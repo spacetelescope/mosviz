@@ -10,5 +10,8 @@ Status reports for developers
 -----------------------------
 
 .. image:: https://readthedocs.org/projects/mosviz/badge/?version=latest
-  :target: http://mosviz.readthedocs.io/en/latest/?badge=latest
-  :alt: Documentation Status
+    :target: http://mosviz.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://travis-ci.org/spacetelescope/mosviz.svg?branch=master
+    :target: https://travis-ci.org/spacetelescope/mosviz
