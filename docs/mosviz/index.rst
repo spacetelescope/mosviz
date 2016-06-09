@@ -19,4 +19,4 @@ for your own use from
 Reference/API
 =============
 
-.. automodapi:: mosviz
+.. automodapi:: mosviz.utils
