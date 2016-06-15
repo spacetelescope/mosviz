@@ -31,7 +31,7 @@ env:
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='nbconvert'
+        - CONDA_DEPENDENCIES=''
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
@@ -51,11 +51,12 @@ matrix:
         #- python: 2.7
         #  env: SETUP_CMD='test --coverage'
 
-        # NOTE: Removed -w due to matplotlib UserWarning
+        # NOTE: DISABLED THIS BECAUSE AUTO-CREATING NOTEBOOKS IN DOC
+        #       IS HARD TO DO ON TRAVIS CI. WE HAVE RTD SET UP ANYWAY.
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
-        - python: 2.7
-          env: SETUP_CMD='build_sphinx'
+        #- python: 2.7
+        #  env: SETUP_CMD='build_sphinx'
 
         # Try Astropy development version
         - python: 2.7
