@@ -119,8 +119,8 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
             cutout_wcs.wcs.cdelt = [row['spatial_pixel_scale'].value] * 2
             cutout_wcs.wcs.crota = [0, row['cutout_pa'].value]
             cutout_hdr = cutout_wcs.to_header()
-            cutout_arr = reproject_interp((data, wcs), cutout_hdr,
-                                          shape_out=(y_pix, x_pix))
+            cutout_arr, = reproject_interp((data, wcs), cutout_hdr,
+                                           shape_out=(y_pix, x_pix))
 
         else:
             try:
