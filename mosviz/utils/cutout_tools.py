@@ -96,6 +96,7 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
     c = SkyCoord(table['ra'], table['dec'])
     x = (table['cutout_x_size'] / table['spatial_pixel_scale']).value  # pix
     y = (table['cutout_y_size'] / table['spatial_pixel_scale']).value  # pix
+    pscl = table['spatial_pixel_scale'].to(u.deg / u.pix)
 
     # Do not rotate if column is missing.
     if 'cutout_pa' not in table.colnames:
@@ -108,7 +109,7 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
 
     cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
 
-    for position, x_pix, y_pix, row in zip(c, x, y, table):
+    for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
 
         # TODO: Better units handling in WCS.
         if apply_rotation:
@@ -116,11 +117,12 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
             cutout_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
             cutout_wcs.wcs.crval = [position.ra.deg, position.dec.deg]
             cutout_wcs.wcs.crpix = [(x_pix - 1) * 0.5, (y_pix - 1) * 0.5]
-            cutout_wcs.wcs.cdelt = [row['spatial_pixel_scale'].value] * 2
+            cutout_wcs.wcs.cdelt = [pix_scl.value] * 2
             cutout_wcs.wcs.crota = [0, row['cutout_pa'].value]
             cutout_hdr = cutout_wcs.to_header()
-            cutout_arr, = reproject_interp((data, wcs), cutout_hdr,
-                                           shape_out=(y_pix, x_pix))
+            cutout_arr = reproject_interp((data, wcs), cutout_hdr,
+                                          shape_out=(y_pix, x_pix))
+            cutout_arr = cutout_arr[0]  # Ignore footprint
 
         else:
             try:
