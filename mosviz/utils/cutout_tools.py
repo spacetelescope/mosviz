@@ -7,6 +7,9 @@ from __future__ import (absolute_import, division, print_function,
 import os
 from functools import partial
 
+# THIRD-PARTY
+import numpy as np
+
 # ASTROPY
 import astropy.units as u
 from astropy import log
@@ -14,7 +17,7 @@ from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.nddata.utils import Cutout2D
 from astropy.table import QTable
-from astropy.wcs import WCS
+from astropy.wcs import WCS, NoConvergence
 
 __all__ = ['make_cutouts', 'show_cutout_with_slit']
 
@@ -94,7 +97,19 @@ def make_cutouts(catalogname, imagename, image_label,
     cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
 
     for position, x_pix, y_pix, row in zip(c, x, y, table):
-        cutout = cutcls(position, size=(y_pix, x_pix))
+        try:
+            cutout = cutcls(position, size=(y_pix, x_pix))
+        except NoConvergence:
+            if verbose:
+                log.info('WCS solution did not converge: '
+                         'Skipping {0}'.format(row['id']))
+            continue
+
+        if np.array_equiv(cutout.data, 0):
+            if verbose:
+                log.info('No data in cutout: Skipping {0}'.format(row['id']))
+            continue
+
         fname = os.path.join(
             path, '{0}_{1}_cutout.fits'.format(row['id'], image_label))
 
