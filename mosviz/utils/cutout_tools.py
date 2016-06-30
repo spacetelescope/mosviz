@@ -55,6 +55,7 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
 
         * ``OBJ_RA`` - RA of the cutout object in degrees.
         * ``OBJ_DEC`` - DEC of the cutout object in degrees.
+        * ``OBJ_ROT`` - Rotation of cutout object in degrees.
 
     Parameters
     ----------
@@ -111,18 +112,35 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
 
     for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
 
-        # TODO: Better units handling in WCS.
         if apply_rotation:
+            pix_rot = row['cutout_pa'].to(u.degree).value
+
             cutout_wcs = WCS(naxis=2)
             cutout_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
             cutout_wcs.wcs.crval = [position.ra.deg, position.dec.deg]
             cutout_wcs.wcs.crpix = [(x_pix - 1) * 0.5, (y_pix - 1) * 0.5]
-            cutout_wcs.wcs.cdelt = [pix_scl.value] * 2
-            cutout_wcs.wcs.crota = [0, row['cutout_pa'].value]
+
+            # TODO: Positive angle means counterclockwise?
+            try:
+                cutout_wcs.wcs.cd = wcs.wcs.cd
+                cutout_wcs.rotateCD(pix_rot)
+            except AttributeError:
+                cutout_wcs.wcs.cdelt = wcs.wcs.cdelt
+                cutout_wcs.wcs.crota = [0, pix_rot]
+
             cutout_hdr = cutout_wcs.to_header()
-            cutout_arr = reproject_interp((data, wcs), cutout_hdr,
-                                          shape_out=(y_pix, x_pix))
+
+            try:
+                cutout_arr = reproject_interp((data, wcs), cutout_hdr,
+                                              shape_out=(y_pix, x_pix))
+            except Exception:
+                if verbose:
+                    log.info('reproject failed: '
+                             'Skipping {0}'.format(row['id']))
+                continue
+
             cutout_arr = cutout_arr[0]  # Ignore footprint
+            cutout_hdr['OBJ_ROT'] = (pix_rot, 'Cutout rotation in degrees')
 
         else:
             try:
