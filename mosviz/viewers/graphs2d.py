@@ -20,6 +20,18 @@ AVAILABLE_COLORS = cycle([(0, 0, 0), (0, 73, 73), (0, 146, 146),
 class Base2DGraph(pg.GraphicsLayoutWidget):
     def __init__(self, *args, **kwargs):
         super(Base2DGraph, self).__init__(*args, **kwargs)
+        self._plot = self.addPlot()
+        self.vb = self.plot.getViewBox()
+        self.vb.setAspectLocked()
+        self.image_item = pg.ImageItem()
+        self._plot.addItem(self.image_item)
+
+    @property
+    def plot(self):
+        return self._plot
+    
+    def set_data(self, data, slit_shape=None, pix_scale=0.1):
+        self.image_item.setImage(data)
 
 
 class Spectrum2DGraph(Base2DGraph):
@@ -32,18 +44,12 @@ class ImageGraph(Base2DGraph):
         super(ImageGraph, self).__init__()
         self._axes = {'left': ImageAxisItem(orientation='left'),
                       'bottom': ImageAxisItem(orientation='bottom')}
-        self.p1 = self.addPlot()#axisItems={'left': self._axes['left'],
-                                #          'bottom': self._axes['bottom']})
-        self.p1.showGrid(True, True, 0.5)
-        self.vb = self.p1.getViewBox()
-        self.vb.setAspectLocked()
-        self.image_item = pg.ImageItem()
-        self.p1.addItem(self.image_item)
+        self.plot.showGrid(True, True, 0.5)
         self._r1 = QGraphicsRectItem(0, 0, 0, 0)
         self.vb.addItem(self._r1)
 
-        self.p1.disableAutoRange(self.vb.YAxis)
-        self.p1.disableAutoRange(self.vb.XAxis)
+        self.plot.disableAutoRange(self.vb.YAxis)
+        self.plot.disableAutoRange(self.vb.XAxis)
 
         # Contrast/color control
         self.hist = pg.HistogramLUTItem()
@@ -70,15 +76,17 @@ class ImageGraph(Base2DGraph):
         self.hist.hide()
 
     def set_data(self, data, slit_shape=None, pix_scale=0.1):
-        self.image_item.setImage(data.quantity.value)
+        self.image_item.setImage(data)
+
+        return
         self.hist.setLevels(np.nanmin(data.quantity.value),
                             np.nanmax(data.quantity.value))
         self.iso.setData(pg.gaussianFilter(data.quantity.value, (2, 2)))
         self.iso_line.setValue(np.median(data.quantity.value))
 
-        self.p1.setLabel('bottom', text="X [{}]".format(
+        self.plot.setLabel('bottom', text="X [{}]".format(
             u.Unit(data.wcs.wcs.cunit[0])))
-        self.p1.setLabel('left', text="Y [{}]".format(
+        self.plot.setLabel('left', text="Y [{}]".format(
             u.Unit(data.wcs.wcs.cunit[1])))
 
         if slit_shape is not None:
@@ -100,7 +108,7 @@ class ImageGraph(Base2DGraph):
         # print(_disp[0], _cdisp[0])
         # self.image_item.translate(_disp[0], _cdisp[0])
         # self.image_item.scale(pix_scale, pix_scale)
-        # self.p1.autoRange()
+        # self.plot.autoRange()
 
     def toggle_color_map(self, show):
         if show:

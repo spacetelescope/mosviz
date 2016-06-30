@@ -4,7 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
-from ..core.data import GenericSpectrum1D
+from ..core.data import MOSData
 from ..core.threads import FileLoadThread
 
 import logging
@@ -44,11 +44,23 @@ class DataListPlugin(Plugin):
         self.list_widget_data_list.itemSelectionChanged.connect(
             self.toggle_buttons)
 
+        # Connect the create new sub window button
+        self.button_create_sub_window.clicked.connect(
+            lambda: Dispatch.on_add_window.emit(data=self.current_data))
+
         # When the data list delete button is pressed
         self.button_remove_data.clicked.connect(
             lambda: self.remove_data_item())
 
     def _data_loaded(self, data):
+        """
+        Result of data loading thread. Object expected to be a list.
+
+        Parameters
+        ----------
+        data : list
+            List of data objects.
+        """
         Dispatch.on_added_data.emit(data=data)
 
         if self.active_window is None:
@@ -101,7 +113,7 @@ class DataListPlugin(Plugin):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters([x + " (*)" for x in
-                               io_registry.get_formats(GenericSpectrum1D)[
+                               io_registry.get_formats(MOSData)[
                                    'Format']])
 
         if dialog.exec_():
@@ -161,9 +173,11 @@ class DataListPlugin(Plugin):
         if self.current_data_item is not None:
             self.label_unopened.hide()
             self.button_remove_data.setEnabled(True)
+            self.button_create_sub_window.setEnabled(True)
         else:
             self.label_unopened.show()
             self.button_remove_data.setEnabled(False)
+            self.button_create_sub_window.setEnabled(False)
 
 
 class UiDataListPlugin:
@@ -192,6 +206,13 @@ class UiDataListPlugin:
 
         plugin.layout_horizontal = QHBoxLayout()
 
+        plugin.button_create_sub_window = QToolButton(plugin)
+        plugin.button_create_sub_window.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Open in Browser-50.png")))
+        plugin.button_create_sub_window.setIconSize(QSize(25, 25))
+        plugin.button_create_sub_window.setMinimumSize(QSize(35, 35))
+        plugin.button_create_sub_window.setEnabled(False)
+
         plugin.button_remove_data = QToolButton(plugin)
         plugin.button_remove_data.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
@@ -199,6 +220,7 @@ class UiDataListPlugin:
         plugin.button_remove_data.setIconSize(QSize(25, 25))
         plugin.button_remove_data.setMinimumSize(QSize(35, 35))
 
+        plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
         plugin.layout_horizontal.addStretch()
         plugin.layout_horizontal.addWidget(plugin.button_remove_data)
 

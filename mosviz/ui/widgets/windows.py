@@ -76,11 +76,10 @@ class MainWindow(UiMainWindow):
             window=window.widget() if window is not None else None)
 
     @DispatchHandle.register_listener("on_add_window")
-    def add_sub_window(self, data=None, layer=None, window=None, *args,
+    def add_sub_window(self, data=None, window=None, *args,
                        **kwargs):
-        layer = layer
         window = window or MOSViewer()
-        window.add_plot(layer=layer)
+        window.set_data(data=data)
 
         if window is not None:
             mdi_sub_window = self.mdi_area.addSubWindow(window)

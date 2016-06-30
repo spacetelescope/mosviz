@@ -21,7 +21,12 @@ class Base1DGraph(pg.PlotWidget):
     def __init__(self, *args, **kwargs):
         super(Base1DGraph, self).__init__(*args, **kwargs)
 
-        self._plot = self.getPlotItem()
+        self._plot_item = self.getPlotItem()
+        self._plot = self._plot_item.plot()
+
+    @property
+    def plot(self):
+        return self._plot
 
 
 class Spectrum1DGraph(Base1DGraph):

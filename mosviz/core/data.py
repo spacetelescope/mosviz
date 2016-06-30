@@ -2,14 +2,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-# STDLIB
 import logging
 logging.basicConfig(level=logging.INFO)
-import re
 
-# THIRD-PARTY
-import numpy as np
-from astropy.units import Quantity, spectral_density, spectral
 from specutils.core.generic import GenericSpectrum1D
 
 from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
@@ -19,30 +14,38 @@ class MOSData(NDIOMixin):
     """
     Core data container for MOS data.
     """
-    def __init__(self, spectrum1d, spectrum2d, image, **kwargs):
-        self._spectrum1d = GenericSpectrum1D.read(spectrum1d)
-        self._spectrum2d = Spectrum2D.read(spectrum2d)
-        self._image = Image.read(image)
+    def __init__(self, name, **kwargs):
+        self._name = name
+        self._collection = []
 
     @property
-    def spectrum1d(self):
-        return self._spectrum1d
+    def name(self):
+        return self._name
 
     @property
-    def spectrum2d(self):
-        return self._spectrum2d
+    def collection(self):
+        return self._collection
 
-    @property
-    def image(self):
-        return self._image
+    def load(self, id, spec1d_path, spec2d_path, image_path, **kwargs):
+        spectrum1d = GenericSpectrum1D.read(spec1d_path, format='spectrum1d')
+        spectrum2d = Spectrum2D.read(spec2d_path, format='spectrum2d')
+        image = Image.read(image_path, format='mos-image')
+
+        data_dict = {'id': id, 'spec1d': spectrum1d, 'spec2d': spectrum2d,
+                     'image': image}
+
+        data_dict.update(kwargs)
+
+        self._collection.append(data_dict)
 
 
 class Image(NDIOMixin, NDArithmeticMixin, NDData):
     """
     Base base class image data.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
+        self._name = name
 
 
 class Spectrum2D(GenericSpectrum1D):

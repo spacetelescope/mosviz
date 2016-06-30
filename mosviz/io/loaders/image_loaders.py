@@ -1,5 +1,5 @@
 from mosviz.interfaces.decorators import data_loader
-from mosviz.core.data import MOSData
+from mosviz.core.data import Image
 
 import os
 
@@ -19,25 +19,17 @@ def fits_identify(*args, **kwargs):
             args[0].lower().split('.')[-1] in ['fits', 'fit'])
 
 
-@data_loader(label="Simple Generic", identifier=fits_identify, data_class=MOSData)
-def simple_generic_loader(file_name, **kwargs):
-    print("LOADING {}".format(file_name))
-    mos_data = MOSData()
-
-    name = os.path.basename(file_name.name.rstrip(os.sep)).rsplit('.', 1)[0]
-    hdulist = fits.open(file_name, **kwargs)
+@data_loader(label="mos-image", identifier=fits_identify, data_class=Image)
+def generic_image_loader(file_name, **kwargs):
+    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
+    hdulist = fits.open(file_name, memmap=True, **kwargs)
 
     header = hdulist[0].header
-
-    tab = Table.read(file_name)
-
     meta = {'header': header}
     wcs = WCS(hdulist[0].header)
     unit = Unit('Jy')
-    uncertainty = StdDevUncertainty(tab["err"])
-    data = tab["flux"]
+    data = hdulist[0].data
 
     hdulist.close()
 
-    return mos_data
-
+    return Image(data=data, name=name, wcs=wcs, unit=unit, meta=meta)
