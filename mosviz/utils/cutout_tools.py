@@ -35,7 +35,8 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
         * ``'cutout_x_size'`` - Cutout width (e.g., in arcsec).
         * ``'cutout_y_size'`` - Cutout height (e.g., in arcsec).
         * ``'cutout_pa'`` - Cutout angle (e.g., in degrees). This is only
-          use if user chooses to rotate the cutouts.
+          use if user chooses to rotate the cutouts. Positive value
+          will result in a clockwise rotation.
         * ``'spatial_pixel_scale'`` - Pixel scale (e.g., in arcsec/pix).
 
     The following are no longer used, so they are now optional:
@@ -120,19 +121,18 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
             cutout_wcs.wcs.crval = [position.ra.deg, position.dec.deg]
             cutout_wcs.wcs.crpix = [(x_pix - 1) * 0.5, (y_pix - 1) * 0.5]
 
-            # TODO: Positive angle means counterclockwise?
             try:
                 cutout_wcs.wcs.cd = wcs.wcs.cd
-                cutout_wcs.rotateCD(pix_rot)
+                cutout_wcs.rotateCD(-pix_rot)
             except AttributeError:
                 cutout_wcs.wcs.cdelt = wcs.wcs.cdelt
-                cutout_wcs.wcs.crota = [0, pix_rot]
+                cutout_wcs.wcs.crota = [0, -pix_rot]
 
             cutout_hdr = cutout_wcs.to_header()
 
             try:
-                cutout_arr = reproject_interp((data, wcs), cutout_hdr,
-                                              shape_out=(y_pix, x_pix))
+                cutout_arr = reproject_interp(
+                    (data, wcs), cutout_hdr, shape_out=(y_pix, x_pix), order=2)
             except Exception:
                 if verbose:
                     log.info('reproject failed: '
