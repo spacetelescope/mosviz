@@ -22,7 +22,7 @@ from astropy.wcs import WCS, NoConvergence
 __all__ = ['make_cutouts', 'show_cutout_with_slit']
 
 
-def make_cutouts(catalogname, imagename, image_label,
+def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
                  table_format='ascii.ecsv', image_ext=0, clobber=False,
                  verbose=True):
     """Make cutouts from a 2D image and write them to FITS files.
@@ -34,6 +34,8 @@ def make_cutouts(catalogname, imagename, image_label,
         * ``'dec'`` - DEC (e.g., in degrees).
         * ``'cutout_x_size'`` - Cutout width (e.g., in arcsec).
         * ``'cutout_y_size'`` - Cutout height (e.g., in arcsec).
+        * ``'cutout_pa'`` - Cutout angle (e.g., in degrees). This is only
+          use if user chooses to rotate the cutouts.
         * ``'spatial_pixel_scale'`` - Pixel scale (e.g., in arcsec/pix).
 
     The following are no longer used, so they are now optional:
@@ -53,6 +55,7 @@ def make_cutouts(catalogname, imagename, image_label,
 
         * ``OBJ_RA`` - RA of the cutout object in degrees.
         * ``OBJ_DEC`` - DEC of the cutout object in degrees.
+        * ``OBJ_ROT`` - Rotation of cutout object in degrees.
 
     Parameters
     ----------
@@ -64,6 +67,9 @@ def make_cutouts(catalogname, imagename, image_label,
 
     image_label : str
         Label to name the cutout sub-directory and filenames.
+
+    apply_rotation : bool
+        Cutout will be rotated to a given angle. Default is `False`.
 
     table_format : str, optional
         Format as accepted by `~astropy.table.QTable`. Default is ECSV.
@@ -78,6 +84,9 @@ def make_cutouts(catalogname, imagename, image_label,
         Print extra info. Default is `True`.
 
     """
+    # Optional dependencies...
+    from reproject import reproject_interp
+
     table = QTable.read(catalogname, format=table_format)
 
     with fits.open(imagename) as pf:
@@ -86,8 +95,13 @@ def make_cutouts(catalogname, imagename, image_label,
 
     # It is more efficient to operate on an entire column at once.
     c = SkyCoord(table['ra'], table['dec'])
-    x = table['cutout_x_size'] / table['spatial_pixel_scale']
-    y = table['cutout_y_size'] / table['spatial_pixel_scale']
+    x = (table['cutout_x_size'] / table['spatial_pixel_scale']).value  # pix
+    y = (table['cutout_y_size'] / table['spatial_pixel_scale']).value  # pix
+    pscl = table['spatial_pixel_scale'].to(u.deg / u.pix)
+
+    # Do not rotate if column is missing.
+    if 'cutout_pa' not in table.colnames:
+        apply_rotation = False
 
     # Sub-directory, relative to working directory.
     path = '{0}_cutouts'.format(image_label)
@@ -96,16 +110,51 @@ def make_cutouts(catalogname, imagename, image_label,
 
     cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
 
-    for position, x_pix, y_pix, row in zip(c, x, y, table):
-        try:
-            cutout = cutcls(position, size=(y_pix, x_pix))
-        except NoConvergence:
-            if verbose:
-                log.info('WCS solution did not converge: '
-                         'Skipping {0}'.format(row['id']))
-            continue
+    for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
 
-        if np.array_equiv(cutout.data, 0):
+        if apply_rotation:
+            pix_rot = row['cutout_pa'].to(u.degree).value
+
+            cutout_wcs = WCS(naxis=2)
+            cutout_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
+            cutout_wcs.wcs.crval = [position.ra.deg, position.dec.deg]
+            cutout_wcs.wcs.crpix = [(x_pix - 1) * 0.5, (y_pix - 1) * 0.5]
+
+            # TODO: Positive angle means counterclockwise?
+            try:
+                cutout_wcs.wcs.cd = wcs.wcs.cd
+                cutout_wcs.rotateCD(pix_rot)
+            except AttributeError:
+                cutout_wcs.wcs.cdelt = wcs.wcs.cdelt
+                cutout_wcs.wcs.crota = [0, pix_rot]
+
+            cutout_hdr = cutout_wcs.to_header()
+
+            try:
+                cutout_arr = reproject_interp((data, wcs), cutout_hdr,
+                                              shape_out=(y_pix, x_pix))
+            except Exception:
+                if verbose:
+                    log.info('reproject failed: '
+                             'Skipping {0}'.format(row['id']))
+                continue
+
+            cutout_arr = cutout_arr[0]  # Ignore footprint
+            cutout_hdr['OBJ_ROT'] = (pix_rot, 'Cutout rotation in degrees')
+
+        else:
+            try:
+                cutout = cutcls(position, size=(y_pix, x_pix))
+            except NoConvergence:
+                if verbose:
+                    log.info('WCS solution did not converge: '
+                             'Skipping {0}'.format(row['id']))
+                continue
+            else:
+                cutout_hdr = cutout.wcs.to_header()
+                cutout_arr = cutout.data
+
+        if np.array_equiv(cutout_arr, 0):
             if verbose:
                 log.info('No data in cutout: Skipping {0}'.format(row['id']))
             continue
@@ -114,8 +163,8 @@ def make_cutouts(catalogname, imagename, image_label,
             path, '{0}_{1}_cutout.fits'.format(row['id'], image_label))
 
         # Construct FITS HDU.
-        hdu = fits.PrimaryHDU(cutout.data)
-        hdu.header.update(cutout.wcs.to_header())
+        hdu = fits.PrimaryHDU(cutout_arr)
+        hdu.header.update(cutout_hdr)
         hdu.header['OBJ_RA'] = (position.ra.deg, 'Cutout object RA in deg')
         hdu.header['OBJ_DEC'] = (position.dec.deg, 'Cutout object DEC in deg')
 
@@ -185,7 +234,6 @@ def show_cutout_with_slit(hdr, data=None, slit_ra=None, slit_dec=None,
     import matplotlib.pyplot as plt
     from photutils import (SkyCircularAnnulus, SkyCircularAperture,
                            SkyRectangularAperture)
-    from scipy.ndimage.interpolation import rotate
 
     if slit_ra is None:
         slit_ra = hdr['OBJ_RA']
@@ -206,13 +254,9 @@ def show_cutout_with_slit(hdr, data=None, slit_ra=None, slit_dec=None,
     else:  # rectangular
         slit_width = u.Quantity(slit_width, u.arcsec)
         slit_length = u.Quantity(slit_length, u.arcsec)
-        theta = u.Quantity(90, u.degree)
+        slit_angle = u.Quantity(slit_angle, u.degree)
         aper = SkyRectangularAperture(position, slit_width, slit_length,
-                                      theta=theta)
-
-        # Rotate data and keep slit upright
-        if data is not None:
-            data = rotate(data, slit_angle - theta.value, reshape=False)
+                                      theta=slit_angle)
 
     wcs = WCS(hdr)
     aper_pix = aper.to_pixel(wcs)
