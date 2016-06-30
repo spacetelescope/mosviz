@@ -26,17 +26,33 @@ class MOSData(NDIOMixin):
     def collection(self):
         return self._collection
 
-    def load(self, id, spec1d_path, spec2d_path, image_path, **kwargs):
-        spectrum1d = GenericSpectrum1D.read(spec1d_path, format='spectrum1d')
-        spectrum2d = Spectrum2D.read(spec2d_path, format='spectrum2d')
-        image = Image.read(image_path, format='mos-image')
-
-        data_dict = {'id': id, 'spec1d': spectrum1d, 'spec2d': spectrum2d,
-                     'image': image}
+    def add(self, id, spec1d_path, spec2d_path, image_path, **kwargs):
+        data_dict = {'id': id, 'spec1d': spec1d_path, 'spec2d': spec2d_path,
+                     'image': image_path}
 
         data_dict.update(kwargs)
 
         self._collection.append(data_dict)
+
+    def load(self, index):
+        item = self.collection[index]
+
+        spectrum1d = GenericSpectrum1D.read(item['spec1d'],
+                                            format='spectrum1d')
+        spectrum2d = Spectrum2D.read(item['spec2d'], format='spectrum2d')
+        image = Image.read(item['image'], format='mos-image')
+
+        # item.update({'spec1d': spectrum1d, 'spec2d':
+        #     spectrum2d, 'image': image})
+
+        return {'spec1d': spectrum1d, 'spec2d':
+                spectrum2d, 'image': image, 'id': item['id']}
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return [self.load(i) for i in
+                    range(key.start, key.stop, key.step)]
+        return self.load(key)
 
 
 class Image(NDIOMixin, NDArithmeticMixin, NDData):

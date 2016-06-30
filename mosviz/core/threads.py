@@ -46,9 +46,9 @@ class FileLoadThread(QThread):
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
 
-        try:
-            data = MOSData.read(file_name, format=file_filter)
-            return data
-        except:
-            logging.error("Incompatible loader for selected data: {"
-                          "}".format(file_filter))
+        # try:
+        data = MOSData.read(file_name, format=file_filter)
+        return data
+        # except:
+        #     logging.error("Incompatible loader for selected data: {"
+        #                   "}".format(file_filter))

@@ -29,15 +29,15 @@ def generic_mos_loader(file_name, **kwargs):
     for i in range(len(tab)):
         file_path = '/'.join(file_name.split('/')[:-1])
 
-        mos_data.load(id=tab[i]['id'],
-                      spec1d_path=os.path.join(file_path,
+        mos_data.add(id=tab[i]['id'],
+                     spec1d_path=os.path.join(file_path,
                                                tab[i]['spectrum1d']),
-                      spec2d_path=os.path.join(file_path,
+                     spec2d_path=os.path.join(file_path,
                                                tab[i]['spectrum2d']),
-                      image_path=os.path.join(file_path, tab[i]['cutout']),
-                      ra=tab[i]['ra'], dec=tab[i]['dec'],
-                      slit_width=tab[i]['slit_width'],
-                      pix_scale=tab[i]['pix_scale'])
+                     image_path=os.path.join(file_path, tab[i]['cutout']),
+                     ra=tab[i]['ra'], dec=tab[i]['dec'],
+                     slit_width=tab[i]['slit_width'],
+                     pix_scale=tab[i]['pix_scale'])
 
     return mos_data
 
@@ -56,8 +56,8 @@ def mos_glue_loader(catalog_list, **kwargs):
     print("Loading from: ", catalog_list)
 
     for mos_dict in catalog_list:
-        mos_data = MOSData.load(spec1d_path=mos_dict['spectrum1d'],
-                                spec2d_path=mos_dict['spectrum2d'],
-                                image_path=mos_dict['cutout'])
+        mos_data = MOSData.store(spec1d_path=mos_dict['spectrum1d'],
+                                 spec2d_path=mos_dict['spectrum2d'],
+                                 image_path=mos_dict['cutout'])
 
     return mos_data

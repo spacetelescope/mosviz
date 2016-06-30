@@ -3,6 +3,7 @@ from mosviz.core.data import GenericSpectrum1D
 from mosviz.core.data import Spectrum2D
 
 import os
+import logging
 
 from astropy.io import fits
 from astropy.table import Table
@@ -24,7 +25,7 @@ def fits_identify(*args, **kwargs):
              data_class=GenericSpectrum1D)
 def generic_spectrum1d_loader(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
-    hdulist = fits.open(file_name, memmap=True, **kwargs)
+    hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}
@@ -45,7 +46,7 @@ def generic_spectrum1d_loader(file_name, **kwargs):
              data_class=Spectrum2D)
 def generic_spectrum1d_loader(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
-    hdulist = fits.open(file_name, memmap=True, **kwargs)
+    hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}

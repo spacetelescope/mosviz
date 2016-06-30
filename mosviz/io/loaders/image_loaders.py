@@ -2,6 +2,7 @@ from mosviz.interfaces.decorators import data_loader
 from mosviz.core.data import Image
 
 import os
+import logging
 
 from astropy.io import fits
 from astropy.table import Table
@@ -22,7 +23,7 @@ def fits_identify(*args, **kwargs):
 @data_loader(label="mos-image", identifier=fits_identify, data_class=Image)
 def generic_image_loader(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
-    hdulist = fits.open(file_name, memmap=True, **kwargs)
+    hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}

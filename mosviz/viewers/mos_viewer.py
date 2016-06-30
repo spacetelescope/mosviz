@@ -104,7 +104,7 @@ class MOSViewer(UiMOSViewer):
         self._current_index = index
         self.tool_bar_mos_viewer.combo_box_select.setCurrentIndex(self._current_index)
 
-        data = self._data.collection[self._current_index]
+        data = self._data[self._current_index]
 
         self.graph1d.plot.setData(data['spec1d'].data)
         self.graph2d.set_data(data['spec2d'].data)
