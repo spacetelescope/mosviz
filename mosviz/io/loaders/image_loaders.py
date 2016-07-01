@@ -1,5 +1,5 @@
 from mosviz.interfaces.decorators import data_loader
-from mosviz.core.data import Image
+from mosviz.core.data import MOSImage
 
 import os
 import logging
@@ -20,7 +20,7 @@ def fits_identify(*args, **kwargs):
             args[0].lower().split('.')[-1] in ['fits', 'fit'])
 
 
-@data_loader(label="mos-image", identifier=fits_identify, data_class=Image)
+@data_loader(label="mos-image", identifier=fits_identify, data_class=MOSImage)
 def generic_image_loader(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
@@ -33,4 +33,4 @@ def generic_image_loader(file_name, **kwargs):
 
     hdulist.close()
 
-    return Image(data=data, name=name, wcs=wcs, unit=unit, meta=meta)
+    return MOSImage(data=data, name=name, wcs=wcs, unit=unit, meta=meta)

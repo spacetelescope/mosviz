@@ -4,10 +4,13 @@ from __future__ import (absolute_import, division, print_function,
 
 import logging
 logging.basicConfig(level=logging.INFO)
+from collections import Counter
 
 from specutils.core.generic import GenericSpectrum1D
 
 from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
+import numpy as np
+from astropy.units import Quantity, Unit
 
 
 class MOSData(NDIOMixin):
@@ -27,8 +30,8 @@ class MOSData(NDIOMixin):
         return self._collection
 
     def add(self, id, spec1d_path, spec2d_path, image_path, **kwargs):
-        data_dict = {'id': id, 'spec1d': spec1d_path, 'spec2d': spec2d_path,
-                     'image': image_path}
+        data_dict = {'id': id, 'spec1d_path': spec1d_path,
+                     'spec2d_path': spec2d_path, 'image_path': image_path}
 
         data_dict.update(kwargs)
 
@@ -37,16 +40,16 @@ class MOSData(NDIOMixin):
     def load(self, index):
         item = self.collection[index]
 
-        spectrum1d = GenericSpectrum1D.read(item['spec1d'],
-                                            format='spectrum1d')
-        spectrum2d = Spectrum2D.read(item['spec2d'], format='spectrum2d')
-        image = Image.read(item['image'], format='mos-image')
+        spectrum1d = MOSSpectrum1D.read(item['spec1d_path'], format='spectrum1d')
+        spectrum2d = MOSSpectrum2D.read(item['spec2d_path'], format='spectrum2d')
+        image = MOSImage.read(item['image_path'], format='mos-image')
 
-        # item.update({'spec1d': spectrum1d, 'spec2d':
-        #     spectrum2d, 'image': image})
+        new_item = {}
+        new_item.update(item)
+        new_item.update({'spec1d': spectrum1d, 'spec2d': spectrum2d,
+                         'image': image, 'id': item['id']})
 
-        return {'spec1d': spectrum1d, 'spec2d':
-                spectrum2d, 'image': image, 'id': item['id']}
+        return new_item
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -55,19 +58,86 @@ class MOSData(NDIOMixin):
         return self.load(key)
 
 
-class Image(NDIOMixin, NDArithmeticMixin, NDData):
+class BaseMOS2D(NDIOMixin, NDArithmeticMixin, NDData):
     """
     Base base class image data.
     """
     def __init__(self, name, *args, **kwargs):
-        super(Image, self).__init__(*args, **kwargs)
+        super(BaseMOS2D, self).__init__(*args, **kwargs)
         self._name = name
+        self._dispersion_unit = None
+        self._cross_dispersion_unit = None
+
+    @property
+    def data(self):
+        """Flux quantity with mask applied. Returns a masked array
+        containing a Quantity object."""
+        data = np.ma.array(
+            Quantity(self._data, unit=self.unit),
+            mask=self.mask)
+
+        return data
+
+    @property
+    def dispersion_unit(self):
+        if self._dispersion_unit is None:
+            try:
+                self._dispersion_unit = self.wcs.wcs.cunit[0]
+            except:
+                self._dispersion_unit = Unit("")
+
+        return self._dispersion_unit
+
+    @property
+    def cross_dispersion_unit(self):
+        if self._cross_dispersion_unit is None:
+            try:
+                self._cross_dispersion_unit = self.wcs.wcs.cunit[1]
+            except:
+                self._cross_dispersion_unit = Unit("")
+
+        return self._cross_dispersion_unit
 
 
-class Spectrum2D(GenericSpectrum1D):
+class MOSImage(BaseMOS2D):
     """
     Base base class image data.
     """
     def __init__(self, *args, **kwargs):
-        super(Spectrum2D, self).__init__(*args, **kwargs)
+        super(MOSImage, self).__init__(*args, **kwargs)
 
+
+class MOSSpectrum2D(BaseMOS2D):
+    """
+    Base base class image data.
+    """
+    def __init__(self, *args, **kwargs):
+        super(MOSSpectrum2D, self).__init__(*args, **kwargs)
+
+
+class MOSSpectrum1D(GenericSpectrum1D):
+    """
+    Class for 1d spectral data.
+    """
+    def __init__(self, *args, **kwargs):
+        super(MOSSpectrum1D, self).__init__(*args, **kwargs)
+
+    @property
+    def data(self):
+        """Flux quantity with mask applied. Returns a masked array
+        containing a Quantity object."""
+        data = np.ma.array(
+            Quantity(self._data, unit=self.unit),
+            mask=self.mask)
+
+        return data
+
+    @property
+    def dispersion_unit(self):
+        if self._dispersion_unit is None:
+            try:
+                self._dispersion_unit = self.wcs.wcs.cunit[0]
+            except:
+                self._dispersion_unit = Unit("")
+
+        return self._dispersion_unit

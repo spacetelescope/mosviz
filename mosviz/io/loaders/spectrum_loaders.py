@@ -1,6 +1,6 @@
 from mosviz.interfaces.decorators import data_loader
 from mosviz.core.data import GenericSpectrum1D
-from mosviz.core.data import Spectrum2D
+from mosviz.core.data import MOSSpectrum2D
 
 import os
 import logging
@@ -43,7 +43,7 @@ def generic_spectrum1d_loader(file_name, **kwargs):
 
 
 @data_loader(label="spectrum2d", identifier=lambda x: x,
-             data_class=Spectrum2D)
+             data_class=MOSSpectrum2D)
 def generic_spectrum1d_loader(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
@@ -58,6 +58,6 @@ def generic_spectrum1d_loader(file_name, **kwargs):
 
     hdulist.close()
 
-    return Spectrum2D(data=data, name=name, wcs=wcs, uncertainty=uncertainty,
-                      unit=unit, meta=meta, mask=mask)
+    return MOSSpectrum2D(data=data, name=name, wcs=wcs, uncertainty=uncertainty,
+                         unit=unit, meta=meta, mask=mask)
 
