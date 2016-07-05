@@ -15,7 +15,7 @@ import astropy.units as u
 from astropy import log
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
-from astropy.nddata.utils import Cutout2D
+from astropy.nddata.utils import (Cutout2D, NoOverlapError)
 from astropy.table import QTable
 from astropy.wcs import WCS, NoConvergence
 
@@ -148,6 +148,11 @@ def make_cutouts(catalogname, imagename, image_label, apply_rotation=False,
             except NoConvergence:
                 if verbose:
                     log.info('WCS solution did not converge: '
+                             'Skipping {0}'.format(row['id']))
+                continue
+            except NoOverlapError:
+                if verbose:
+                    log.info('Cutout is not on image: '
                              'Skipping {0}'.format(row['id']))
                 continue
             else:
