@@ -12,4 +12,10 @@ from ._astropy_init import *
 
 # For egg_info test builds to pass, put package imports here.
 if not _ASTROPY_SETUP_:
-    from . import utils
+    from mosviz import *
+
+
+def setup():
+    from .viewers.mos_viewer import MOSVizViewer
+    from glue.config import qt_client
+    qt_client.add(MOSVizViewer)
