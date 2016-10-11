@@ -1,7 +1,4 @@
 numpy
 matplotlib
 Cython
-astropy-helpers
 astropy
-photutils
-nbconvert

@@ -16,8 +16,6 @@ htmlcov
 .coverage
 MANIFEST
 .ipynb_checkpoints
-docs/mosviz/notebooks/*cutouts
-docs/mosviz/notebooks/*png
 
 # Sphinx
 docs/api
