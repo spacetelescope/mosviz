@@ -9,19 +9,19 @@ class Line1DWidget(QMainWindow):
     def __init__(self, parent=None):
         super(Line1DWidget, self).__init__(parent)
 
-        # a figure instance to plot on
-        self.figure = plt.figure()
+        self.figure = plt.figure(facecolor='white')
 
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
+        # Canvas Widget that displays the `figure` it takes the `figure`
+        # instance as a parameter to __init__
         self.canvas = FigureCanvas(self.figure)
 
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
+        # Navigation widget, it takes the Canvas widget and a parent
         self.toolbar = NavigationToolbar(self.canvas, self)
 
         self.addToolBar(self.toolbar)
         self.setCentralWidget(self.canvas)
+
+        self.set_data()
 
     def set_data(self, data):
         # create an axis

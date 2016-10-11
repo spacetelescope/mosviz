@@ -7,6 +7,7 @@ from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget
+from ..loaders.mos_loaders import *
 
 from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
 
