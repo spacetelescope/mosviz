@@ -90,6 +90,6 @@ def nircam_image_reader(file_name):
     # drop the last axis since the cube will be split
     data.coords = coordinates_from_wcs(wcs.sub(2))
     data.add_component(hdulist[0].data[0], 'Signal [ADU/s]')
-    data.add_component(hdulist[0].data[1], 'Error [ADU/s]')
+    data.add_component(hdulist[0].data[1], 'Uncertainty [ADU/s]')
 
     return data
