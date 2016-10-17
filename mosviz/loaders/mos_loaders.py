@@ -6,9 +6,9 @@ from glue.core.coordinates import coordinates_from_header
 from astropy.io import fits
 import numpy as np
 
-"""Data factories take a filename as input and return a Data object"""
+
 @data_factory('NIRSpec 1D Spectrum')
-def nirpsec_spectrum1d_reader(file_name):
+def nirspec_spectrum1d_reader(file_name):
     """
     Data loader for MOSViz 1D spectrum.
 
@@ -36,8 +36,9 @@ def nirpsec_spectrum1d_reader(file_name):
 
     return data
 
+
 @data_factory('NIRSpec 2D Spectrum')
-def nirpsec_spectrum2D_reader(file_name):
+def nirspec_spectrum2d_reader(file_name):
     """
     Data loader for simulated NIRSpec 2D spectrum.
 
