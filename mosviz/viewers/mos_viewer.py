@@ -13,6 +13,8 @@ from ..widgets.viewer_options import OptionsWidget
 from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
 from glue.core import message as msg
 from glue.core import Subset
+from glue.core.exceptions import IncompatibleAttribute
+from astropy.table import Table
 
 
 class MOSVizViewer(DataViewer):
@@ -25,10 +27,12 @@ class MOSVizViewer(DataViewer):
         self.load_ui()
 
         # Define some data containers
-        self.selection_catalog = None
-        self._current_selection = dict(spec1d=None, spec2d=None, image=None)
+        self.catalog = None
 
     def load_ui(self):
+        """
+        Setup the MOSView viewer interface.
+        """
         self.central_widget = QWidget()
 
         path = os.path.abspath(
@@ -64,6 +68,9 @@ class MOSVizViewer(DataViewer):
         return self._options_widget
 
     def initialize_toolbar(self):
+        """
+        Initialize the custom toolbar for the MOSViz viewer.
+        """
         from glue.config import viewer_tool
 
         self.toolbar = self._toolbar_cls(self)
@@ -77,9 +84,7 @@ class MOSVizViewer(DataViewer):
 
         # Connect the selection event for the combo box to what's displayed
         self.toolbar.source_select.currentIndexChanged[int].connect(
-            lambda ind: print(ind, len(self.selection_catalog)))
-        self.toolbar.source_select.currentIndexChanged[int].connect(
-            lambda ind: self.load_selection(self.selection_catalog[ind]))
+            lambda ind: self.load_selection(self.catalog[ind]))
 
     def register_to_hub(self, hub):
         super(MOSVizViewer, self).register_to_hub(hub)
@@ -181,14 +186,19 @@ class MOSVizViewer(DataViewer):
         mask = None
 
         if isinstance(data, Subset):
-            mask = data.to_mask()
+            try:
+                mask = data.to_mask()
+            except IncompatibleAttribute:
+                return
 
             if not np.any(mask):
                 return
 
             data = data.data
 
-        columns = []
+        # Clear the table
+        self.catalog = Table()
+
         col_names = data.components
 
         for att in col_names:
@@ -203,60 +213,50 @@ class MOSVizViewer(DataViewer):
 
                 if str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
                     path = '/'.join(component._load_log.path.split('/')[:-1])
-                    columns.append([os.path.join(path, x) for x in comp_labels])
+                    self.catalog[str(att)] = [os.path.join(path, x)
+                                              for x in comp_labels]
                 else:
-                    columns.append(comp_labels)
+                    self.catalog[str(att)] = comp_labels
             else:
                 comp_data = component.data[mask]
 
                 if comp_data.ndim > 1:
                     comp_data = comp_data[0]
 
-                columns.append(comp_data)
-
-        catalog_list = []
-
-        for row in zip(*columns):
-            catalog_dict = dict(zip([str(x) for x in col_names], row))
-            catalog_list.append(catalog_dict)
-
-        # Update the selection catalog
-        self.selection_catalog = catalog_list
+                self.catalog[str(att)] = comp_data
 
         self._update_navigation()
-        self.load_selection(self.selection_catalog[0])
+        self.load_selection(self.catalog[0])
 
     def _update_navigation(self):
         """
         Updates the :class:`qtpy.QtWidgets.QComboBox` widget with the
         appropriate source `id`s from the MOS catalog.
-
         """
-        source_names = [x['id'] for x in self.selection_catalog]
         self.toolbar.source_select.clear()
-        self.toolbar.source_select.addItems(source_names)
+        self.toolbar.source_select.addItems(self.catalog['id'][:])
 
     def load_selection(self, row):
         """
         Processes a row in the MOS catalog by first loading the data set,
-        updating the stored data componenets, and then rendering the data on
+        updating the stored data components, and then rendering the data on
         the visible MOSViz viewer plots.
 
         Parameters
         ----------
-        row : dict
-            A dictionary representing a row in the MOS catalog. Each key should
-            be a column name.
+        row : :class:`astropy.table.Row`
+            A `row` object representing a row in the MOS catalog. Each key
+            should be a column name.
         """
         spec1d_data = nirspec_spectrum1d_reader(row['spectrum1d'])
         spec2d_data = nirspec_spectrum2d_reader(row['spectrum2d'])
 
-        self._update_data_components(spec1d_data, 'spec1d')
-        self._update_data_components(spec2d_data, 'spec2d')
+        self._update_data_components(spec1d_data)
+        self._update_data_components(spec2d_data)
 
-        self.render_selection()
+        self.render_data(spec1d_data, spec2d_data)
 
-    def _update_data_components(self, data, key):
+    def _update_data_components(self, data):
         """
         Update the data components that act as containers for the displayed
         data in the MOSViz viewer. This obviates the need to keep creating new
@@ -269,28 +269,35 @@ class MOSVizViewer(DataViewer):
         key : string
             Key referencing the data stored data object.
         """
-        if self._current_selection.get(key) is None:
-            self._current_selection[key] = data
-            self.session.data_collection.append(data)
+        for dc in self.session.data_collection.data:
+            if dc.label == data.label:
+                dc.update_values_from_data(data)
+                break
         else:
-            self._current_selection.get(key).update_values_from_data(data)
+            self.session.data_collection.append(data)
 
-    def render_selection(self):
+    def render_data(self, spec1d_data=None, spec2d_data=None,
+                    image_data=None):
         """
         Render the updated data sets in the individual plot widgets within the
         MOSViz viewer.
         """
-        spec1d_data = self._current_selection.get('spec1d')
-        spec2d_data = self._current_selection.get('spec2d')
+        if spec1d_data is not None:
+            self.spectrum1d_widget.set_data(
+                x=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
+                y=spec1d_data.get_component(spec1d_data.id['Spectral Flux']).data,
+                yerr=spec1d_data.get_component(spec1d_data.id['Variance']).data)
 
-        self.spectrum1d_widget.set_data(
-            x=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
-            y=spec1d_data.get_component(spec1d_data.id['Spectral Flux']).data,
-            yerr=spec1d_data.get_component(spec1d_data.id['Variance']).data)
+        if spec2d_data is not None:
+            self.spectrum2d_widget.set_image(
+                spec2d_data.get_component(
+                    spec2d_data.id['Data Quality']).data)
+            self.spectrum2d_widget._redraw()
 
-        self.spectrum2d_widget.set_image(
-            spec2d_data.get_component(
-                spec2d_data.id['Data Quality']).data)
+        if True:
+            # Random 2d image data until loaders are created
+            self.image_widget.set_image(np.random.sample((100, 100)))
+            self.image_widget._redraw()
 
     def closeEvent(self, event):
         """
@@ -299,7 +306,7 @@ class MOSVizViewer(DataViewer):
         """
         super(MOSVizViewer, self).closeEvent(event)
 
-        for data in self._current_selection.values():
+        for data in self._loaded_data.values():
             self.session.data_collection.remove(data)
 
 

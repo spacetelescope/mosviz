@@ -22,7 +22,6 @@ class Line1DWidget(QMainWindow):
         self.setCentralWidget(self.canvas)
 
     def set_data(self, x, y, yerr=None):
-        # print(data)
         # Create an axis
         ax = self.figure.add_subplot(111)
 
