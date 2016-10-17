@@ -21,17 +21,19 @@ class Line1DWidget(QMainWindow):
         self.addToolBar(self.toolbar)
         self.setCentralWidget(self.canvas)
 
-        self.set_data()
-
-    def set_data(self, data):
-        # create an axis
+    def set_data(self, x, y, yerr=None):
+        # print(data)
+        # Create an axis
         ax = self.figure.add_subplot(111)
 
-        # discards the old graph
+        # Discards the old graph
         ax.hold(False)
 
-        # plot data
-        ax.plot(data, '*-')
+        # Plot data
+        if yerr is None:
+            ax.plot(x, y)
+        else:
+            ax.errorbar(x, y, yerr=1/yerr)
 
-        # refresh canvas
+        # Refresh canvas
         self.canvas.draw()

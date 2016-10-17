@@ -38,7 +38,14 @@
       <widget class="QWidget" name="left_bottom_layout" native="true">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QTextEdit" name="meta_information"/>
+         <widget class="QTextEdit" name="meta_information">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
