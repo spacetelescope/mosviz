@@ -59,6 +59,7 @@ def nirspec_spectrum2d_reader(file_name):
 
     return data
 
+
 @data_factory('NIRCam Image')
 def nircam_image_reader(file_name):
     """
@@ -95,6 +96,7 @@ def nircam_image_reader(file_name):
 
     return data
 
+
 @data_factory('DEIMOS 1D Spectrum')
 def deimos_spectrum1D_reader(file_name):
     """
@@ -120,6 +122,7 @@ def deimos_spectrum1D_reader(file_name):
 
     return data
 
+
 @data_factory('DEIMOS 2D Spectrum')
 def deimos_spectrum2D_reader(file_name):
     """
@@ -135,6 +138,7 @@ def deimos_spectrum2D_reader(file_name):
     data.add_component(hdulist[1].data['FLUX'][0], 'Spectral Flux')
     data.add_component(hdulist[1].data['IVAR'][0], 'Inverse Variance')
     return data
+
 
 @data_factory('ACS Cutout Image')
 def acs_cutout_image_reader(file_name):

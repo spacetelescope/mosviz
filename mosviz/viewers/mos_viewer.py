@@ -86,6 +86,19 @@ class MOSVizViewer(DataViewer):
         self.toolbar.source_select.currentIndexChanged[int].connect(
             lambda ind: self.load_selection(self.catalog[ind]))
 
+        # Connect the specviz button
+        self.toolbar.open_specviz.triggered.connect(lambda x: x)
+
+        # Connect previous and forward buttons
+        self.toolbar.cycle_next_action.triggered.connect(
+            lambda: self._set_navigation(
+                self.toolbar.source_select.currentIndex() + 1))
+
+        # Connect previous and previous buttons
+        self.toolbar.cycle_previous_action.triggered.connect(
+            lambda: self._set_navigation(
+                self.toolbar.source_select.currentIndex() - 1))
+
     def register_to_hub(self, hub):
         super(MOSVizViewer, self).register_to_hub(hub)
 
@@ -236,6 +249,11 @@ class MOSVizViewer(DataViewer):
         self.toolbar.source_select.clear()
         self.toolbar.source_select.addItems(self.catalog['id'][:])
 
+    def _set_navigation(self, index):
+        if 0 <= index < self.toolbar.source_select.count():
+            self.toolbar.source_select.setCurrentIndex(index)
+            self.load_selection(self.catalog[index])
+
     def load_selection(self, row):
         """
         Processes a row in the MOS catalog by first loading the data set,
@@ -250,11 +268,13 @@ class MOSVizViewer(DataViewer):
         """
         spec1d_data = nirspec_spectrum1d_reader(row['spectrum1d'])
         spec2d_data = nirspec_spectrum2d_reader(row['spectrum2d'])
+        image_data = nircam_image_reader(row['cutout'])
 
         self._update_data_components(spec1d_data)
         self._update_data_components(spec2d_data)
+        self._update_data_components(image_data)
 
-        self.render_data(spec1d_data, spec2d_data)
+        self.render_data(spec1d_data, spec2d_data, image_data)
 
     def _update_data_components(self, data):
         """
@@ -266,8 +286,6 @@ class MOSVizViewer(DataViewer):
         ----------
         data : :class:`glue.core.data.Data`
             Data object to replace within the component.
-        key : string
-            Key referencing the data stored data object.
         """
         for dc in self.session.data_collection.data:
             if dc.label == data.label:
@@ -294,10 +312,12 @@ class MOSVizViewer(DataViewer):
                     spec2d_data.id['Data Quality']).data)
             self.spectrum2d_widget._redraw()
 
-        if True:
-            # Random 2d image data until loaders are created
-            self.image_widget.set_image(np.random.sample((100, 100)))
-            self.image_widget._redraw()
+        if image_data is not None:
+            pass
+            # self.image_widget.set_image(
+            #     image_data.get_component(
+            #         image_data.id['Signal [ADU/s]']).data)
+            # self.image_widget._redraw()
 
     def closeEvent(self, event):
         """

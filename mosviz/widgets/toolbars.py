@@ -48,5 +48,9 @@ class MOSViewerToolbar(BasicToolbar):
         self.addWidget(self.source_select)
         self.addAction(self.cycle_next_action)
 
+        # Include a button to open spectrum in specviz
+        self.open_specviz = QAction("Open in SpecViz", self)
+        self.addAction(self.open_specviz)
+
     def _setup_connections(self):
         pass
