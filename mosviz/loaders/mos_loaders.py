@@ -29,6 +29,7 @@ def nirspec_spectrum1d_reader(file_name):
         hdulist['DATA'].header['NAXIS1'])[::-1]
 
     data = Data(label='1D Spectrum')
+    data.header = hdulist['DATA'].header
     data.coords = coordinates_from_header(hdulist[1].header)
     data.add_component(wavelength, 'Composed Wavelength')
     data.add_component(hdulist['DATA'].data, 'Spectral Flux')
@@ -52,6 +53,7 @@ def nirspec_spectrum2d_reader(file_name):
 
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
+    data.header = hdulist['DATA'].header
     data.coords = coordinates_from_header(hdulist[1].header)
     data.add_component(hdulist['DATA'].data, 'Spectral Flux')
     data.add_component(hdulist['VAR'].data, 'Variance')
@@ -86,6 +88,7 @@ def nircam_image_reader(file_name):
 
     hdulist = fits.open(file_name)
     data = Data(label='NIRCam Image')
+    data.header = hdulist[0].header
     wcs = WCS(hdulist[0].header)
 
     # drop the last axis since the cube will be split
@@ -109,6 +112,7 @@ def deimos_spectrum1D_reader(file_name):
     
     hdulist = fits.open(file_name)    
     data = Data(label='1D Spectrum')
+    data.header = hdulist[1].header
 
     full_wl = np.append(hdulist[1].data['LAMBDA'][0], hdulist[2].data['LAMBDA'][0])
     full_spec = np.append(hdulist[1].data['SPEC'][0], hdulist[2].data['SPEC'][0])
@@ -132,6 +136,7 @@ def deimos_spectrum2D_reader(file_name):
     hdulist = fits.open(file_name)    
     data = Data(label='2D Spectrum')
     data.coords = coordinates_from_header(hdulist[1].header)
+    data.header = hdulist[1].header
     data.add_component(hdulist[1].data['FLUX'][0], 'Spectral Flux')
     data.add_component(hdulist[1].data['IVAR'][0], 'Inverse Variance')
     return data
@@ -147,6 +152,7 @@ def acs_cutout_image_reader(file_name):
     hdulist = fits.open(file_name)
     data = Data(label='ACS Cutout Image')
     data.coords = coordinates_from_header(hdulist[0].header)
+    data.header = hdulist[0].header
     data.add_component(hdulist[0].data, 'Signal')
 
     return data
