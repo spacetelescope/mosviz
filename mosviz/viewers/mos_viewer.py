@@ -6,7 +6,7 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout
 from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
-from ..widgets.plots import Line1DWidget
+from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget
 from ..loaders.mos_loaders import *
 from ..widgets.viewer_options import OptionsWidget
 
@@ -15,6 +15,11 @@ from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
 from astropy.table import Table
+
+try:
+    from specviz.external.glue.data_viewer import SpecvizViewer
+except ImportError:
+    SpecvizViewer = None
 
 
 class MOSVizViewer(DataViewer):
@@ -28,6 +33,7 @@ class MOSVizViewer(DataViewer):
 
         # Define some data containers
         self.catalog = None
+        self._specviz_instance = None
 
     def load_ui(self):
         """
@@ -41,7 +47,7 @@ class MOSVizViewer(DataViewer):
         loadUi(path, self.central_widget)
 
         self.image_widget = StandaloneImageWidget()
-        self.spectrum2d_widget = StandaloneImageWidget()
+        self.spectrum2d_widget = ShareableAxesImageWidget()
         self.spectrum1d_widget = Line1DWidget()
 
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
@@ -87,7 +93,12 @@ class MOSVizViewer(DataViewer):
             lambda ind: self.load_selection(self.catalog[ind]))
 
         # Connect the specviz button
-        self.toolbar.open_specviz.triggered.connect(lambda x: x)
+        if SpecvizViewer is not None:
+            self.toolbar.open_specviz.triggered.connect(
+                lambda: self._open_in_specviz(
+                    self.catalog[self.toolbar.source_select.currentIndex()]))
+        else:
+            self.toolbar.open_specviz.setDisabled(True)
 
         # Connect previous and forward buttons
         self.toolbar.cycle_next_action.triggered.connect(
@@ -254,6 +265,11 @@ class MOSVizViewer(DataViewer):
             self.toolbar.source_select.setCurrentIndex(index)
             self.load_selection(self.catalog[index])
 
+    def _open_in_specviz(self, row):
+        if self._specviz_instance is None:
+            self._specviz_instance = self.session.application.new_data_viewer(
+                SpecvizViewer)
+
     def load_selection(self, row):
         """
         Processes a row in the MOS catalog by first loading the data set,
@@ -268,7 +284,7 @@ class MOSVizViewer(DataViewer):
         """
         spec1d_data = nirspec_spectrum1d_reader(row['spectrum1d'])
         spec2d_data = nirspec_spectrum2d_reader(row['spectrum2d'])
-        image_data = nircam_image_reader(row['cutout'])
+        image_data = acs_cutout_image_reader(row['cutout'])
 
         self._update_data_components(spec1d_data)
         self._update_data_components(spec2d_data)
@@ -306,18 +322,36 @@ class MOSVizViewer(DataViewer):
                 y=spec1d_data.get_component(spec1d_data.id['Spectral Flux']).data,
                 yerr=spec1d_data.get_component(spec1d_data.id['Variance']).data)
 
+            self.spectrum1d_widget.axes.set_xlabel("Wavelength")
+            self.spectrum1d_widget.axes.set_ylabel("Flux")
+
         if spec2d_data is not None:
+            wcs = spec2d_data.coords.wcs
+
             self.spectrum2d_widget.set_image(
-                spec2d_data.get_component(
-                    spec2d_data.id['Data Quality']).data)
+                image=spec2d_data.get_component(
+                    spec2d_data.id['Spectral Flux']).data,
+                wcs=wcs, interpolation='none', aspect='auto',
+                share_x=self.spectrum1d_widget.axes,
+                share_y=self.image_widget.axes)
+
+            self.spectrum2d_widget.axes.set_xlabel("Wavelength")
+            self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
+
             self.spectrum2d_widget._redraw()
 
         if image_data is not None:
-            pass
-            # self.image_widget.set_image(
-            #     image_data.get_component(
-            #         image_data.id['Signal [ADU/s]']).data)
-            # self.image_widget._redraw()
+            wcs = image_data.coords.wcs
+
+            self.image_widget.set_image(
+                image_data.get_component(
+                    image_data.id['Signal']).data, wcs=wcs,
+                interpolation='none')
+
+            self.image_widget.axes.set_xlabel("Spatial X")
+            self.image_widget.axes.set_ylabel("Spatial Y")
+
+            self.image_widget._redraw()
 
     def closeEvent(self, event):
         """

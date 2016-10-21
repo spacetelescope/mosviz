@@ -52,5 +52,6 @@ class MOSViewerToolbar(BasicToolbar):
         self.open_specviz = QAction("Open in SpecViz", self)
         self.addAction(self.open_specviz)
 
+
     def _setup_connections(self):
         pass
