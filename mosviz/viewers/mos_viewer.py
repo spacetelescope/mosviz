@@ -6,11 +6,10 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout
 from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
-from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget
+from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImageWidget
 from ..loaders.mos_loaders import *
 from ..widgets.viewer_options import OptionsWidget
 
-from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
@@ -46,7 +45,7 @@ class MOSVizViewer(DataViewer):
                          '..', 'widgets', 'ui', 'mos_widget.ui'))
         loadUi(path, self.central_widget)
 
-        self.image_widget = StandaloneImageWidget()
+        self.image_widget = DrawableImageWidget()
         self.spectrum2d_widget = ShareableAxesImageWidget()
         self.spectrum1d_widget = Line1DWidget()
 
@@ -70,27 +69,16 @@ class MOSVizViewer(DataViewer):
         # Define the options widget
         self._options_widget = OptionsWidget()
 
-    def options_widget(self):
-        return self._options_widget
-
-    def initialize_toolbar(self):
+    def setup_connections(self):
         """
-        Initialize the custom toolbar for the MOSViz viewer.
+        Connects gui elements to event calls.
         """
-        from glue.config import viewer_tool
-
-        self.toolbar = self._toolbar_cls(self)
-
-        for tool_id in self.tools:
-            mode_cls = viewer_tool.members[tool_id]
-            mode = mode_cls(self)
-            self.toolbar.add_tool(mode)
-
-        self.addToolBar(self.toolbar)
-
         # Connect the selection event for the combo box to what's displayed
         self.toolbar.source_select.currentIndexChanged[int].connect(
             lambda ind: self.load_selection(self.catalog[ind]))
+
+        self.toolbar.source_select.currentIndexChanged[int].connect(
+            lambda ind: self._set_navigation(ind))
 
         # Connect the specviz button
         if SpecvizViewer is not None:
@@ -109,6 +97,26 @@ class MOSVizViewer(DataViewer):
         self.toolbar.cycle_previous_action.triggered.connect(
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() - 1))
+
+    def options_widget(self):
+        return self._options_widget
+
+    def initialize_toolbar(self):
+        """
+        Initialize the custom toolbar for the MOSViz viewer.
+        """
+        from glue.config import viewer_tool
+
+        self.toolbar = self._toolbar_cls(self)
+
+        for tool_id in self.tools:
+            mode_cls = viewer_tool.members[tool_id]
+            mode = mode_cls(self)
+            self.toolbar.add_tool(mode)
+
+        self.addToolBar(self.toolbar)
+
+        self.setup_connections()
 
     def register_to_hub(self, hub):
         super(MOSVizViewer, self).register_to_hub(hub)
@@ -249,7 +257,11 @@ class MOSVizViewer(DataViewer):
 
                 self.catalog[str(att)] = comp_data
 
+        # Update gui elements
         self._update_navigation()
+        self._set_navigation(0)
+
+        # Load the first source in the catalog
         self.load_selection(self.catalog[0])
 
     def _update_navigation(self):
@@ -264,6 +276,16 @@ class MOSVizViewer(DataViewer):
         if 0 <= index < self.toolbar.source_select.count():
             self.toolbar.source_select.setCurrentIndex(index)
             self.load_selection(self.catalog[index])
+
+        if index <= 0:
+            self.toolbar.cycle_previous_action.setDisabled(True)
+        else:
+            self.toolbar.cycle_previous_action.setDisabled(False)
+
+        if index >= self.toolbar.source_select.count() - 1:
+            self.toolbar.cycle_next_action.setDisabled(True)
+        else:
+            self.toolbar.cycle_next_action.setDisabled(False)
 
     def _open_in_specviz(self, row):
         if self._specviz_instance is None:
@@ -290,7 +312,7 @@ class MOSVizViewer(DataViewer):
         self._update_data_components(spec2d_data)
         self._update_data_components(image_data)
 
-        self.render_data(spec1d_data, spec2d_data, image_data)
+        self.render_data(row, spec1d_data, spec2d_data, image_data)
 
     def _update_data_components(self, data):
         """
@@ -310,7 +332,7 @@ class MOSVizViewer(DataViewer):
         else:
             self.session.data_collection.append(data)
 
-    def render_data(self, spec1d_data=None, spec2d_data=None,
+    def render_data(self, row, spec1d_data=None, spec2d_data=None,
                     image_data=None):
         """
         Render the updated data sets in the individual plot widgets within the
@@ -332,8 +354,8 @@ class MOSVizViewer(DataViewer):
                 image=spec2d_data.get_component(
                     spec2d_data.id['Spectral Flux']).data,
                 wcs=wcs, interpolation='none', aspect='auto',
-                share_x=self.spectrum1d_widget.axes,
-                share_y=self.image_widget.axes)
+                sharex=self.spectrum1d_widget.axes,
+                sharey=self.image_widget.axes)
 
             self.spectrum2d_widget.axes.set_xlabel("Wavelength")
             self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
@@ -350,6 +372,10 @@ class MOSVizViewer(DataViewer):
 
             self.image_widget.axes.set_xlabel("Spatial X")
             self.image_widget.axes.set_ylabel("Spatial Y")
+
+            # Add the slit patch to the plot
+            self.image_widget.draw_shapes(width=row['slit_width'],
+                                          length=row['slit_length'])
 
             self.image_widget._redraw()
 
