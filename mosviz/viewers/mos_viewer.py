@@ -2,7 +2,7 @@ import os
 
 from glue.qt.widgets.data_viewer import DataViewer
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QLineEdit
 from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
@@ -48,6 +48,7 @@ class MOSVizViewer(DataViewer):
         self.image_widget = DrawableImageWidget()
         self.spectrum2d_widget = ShareableAxesImageWidget()
         self.spectrum1d_widget = Line1DWidget()
+        self.meta_form_layout = self.central_widget.meta_form_layout
 
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
         self.central_widget.right_vertical_splitter.addWidget(self.spectrum2d_widget)
@@ -55,7 +56,7 @@ class MOSVizViewer(DataViewer):
 
         # Set the splitter stretch factors
         self.central_widget.left_vertical_splitter.setStretchFactor(0, 1)
-        self.central_widget.left_vertical_splitter.setStretchFactor(1, 2)
+        self.central_widget.left_vertical_splitter.setStretchFactor(1, 8)
 
         self.central_widget.right_vertical_splitter.setStretchFactor(0, 1)
         self.central_widget.right_vertical_splitter.setStretchFactor(1, 2)
@@ -378,6 +379,26 @@ class MOSVizViewer(DataViewer):
                                           length=row['slit_length'])
 
             self.image_widget._redraw()
+
+        # Clear the meta information widget
+        # NOTE: this process is inefficient
+        for i in range(self.meta_form_layout.count()):
+            wid = self.meta_form_layout.itemAt(i).widget()
+            label = self.meta_form_layout.labelForField(wid)
+
+            if label is not None:
+                label.deleteLater()
+
+            wid.deleteLater()
+
+        # Repopulate the form layout
+        # NOTE: this process is inefficient
+        for col in row.colnames:
+            line_edit = QLineEdit(str(row[col]),
+                                  self.central_widget.meta_form_widget)
+            line_edit.setReadOnly(True)
+
+            self.meta_form_layout.addRow(col, line_edit)
 
     def closeEvent(self, event):
         """
