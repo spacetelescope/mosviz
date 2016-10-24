@@ -57,7 +57,17 @@
 	background-color: rgb(231, 231, 231);
 }</string>
            </property>
-           <layout class="QFormLayout" name="meta_form_layout"/>
+           <layout class="QFormLayout" name="meta_form_layout">
+            <property name="leftMargin">
+             <number>24</number>
+            </property>
+            <property name="topMargin">
+             <number>24</number>
+            </property>
+            <property name="rightMargin">
+             <number>24</number>
+            </property>
+           </layout>
           </widget>
          </widget>
         </item>

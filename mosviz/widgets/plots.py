@@ -9,6 +9,9 @@ from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
 
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
+
 
 class Line1DWidget(QMainWindow):
     window_closed = Signal()
@@ -53,6 +56,9 @@ class Line1DWidget(QMainWindow):
             self._axes.errorbar(x, y, yerr=yerr)
 
         # Refresh canvas
+        self._redraw()
+
+    def _redraw(self):
         self.central_widget.canvas.draw()
 
 
@@ -60,27 +66,29 @@ class ShareableAxesImageWidget(StandaloneImageWidget):
     def __init__(self, *args, **kwargs):
         super(ShareableAxesImageWidget, self).__init__(*args, **kwargs)
 
-    def set_image(self, sharex=None, sharey=None, **kwargs):
-        # if sharex is not None:
-        #     self.axes._shared_x_axes.join(self.axes, sharex)
-        #     if sharex._adjustable == 'box':
-        #         sharex._adjustable = 'datalim'
-        #         #warnings.warn(
-        #         #    'shared axes: "adjustable" is being changed to "datalim"')
-        #     self._adjustable = 'datalim'
-        #
-        # if sharey is not None:
-        #     self.axes._shared_y_axes.join(self.axes, sharey)
-        #     if sharey._adjustable == 'box':
-        #         sharey._adjustable = 'datalim'
-        #         #warnings.warn(
-        #         #    'shared axes: "adjustable" is being changed to "datalim"')
-        #     self._adjustable = 'datalim'
-        #
-        # self._axes._sharex = sharex
-        # self._axes._sharey = sharey
+    def set_locked_axes(self, sharex=None, sharey=None):
+        if sharex is not None and sharex is not False:
+            self.axes._shared_x_axes.join(self.axes, sharex)
+            if sharex._adjustable == 'box':
+                sharex._adjustable = 'datalim'
+                #warnings.warn(
+                #    'shared axes: "adjustable" is being changed to "datalim"')
+            self._adjustable = 'datalim'
+        elif self._axes._sharex is not None and sharex is False:
+            self.axes._shared_x_axes.remove(self._axes._sharex)
 
-        super(ShareableAxesImageWidget, self).set_image(**kwargs)
+        if sharey is not None and sharey is not False:
+            self.axes._shared_y_axes.join(self.axes, sharey)
+            if sharey._adjustable == 'box':
+                sharey._adjustable = 'datalim'
+                #warnings.warn(
+                #    'shared axes: "adjustable" is being changed to "datalim"')
+            self._adjustable = 'datalim'
+        elif self._axes._sharey is not None and sharey is False:
+            self.axes._shared_y_axes.remove(self._axes._sharey)
+
+        self._axes._sharex = sharex
+        self._axes._sharey = sharey
 
 
 class DrawableImageWidget(StandaloneImageWidget):

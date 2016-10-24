@@ -99,6 +99,13 @@ class MOSVizViewer(DataViewer):
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() - 1))
 
+        # Connect the toolbar axes setting actions
+        self.toolbar.lock_x_action.triggered.connect(
+            lambda state: self.set_locked_axes(x=state))
+
+        self.toolbar.lock_y_action.triggered.connect(
+            lambda state: self.set_locked_axes(y=state))
+
     def options_widget(self):
         return self._options_widget
 
@@ -354,9 +361,7 @@ class MOSVizViewer(DataViewer):
             self.spectrum2d_widget.set_image(
                 image=spec2d_data.get_component(
                     spec2d_data.id['Spectral Flux']).data,
-                wcs=wcs, interpolation='none', aspect='auto',
-                sharex=self.spectrum1d_widget.axes,
-                sharey=self.image_widget.axes)
+                wcs=wcs, interpolation='none', aspect='auto')
 
             self.spectrum2d_widget.axes.set_xlabel("Wavelength")
             self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
@@ -399,6 +404,15 @@ class MOSVizViewer(DataViewer):
             line_edit.setReadOnly(True)
 
             self.meta_form_layout.addRow(col, line_edit)
+
+    def set_locked_axes(self, x=None, y=None):
+        self.spectrum2d_widget.set_locked_axes(
+            sharex=self.spectrum1d_widget.axes if x else x,
+            sharey=self.image_widget.axes if y else y)
+
+        self.spectrum2d_widget._redraw()
+        self.image_widget._redraw()
+        self.spectrum1d_widget._redraw()
 
     def closeEvent(self, event):
         """
