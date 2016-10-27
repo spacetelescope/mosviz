@@ -7,10 +7,23 @@ The NIRSpec micro-shutter array (MSA) will produce ~100 spectra per pointing.  M
 
 MOSViz is built using the PyQt programming language that allows for flexible and efficient development of a Graphical User Interface (GUI) using the Python programming language.  MOSViz is incorporated into the Glue visualization tool (Beaumont, Robitaille, & Borkin 2014), and as such, takes advantage of Glue’s “linked views,” as described in Section 4.  It uses the specutils core data object from Astropy (Astropy Collaboration 2013).
 
+
+.. image:: _static/mosviz_screenshot.png
+  :scale: 50%
+  :alt: Screenshot of mosviz running
+  :align: center
+
 .. toctree::
    :maxdepth: 2
 
    installation
    functionality
    readingindata
-   api
+
+API
+===
+
+.. toctree::
+   :maxdepth: 2
+
+   api/index

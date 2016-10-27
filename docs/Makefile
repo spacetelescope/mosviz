@@ -37,7 +37,6 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)
-	-rm -rf api
 	-rm -rf generated
 
 html:
