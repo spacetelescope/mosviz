@@ -24,14 +24,14 @@ env:
         # The following versions are the 'default' for tests, unless
         # overridden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - NUMPY_VERSION=1.10
-        - ASTROPY_VERSION=stable
+        - NUMPY_VERSION=1.11
         - SETUP_CMD='test'
         - PIP_DEPENDENCIES=''
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES=''
+        - CONDA_CHANNELS='astroconda astropy-ci-extras conda-forge '
+        - CONDA_DEPENDENCIES='glueviz>=0.9.0 astropy>=1.2 matplotlib>=1.5.3 numpy cython pyqt'
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
@@ -59,10 +59,10 @@ matrix:
         #  env: SETUP_CMD='build_sphinx -w'
 
         # Try Astropy development version
-        - python: 2.7
-          env: ASTROPY_VERSION=development
-        - python: 3.5
-          env: ASTROPY_VERSION=development
+        #- python: 2.7
+        #  env: ASTROPY_VERSION=development
+        #- python: 3.5
+        #  env: ASTROPY_VERSION=development
 
 install:
 
@@ -88,8 +88,6 @@ install:
     # well as at the start of the install section or in the before_install
     # section if they are needed before setting up conda) to install any
     # other dependencies.
-
-    - pip install -r docs/rtd-pip-requirements
 
 script:
    - python setup.py $SETUP_CMD
