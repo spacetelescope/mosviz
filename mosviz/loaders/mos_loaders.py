@@ -70,21 +70,25 @@ def nircam_image_reader(file_name):
 
     From the header:
     If ISWFS is T, structure is:
-            Plane 1: Signal [frame3 - frame1] in ADU
-            Plane 2: Signal uncertainty [sqrt(2*RN/g + |frame3|)]
+
+            -  Plane 1: Signal [frame3 - frame1] in ADU
+            -  Plane 2: Signal uncertainty [sqrt(2*RN/g + \|frame3\|)]
+
     If ISWFS is F, structure is:
-            Plane 1: Signal from linear fit to ramp [ADU/sec]
-            Plane 2: Signal uncertainty [ADU/sec]
+
+            -  Plane 1: Signal from linear fit to ramp [ADU/sec]
+            -  Plane 2: Signal uncertainty [ADU/sec]
+
     Note that in the later case, the uncertainty is simply the formal
     uncertainty in the fit parameter (eg. uncorrelated, WRONG!). Noise
     model to be implemented at a later date.
-    In the case of WFS, error is computed as
-      SQRT(2*sigma_read + |frame3|)
+    In the case of WFS, error is computed as SQRT(2*sigma_read + \|frame3\|)
     which should be a bit more correct - ~Fowler sampling.
 
     The FITS file has a single extension with a data cube.
     The data is the first slice of the cube and the uncertainty
     is the second slice.
+
     """
 
     hdulist = fits.open(file_name)
@@ -108,11 +112,11 @@ def deimos_spectrum1D_reader(file_name):
     This loads the 'Bxspf-B' (extension 1)
     and 'Bxspf-R' (extension 2) and appends them
     together to proudce the combined Red/Blue Spectrum
-    along with their Wavelength and Inverse Variance 
+    along with their Wavelength and Inverse Variance
     arrays.
     """
-    
-    hdulist = fits.open(file_name)    
+
+    hdulist = fits.open(file_name)
     data = Data(label='1D Spectrum')
     data.header = hdulist[1].header
 
@@ -132,11 +136,11 @@ def deimos_spectrum2D_reader(file_name):
     """
     Data loader for Keck/DEIMOS 2D spectra.
 
-    This loads only the Flux and Inverse variance. 
+    This loads only the Flux and Inverse variance.
     Wavelength information comes from the WCS.
     """
-    
-    hdulist = fits.open(file_name)    
+
+    hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
     data.coords = coordinates_from_header(hdulist[1].header)
     data.header = hdulist[1].header

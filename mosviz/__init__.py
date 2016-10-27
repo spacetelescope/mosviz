@@ -1,5 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+from __future__ import absolute_import
+
 """
 This is an Astropy affiliated package.
 """
@@ -12,7 +14,9 @@ from ._astropy_init import *
 
 # For egg_info test builds to pass, put package imports here.
 if not _ASTROPY_SETUP_:
-    from mosviz import *
+    from . import loaders
+    from . import viewers
+    from . import widgets
 
 
 def setup():
