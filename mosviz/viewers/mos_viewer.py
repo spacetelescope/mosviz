@@ -7,9 +7,10 @@ from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImageWidget
-from ..loaders.mos_loaders import *
+from ..loaders import mos_loaders
 from ..widgets.viewer_options import OptionsWidget
 
+from glue import config
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
@@ -238,9 +239,9 @@ class MOSVizViewer(DataViewer):
 
         # Clear the table
         self.catalog = Table()
+        self.catalog.meta = data.meta
 
         col_names = data.components
-
         for att in col_names:
             cid = data.id[att]
             component = data.get_component(cid)
@@ -312,9 +313,49 @@ class MOSVizViewer(DataViewer):
             A `row` object representing a row in the MOS catalog. Each key
             should be a column name.
         """
-        spec1d_data = nirspec_spectrum1d_reader(row['spectrum1d'])
-        spec2d_data = nirspec_spectrum2d_reader(row['spectrum2d'])
-        image_data = acs_cutout_image_reader(row['cutout'])
+
+        if "loaders" in self.catalog.meta:
+            # if loader is specified
+            if "spec1d" in self.catalog.meta["loaders"]:
+                # check .glue/config.py for custom loaders
+                if hasattr(config, self.catalog.meta["loaders"]["spec1d"]):
+                    spectrum1d_loader = getattr(config, self.catalog.meta["loaders"]["spec1d"])
+
+                # check built-in loaders
+                else:
+                    spectrum1d_loader = getattr(mos_loaders, self.catalog.meta["loaders"]["spec1d"])
+
+            # Use the NIRSpec loader by default.
+            else:
+                spectrum1d_loader = mos_loaders.nirspec_spectrum1d_reader
+
+
+            if "spec2d" in self.catalog.meta["loaders"]:
+                if hasattr(config, self.catalog.meta["loaders"]["spec2d"]):
+                    spectrum2d_loader = getattr(config, self.catalog.meta["loaders"]["spec2d"])
+                else:
+                    spectrum2d_loader = getattr(mos_loaders, self.catalog.meta["loaders"]["spec2d"])
+            else:
+                spectrum2d_loader = mos_loaders.nirspec_spectrum2d_reader
+
+            if "image" in self.catalog.meta["loaders"]:
+                if hasattr(config, self.catalog.meta["loaders"]["image"]):
+                    cutout_loader = getattr(config, self.catalog.meta["loaders"]["image"])
+                else:
+                    cutout_loader = getattr(mos_loaders, self.catalog.meta["loaders"]["image"])
+
+            # Use the ACS cutout loader by default.
+            else:
+                cutout_loader = mos_loaders.acs_cutout_image_reader
+        else:
+            spectrum1d_loader = mos_loaders.nirspec_spectrum1d_reader
+            spectrum2d_loader = mos_loaders.nirspec_spectrum2d_reader
+            cutout_loader = mos_loaders.acs_cutout_image_reader
+
+        spec1d_data = spectrum1d_loader(row['spectrum1d'])
+        spec2d_data = spectrum2d_loader(row['spectrum2d'])
+        image_data = cutout_loader(row['cutout'])
+
 
         self._update_data_components(spec1d_data)
         self._update_data_components(spec2d_data)
