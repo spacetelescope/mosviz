@@ -390,8 +390,8 @@ class MOSVizViewer(DataViewer):
         if spec1d_data is not None:
             self.spectrum1d_widget.set_data(
                 x=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
-                y=spec1d_data.get_component(spec1d_data.id['Spectral Flux']).data,
-                yerr=spec1d_data.get_component(spec1d_data.id['Variance']).data)
+                y=spec1d_data.get_component(spec1d_data.id['Flux']).data,
+                yerr=spec1d_data.get_component(spec1d_data.id['Uncertainty']).data)
 
             self.spectrum1d_widget.axes.set_xlabel("Wavelength")
             self.spectrum1d_widget.axes.set_ylabel("Flux")
@@ -401,7 +401,7 @@ class MOSVizViewer(DataViewer):
 
             self.spectrum2d_widget.set_image(
                 image=spec2d_data.get_component(
-                    spec2d_data.id['Spectral Flux']).data,
+                    spec2d_data.id['Flux']).data,
                 wcs=wcs, interpolation='none', aspect='auto')
 
             self.spectrum2d_widget.axes.set_xlabel("Wavelength")
