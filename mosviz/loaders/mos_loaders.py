@@ -30,7 +30,6 @@ def nirspec_spectrum1d_reader(file_name):
 
     data = Data(label='1D Spectrum')
     data.header = hdulist['DATA'].header
-    data.coords = coordinates_from_header(hdulist[1].header)
     data.add_component(wavelength, 'Wavelength')
     data.add_component(hdulist['DATA'].data, 'Flux')
     data.add_component(hdulist['VAR'].data, 'Uncertainty')
