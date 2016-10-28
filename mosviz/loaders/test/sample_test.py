@@ -1,3 +1,4 @@
 from __future__ import absolute_import
 
-from .mos_viewer import *
+def test_sample():
+    assert(1==1)
