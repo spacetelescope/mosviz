@@ -2,4 +2,4 @@
 Installation
 ************
 
-This is a text.
+MOSViz is installed as part of...
