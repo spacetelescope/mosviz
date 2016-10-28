@@ -1,3 +1,3 @@
 from __future__ import absolute_import
 
-from . import mos_viewer
+from .mos_viewer import *

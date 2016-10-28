@@ -1,3 +1,7 @@
 from __future__ import absolute_import
 
-from . import mos_loaders
+"""
+Data loaders for MOSViz
+"""
+
+from .mos_loaders import *

@@ -19,11 +19,4 @@ MOSViz is built using the PyQt programming language that allows for flexible and
    installation
    functionality
    readingindata
-
-API
-===
-
-.. toctree::
-   :maxdepth: 2
-
-   api/index
+   api
