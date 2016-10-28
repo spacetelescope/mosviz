@@ -414,7 +414,7 @@ class MOSVizViewer(DataViewer):
 
             self.image_widget.set_image(
                 image_data.get_component(
-                    image_data.id['Signal']).data, wcs=wcs,
+                    image_data.id['Flux']).data, wcs=wcs,
                 interpolation='none')
 
             self.image_widget.axes.set_xlabel("Spatial X")
