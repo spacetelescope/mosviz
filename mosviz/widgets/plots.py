@@ -12,6 +12,7 @@ from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
 from matplotlib import rcParams
 rcParams.update({'figure.autolayout': True})
 
+__all__ = ['Line1DWidget', 'ShareableAxesImageWidget', 'DrawableImageWidget']
 
 class Line1DWidget(QMainWindow):
     window_closed = Signal()

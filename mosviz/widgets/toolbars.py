@@ -7,6 +7,7 @@ from qtpy.QtWidgets import QAction, QComboBox, QSpacerItem, QMenu, QToolButton, 
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Qt
 
+__all__ = ['CyclePreviousTool', 'CycleForwardTool', 'MOSViewerToolbar']
 
 class CyclePreviousTool(Tool):
     def __init__(self, viewer, toolbar=None):

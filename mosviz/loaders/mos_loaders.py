@@ -7,6 +7,12 @@ from astropy.io import fits
 from astropy.wcs import WCS
 import numpy as np
 
+__all__ = ['nirspec_spectrum1d_reader',
+           'nirspec_spectrum2d_reader',
+           'nircam_image_reader',
+           'deimos_spectrum1D_reader',
+           'deimos_spectrum2D_reader',
+           'acs_cutout_image_reader']
 
 @data_factory('NIRSpec 1D Spectrum')
 def nirspec_spectrum1d_reader(file_name):

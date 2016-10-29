@@ -20,6 +20,7 @@ try:
 except ImportError:
     SpecvizViewer = None
 
+__all__ = ['MOSVizViewer']
 
 class MOSVizViewer(DataViewer):
     LABEL = "MosViz Viewer"
@@ -423,7 +424,3 @@ class MOSVizViewer(DataViewer):
 
         for data in self._loaded_data.values():
             self.session.data_collection.remove(data)
-
-
-
-
