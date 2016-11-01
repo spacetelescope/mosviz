@@ -10,7 +10,7 @@ from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImag
 from ..loaders import mos_loaders
 from ..widgets.viewer_options import OptionsWidget
 
-from glue import config
+import config
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
@@ -317,37 +317,18 @@ class MOSVizViewer(DataViewer):
         if "loaders" in self.catalog.meta:
             # if loader is specified
             if "spec1d" in self.catalog.meta["loaders"]:
-                # check .glue/config.py for custom loaders
-                if hasattr(config, self.catalog.meta["loaders"]["spec1d"]):
-                    spectrum1d_loader = getattr(config, self.catalog.meta["loaders"]["spec1d"])
-
-                # check built-in loaders
-                else:
-                    spectrum1d_loader = getattr(mos_loaders, self.catalog.meta["loaders"]["spec1d"])
-
-            # Use the NIRSpec loader by default.
-            else:
-                spectrum1d_loader = mos_loaders.nirspec_spectrum1d_reader
-
+                spectrum1d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec1d"]),
+                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 1D Spectrum"))
 
             if "spec2d" in self.catalog.meta["loaders"]:
-                if hasattr(config, self.catalog.meta["loaders"]["spec2d"]):
-                    spectrum2d_loader = getattr(config, self.catalog.meta["loaders"]["spec2d"])
-                else:
-                    spectrum2d_loader = getattr(mos_loaders, self.catalog.meta["loaders"]["spec2d"])
-            else:
-                spectrum2d_loader = mos_loaders.nirspec_spectrum2d_reader
+                spectrum2d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec2d"]),
+                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 2D Spectrum"))
 
             if "image" in self.catalog.meta["loaders"]:
-                if hasattr(config, self.catalog.meta["loaders"]["image"]):
-                    cutout_loader = getattr(config, self.catalog.meta["loaders"]["image"])
-                else:
-                    cutout_loader = getattr(mos_loaders, self.catalog.meta["loaders"]["image"])
-
-            # Use the ACS cutout loader by default.
-            else:
-                cutout_loader = mos_loaders.acs_cutout_image_reader
+                cutout_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["image"]),
+                     next(x.function for x in config.data_factory.members if x.label == "Cutout Image"))
         else:
+            # Use NIRSpec loaders by default.
             spectrum1d_loader = mos_loaders.nirspec_spectrum1d_reader
             spectrum2d_loader = mos_loaders.nirspec_spectrum2d_reader
             cutout_loader = mos_loaders.acs_cutout_image_reader
