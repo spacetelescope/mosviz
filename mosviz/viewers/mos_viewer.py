@@ -10,7 +10,7 @@ from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImag
 from ..loaders import mos_loaders
 from ..widgets.viewer_options import OptionsWidget
 
-import config
+from glue import config
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
