@@ -7,9 +7,10 @@ from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImageWidget
-from ..loaders.mos_loaders import *
+from ..loaders import mos_loaders
 from ..widgets.viewer_options import OptionsWidget
 
+from glue import config
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
@@ -239,9 +240,9 @@ class MOSVizViewer(DataViewer):
 
         # Clear the table
         self.catalog = Table()
+        self.catalog.meta = data.meta
 
         col_names = data.components
-
         for att in col_names:
             cid = data.id[att]
             component = data.get_component(cid)
@@ -313,9 +314,30 @@ class MOSVizViewer(DataViewer):
             A `row` object representing a row in the MOS catalog. Each key
             should be a column name.
         """
-        spec1d_data = nirspec_spectrum1d_reader(row['spectrum1d'])
-        spec2d_data = nirspec_spectrum2d_reader(row['spectrum2d'])
-        image_data = acs_cutout_image_reader(row['cutout'])
+
+        if "loaders" in self.catalog.meta:
+            # if loader is specified
+            if "spec1d" in self.catalog.meta["loaders"]:
+                spectrum1d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec1d"]),
+                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 1D Spectrum"))
+
+            if "spec2d" in self.catalog.meta["loaders"]:
+                spectrum2d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec2d"]),
+                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 2D Spectrum"))
+
+            if "image" in self.catalog.meta["loaders"]:
+                cutout_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["image"]),
+                     next(x.function for x in config.data_factory.members if x.label == "Cutout Image"))
+        else:
+            # Use NIRSpec loaders by default.
+            spectrum1d_loader = mos_loaders.nirspec_spectrum1d_reader
+            spectrum2d_loader = mos_loaders.nirspec_spectrum2d_reader
+            cutout_loader = mos_loaders.acs_cutout_image_reader
+
+        spec1d_data = spectrum1d_loader(row['spectrum1d'])
+        spec2d_data = spectrum2d_loader(row['spectrum2d'])
+        image_data = cutout_loader(row['cutout'])
+
 
         self._update_data_components(spec1d_data)
         self._update_data_components(spec2d_data)
@@ -350,8 +372,8 @@ class MOSVizViewer(DataViewer):
         if spec1d_data is not None:
             self.spectrum1d_widget.set_data(
                 x=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
-                y=spec1d_data.get_component(spec1d_data.id['Spectral Flux']).data,
-                yerr=spec1d_data.get_component(spec1d_data.id['Variance']).data)
+                y=spec1d_data.get_component(spec1d_data.id['Flux']).data,
+                yerr=spec1d_data.get_component(spec1d_data.id['Uncertainty']).data)
 
             self.spectrum1d_widget.axes.set_xlabel("Wavelength")
             self.spectrum1d_widget.axes.set_ylabel("Flux")
@@ -361,7 +383,7 @@ class MOSVizViewer(DataViewer):
 
             self.spectrum2d_widget.set_image(
                 image=spec2d_data.get_component(
-                    spec2d_data.id['Spectral Flux']).data,
+                    spec2d_data.id['Flux']).data,
                 wcs=wcs, interpolation='none', aspect='auto')
 
             self.spectrum2d_widget.axes.set_xlabel("Wavelength")
@@ -374,7 +396,7 @@ class MOSVizViewer(DataViewer):
 
             self.image_widget.set_image(
                 image_data.get_component(
-                    image_data.id['Signal']).data, wcs=wcs,
+                    image_data.id['Flux']).data, wcs=wcs,
                 interpolation='none')
 
             self.image_widget.axes.set_xlabel("Spatial X")
