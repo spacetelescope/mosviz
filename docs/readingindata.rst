@@ -1,5 +1,7 @@
 .. doctest-skip-all
 
+.. _doc-sec-reading-data:
+
 ***************
 Reading-in Data
 ***************
@@ -64,8 +66,8 @@ This example consists of galaxies at 0.2<z<1.2 which have spectra from the DEIMO
 multi-object spectrograph on Keck and color cut-out images already created from
 Hubble/ACS.  These galaxies are from the `DEEP2 Survey <http://adsabs.harvard.edu/abs/2013ApJS..208....5N>`_.
 
-MOSViz is a Glue plugin so we'll write our own `Custom Data Loaders <http://glueviz.org/en/stable/customizing_guide/customization.html#custom-data-loaders>`_ to read data.  
-All we need to do is write a function which takes a filename as input and returns a glue `Data` object.  
+MOSViz is a Glue plugin so we'll write our own `Custom Data Loaders <http://glueviz.org/en/stable/customizing_guide/customization.html#custom-data-loaders>`_ to read data.
+All we need to do is write a function which takes a filename as input and returns a glue `Data` object.
 For this example, we have three different types of data: a 1D Spectrum, a 2D spectrum, and a cutout image.
 
 ++++++++++++++++++
@@ -100,7 +102,7 @@ For this example, we have three different types of data: a 1D Spectrum, a 2D spe
 
         return data
 
-MOSViz expects the 1D Spectrum Data object to have three components: Wavelength, Flux, and Uncertainty.  
+MOSViz expects the 1D Spectrum Data object to have three components: Wavelength, Flux, and Uncertainty.
 Let's take a look at the contents of our example FITS file to see which parts we need to pass to MOSViz. ::
 
     >>> from astropy.io import fits
@@ -118,7 +120,7 @@ Let's take a look at the contents of our example FITS file to see which parts we
     7    Horne-NL-B  BinTableHDU    140   1R x 15C     [4096E, 4096E, 4096E, 4096I, 4096I, 4096I, 4096I, 4096I, E, E, E, J, J, 4096E, E]
     8    Horne-NL-R  BinTableHDU    140   1R x 15C     [4096E, 4096E, 4096E, 4096I, 4096I, 4096I, 4096I, 4096I, E, E, E, J, J, 4096E, E]
 
-The file contains pairs of red and blue spectra which have been filtered in various ways. 
+The file contains pairs of red and blue spectra which have been filtered in various ways.
 For the sake of this example we'll choose the `Bxspf` spectra.
 
 Taking a closer look at the relevant extension::
@@ -162,7 +164,7 @@ Taking a closer look at the relevant extension::
 
 Again, there are a lot of options but for MOSViz we're only interested in three columns: `SPEC`, `LAMBDA`, `IVAR`.
 Further, MOSViz expects each of the arrays to be 1 dimensional and of the same size. ::
-    
+
     >>> hdulist['Bxspf-R'].data['SPEC'].shape
     (1, 4096)
     >>> hdulist['Bxspf-R'].data['LAMBDA'].shape
@@ -170,26 +172,26 @@ Further, MOSViz expects each of the arrays to be 1 dimensional and of the same s
     >>> hdulist['Bxspf-R'].data['IVAR'].shape
     (1, 4096)
 
-All of our arrays are the same size but they are stored in 2 dimensional arrays (with the first axis of size 1). 
+All of our arrays are the same size but they are stored in 2 dimensional arrays (with the first axis of size 1).
 So we'll just take the first (and only) element.
 
 Now that we know what data we want from our FITS files let's look at how to write the data loader function. ::
 
     @data_factory('DEIMOS 1D Spectrum')
 
-The `@data_factory` decorator tells Glue that this is a function used to load data.  
+The `@data_factory` decorator tells Glue that this is a function used to load data.
 'DEIMOS 1D Spectrum' is the label which is how we will identify this loader in our table header later. ::
-    
+
     def deimos_spectrum1D_reader(file_name):
 
 The function itself takes a filename to open as its only argument. ::
-    
+
         hdulist = fits.open(file_name)
         data = Data(label='1D Spectrum')
 
-Now as above we're going to open the FITS file.  
+Now as above we're going to open the FITS file.
 Then we instantiate a Glue `Data` object which will be populated with the data we wish to pass to MOSViz. ::
-        
+
         data.header = hdulist[1].header
 
 MOSViz has an info box which can display metadata so we'll make the FITS header available to the `Data` object. ::
@@ -233,7 +235,7 @@ Then we take the full 1D array for each component and pass them to the `data` ob
         return data
 
 MOSViz expects the 2D Spectrum Data object to have two components: Flux and Uncertainty.
-Since a 2D spectrum is an image it also expects a World Coordinate System (WCS) which tells it how to transform from pixels to Wavelength.  
+Since a 2D spectrum is an image it also expects a World Coordinate System (WCS) which tells it how to transform from pixels to Wavelength.
 Let's take a look at the contents of our example FITS file to see which parts we need to pass to MOSViz. ::
 
     >>> from astropy.io import fits
@@ -268,14 +270,14 @@ Let's take a look at the contents of our example FITS file to see which parts we
     )
 
 MOSViz needs Flux and Uncertainty so the relevant columns are `FLUX` and `IVAR` in the the first `slit` extension. ::
-    
+
     >>> hdulist[1].data['FLUX'].shape
     (1, 59, 4096)
     >>> hdulist[1].data['IVAR'].shape
     (1, 59, 4096)
     >>>
 
-All of our arrays are the same size but they are stored in 3 dimensional arrays (with the first axis of size 1). 
+All of our arrays are the same size but they are stored in 3 dimensional arrays (with the first axis of size 1).
 So we'll just take the first (and only) element which will give a 2D array.
 
 We also need a WCS which should be in the header of the same extension as the data. ::
@@ -309,7 +311,7 @@ The function itself takes a filename to open as its only argument. ::
         hdulist = fits.open(file_name)
         data = Data(label='2D Spectrum')
 
-Now as above we're going to open the FITS file.  
+Now as above we're going to open the FITS file.
 Then we instantiate a Glue `Data` object which will be populated with the data we wish to pass to MOSViz. ::
 
         hdulist[1].header['CTYPE2'] = 'Spatial Y'
@@ -352,7 +354,7 @@ Cutout Image Reader
         return data
 
 MOSViz expects the Cutout Image Data object to have one component: Flux.
-Since it is an image it also expects a World Coordinate System (WCS) which tells it how to transform from pixels to sky coordinates.  
+Since it is an image it also expects a World Coordinate System (WCS) which tells it how to transform from pixels to sky coordinates.
 Let's take a look at the contents of our example FITS file to see which parts we need to pass to MOSViz. ::
 
     >>> from astropy.io import fits
@@ -396,7 +398,7 @@ The function itself takes a filename to open as its only argument. ::
         hdulist = fits.open(file_name)
         data = Data(label='Cutout Image')
 
-Now as above we're going to open the FITS file.  
+Now as above we're going to open the FITS file.
 Then we instantiate a Glue `Data` object which will be populated with the data we wish to pass to MOSViz. ::
 
         data.coords = coordinates_from_wcs(WCS(hdulist[0].header))
@@ -501,6 +503,7 @@ The table is required to have the following columns:
 * pix_scale - the pixel scale in arseconds per pixel
 
 .. highlight:: none
+
 ::
 
     # %ECSV 0.9
