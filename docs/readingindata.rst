@@ -11,6 +11,14 @@ This will include 1D and 2D spectra, images, data tables, and associated images.
 This page documents how to read in MOS data from another observatory.
 An example is shown at the bottom (:ref:`reading_in_data`).
 
+The general workflow can be summarized as follows:
+
+1. Start Glue by typing ``glue`` in the command line
+2. In Glue, click on the folder icon and open the file containing the Data Table for your data set.
+3. Drag the file from the Data Collection window into the main canvas.
+4. Select 'MOSViz Viewer' from the pop-up menu.
+5. Use the green arrow buttons at the top of the viewer to switch between objects.
+
 ++++++++
 Overview
 ++++++++
@@ -27,7 +35,7 @@ MOSViz requires at minimum the following input:
 Data Table
 ++++++++++
 
-The data should be written the `ECSV <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`_ format.
+The data table should be written the `ECSV <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`_ format.
 The data table is required to contain at minimum:
 
 * target names/numbers
