@@ -38,7 +38,7 @@ def nirspec_spectrum1d_reader(file_name):
     data.header = hdulist['DATA'].header
     data.add_component(wavelength, 'Wavelength')
     data.add_component(hdulist['DATA'].data, 'Flux')
-    data.add_component(hdulist['VAR'].data, 'Uncertainty')
+    data.add_component(np.sqrt(hdulist['VAR'].data), 'Uncertainty')
 
     return data
 
@@ -60,7 +60,7 @@ def nirspec_spectrum2d_reader(file_name):
     data.header = hdulist['DATA'].header
     data.coords = coordinates_from_header(hdulist[1].header)
     data.add_component(hdulist['DATA'].data, 'Flux')
-    data.add_component(hdulist['VAR'].data, 'Uncertainty')
+    data.add_component(np.sqrt(hdulist['VAR'].data), 'Uncertainty')
 
     return data
 
@@ -129,7 +129,7 @@ def deimos_spectrum1D_reader(file_name):
 
     data.add_component(full_wl, 'Wavelength')
     data.add_component(full_spec, 'Flux')
-    data.add_component(full_ivar, 'Uncertainty')
+    data.add_component(1/np.sqrt(full_ivar), 'Uncertainty')
 
     return data
 
@@ -152,7 +152,7 @@ def deimos_spectrum2D_reader(file_name):
     data.coords = coordinates_from_wcs(wcs)
     data.header = hdulist[1].header
     data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
-    data.add_component(hdulist[1].data['IVAR'][0], 'Uncertainty')
+    data.add_component(1/np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
     return data
 
 
