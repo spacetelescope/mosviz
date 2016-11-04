@@ -31,7 +31,7 @@ env:
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
         - CONDA_CHANNELS='astroconda astropy-ci-extras conda-forge '
-        - CONDA_DEPENDENCIES='glueviz>=0.9.0 astropy>=1.2 matplotlib>=1.5.3 numpy cython pyqt'
+        - CONDA_DEPENDENCIES='glueviz>=0.9.0 astropy>=1.2 matplotlib>=1.5.3 numpy cython pyqt pytest==2'
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
