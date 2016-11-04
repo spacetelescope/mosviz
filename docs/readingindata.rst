@@ -13,7 +13,7 @@ An example is shown at the bottom (:ref:`reading_in_data`).
 
 The general workflow can be summarized as follows:
 
-1. Start Glue by typing `glue` in the command line
+1. Start Glue by typing ``glue`` in the command line
 2. In Glue, click on the folder icon and open the file containing the Data Table for your data set.
 3. Drag the file from the Data Collection window into the main canvas.
 4. Select 'MOSViz Viewer' from the pop-up menu.
