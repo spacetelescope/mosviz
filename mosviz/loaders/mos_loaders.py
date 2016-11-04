@@ -36,11 +36,9 @@ def nirspec_spectrum1d_reader(file_name):
 
     data = Data(label='1D Spectrum')
     data.header = hdulist['DATA'].header
-    data.coords = coordinates_from_header(hdulist[1].header)
-    data.add_component(wavelength, 'Composed Wavelength')
-    data.add_component(hdulist['DATA'].data, 'Spectral Flux')
-    data.add_component(hdulist['VAR'].data, 'Variance')
-    data.add_component(hdulist['QUALITY'].data, 'Data Quality')
+    data.add_component(wavelength, 'Wavelength')
+    data.add_component(hdulist['DATA'].data, 'Flux')
+    data.add_component(hdulist['VAR'].data, 'Uncertainty')
 
     return data
 
@@ -61,9 +59,8 @@ def nirspec_spectrum2d_reader(file_name):
     data = Data(label='2D Spectrum')
     data.header = hdulist['DATA'].header
     data.coords = coordinates_from_header(hdulist[1].header)
-    data.add_component(hdulist['DATA'].data, 'Spectral Flux')
-    data.add_component(hdulist['VAR'].data, 'Variance')
-    data.add_component(hdulist['QUALITY'].data, 'Data Quality')
+    data.add_component(hdulist['DATA'].data, 'Flux')
+    data.add_component(hdulist['VAR'].data, 'Uncertainty')
 
     return data
 
@@ -104,8 +101,8 @@ def nircam_image_reader(file_name):
 
     # drop the last axis since the cube will be split
     data.coords = coordinates_from_wcs(wcs.sub(2))
-    data.add_component(hdulist[0].data[0], 'Signal [ADU/s]')
-    data.add_component(hdulist[0].data[1], 'Uncertainty [ADU/s]')
+    data.add_component(hdulist[0].data[0], 'Flux')
+    data.add_component(hdulist[0].data[1], 'Uncertainty')
 
     return data
 
@@ -131,8 +128,8 @@ def deimos_spectrum1D_reader(file_name):
     full_ivar = np.append(hdulist[1].data['IVAR'][0], hdulist[2].data['IVAR'][0])
 
     data.add_component(full_wl, 'Wavelength')
-    data.add_component(full_spec, 'Spectral Flux')
-    data.add_component(full_ivar, 'Inverse Variance')
+    data.add_component(full_spec, 'Flux')
+    data.add_component(full_ivar, 'Uncertainty')
 
     return data
 
@@ -148,14 +145,18 @@ def deimos_spectrum2D_reader(file_name):
 
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
-    data.coords = coordinates_from_header(hdulist[1].header)
+    hdulist[1].header['CTYPE2'] = 'Spatial Y'
+    wcs = WCS(hdulist[1].header)
+    # original WCS has both axes named "LAMBDA", glue requires unique component names
+
+    data.coords = coordinates_from_wcs(wcs)
     data.header = hdulist[1].header
-    data.add_component(hdulist[1].data['FLUX'][0], 'Spectral Flux')
-    data.add_component(hdulist[1].data['IVAR'][0], 'Inverse Variance')
+    data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
+    data.add_component(hdulist[1].data['IVAR'][0], 'Uncertainty')
     return data
 
 
-@data_factory('ACS Cutout Image')
+@data_factory('Cutout Image')
 def acs_cutout_image_reader(file_name):
     """
     Data loader for the ACS cut-outs for the DEIMOS spectra.
@@ -167,6 +168,6 @@ def acs_cutout_image_reader(file_name):
     data = Data(label='ACS Cutout Image')
     data.coords = coordinates_from_header(hdulist[0].header)
     data.header = hdulist[0].header
-    data.add_component(hdulist[0].data, 'Signal')
+    data.add_component(hdulist[0].data, 'Flux')
 
     return data
