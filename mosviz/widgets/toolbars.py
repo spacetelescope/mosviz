@@ -40,7 +40,7 @@ class CycleForwardTool(Tool):
 class MOSViewerToolbar(BasicToolbar):
     def __init__(self, *args, **kwargs):
         super(MOSViewerToolbar, self).__init__(*args, **kwargs)
-        # self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         # Define icon path
         icon_path = os.path.join(os.path.dirname(__file__),
@@ -72,6 +72,7 @@ class MOSViewerToolbar(BasicToolbar):
         tool_button.setText("Axes Settings")
         tool_button.setIcon(QIcon(os.path.join(icon_path, "Settings-96.png")))
         tool_button.setPopupMode(QToolButton.MenuButtonPopup)
+        tool_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         # Create a menu for the axes settings drop down
         self.settings_menu = QMenu(self)

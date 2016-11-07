@@ -113,8 +113,11 @@ setup(name=PACKAGENAME,
       description=DESCRIPTION,
       scripts=scripts,
       install_requires=[
+          'numpy',
           'astropy',
-          'specutils'
+          'specutils',
+          'glueviz',
+          'matplotlib'
       ],
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
@@ -126,4 +129,4 @@ setup(name=PACKAGENAME,
       use_2to3=False,
       entry_points=entry_points,
       **package_info
-)
+      )
