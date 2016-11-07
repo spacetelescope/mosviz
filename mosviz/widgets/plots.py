@@ -14,6 +14,7 @@ rcParams.update({'figure.autolayout': True})
 
 __all__ = ['Line1DWidget', 'ShareableAxesImageWidget', 'DrawableImageWidget']
 
+
 class Line1DWidget(QMainWindow):
     window_closed = Signal()
 
@@ -90,6 +91,9 @@ class ShareableAxesImageWidget(StandaloneImageWidget):
 
         self._axes._sharex = sharex
         self._axes._sharey = sharey
+
+    def set_status(self):
+        pass
 
 
 class DrawableImageWidget(StandaloneImageWidget):

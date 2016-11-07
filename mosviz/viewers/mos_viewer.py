@@ -1,6 +1,6 @@
 import os
 
-from glue.qt.widgets.data_viewer import DataViewer
+import numpy as np
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QLineEdit
 from qtpy.uic import loadUi
@@ -10,18 +10,23 @@ from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImag
 from ..loaders import mos_loaders
 from ..widgets.viewer_options import OptionsWidget
 
+from glue.qt.widgets.data_viewer import DataViewer
 from glue import config
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
 from astropy.table import Table
 
+from specutils.core.generic import Spectrum1DRef
+from astropy.nddata.nduncertainty import StdDevUncertainty
+
 try:
-    from specviz.external.glue.data_viewer import SpecvizViewer
+    from specviz.external.glue.data_viewer import SpecVizViewer
 except ImportError:
-    SpecvizViewer = None
+    SpecVizViewer = None
 
 __all__ = ['MOSVizViewer']
+
 
 class MOSVizViewer(DataViewer):
     LABEL = "MosViz Viewer"
@@ -34,7 +39,9 @@ class MOSVizViewer(DataViewer):
 
         # Define some data containers
         self.catalog = None
+        self.current_row = None
         self._specviz_instance = None
+        self._loaded_data = {}
 
     def load_ui(self):
         """
@@ -84,10 +91,9 @@ class MOSVizViewer(DataViewer):
             lambda ind: self._set_navigation(ind))
 
         # Connect the specviz button
-        if SpecvizViewer is not None:
+        if SpecVizViewer is not None:
             self.toolbar.open_specviz.triggered.connect(
-                lambda: self._open_in_specviz(
-                    self.catalog[self.toolbar.source_select.currentIndex()]))
+                lambda: self._open_in_specviz())
         else:
             self.toolbar.open_specviz.setDisabled(True)
 
@@ -297,10 +303,42 @@ class MOSVizViewer(DataViewer):
         else:
             self.toolbar.cycle_next_action.setDisabled(False)
 
-    def _open_in_specviz(self, row):
+    def _get_loaders(self):
+        loaders = self.catalog.meta.get("loaders", [])
+        # if loader is specified
+        if "spec1d" in loaders:
+            spectrum1d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec1d"]),
+                                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 1D Spectrum"))
+        else:
+            spectrum1d_loader = mos_loaders.nirspec_spectrum1d_reader
+
+        if "spec2d" in loaders:
+            spectrum2d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec2d"]),
+                                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 2D Spectrum"))
+        else:
+            spectrum2d_loader = mos_loaders.nirspec_spectrum2d_reader
+        if "image" in loaders:
+            cutout_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["image"]),
+                                 next(x.function for x in config.data_factory.members if x.label == "Cutout Image"))
+        else:
+            cutout_loader = mos_loaders.acs_cutout_image_reader
+
+        return spectrum1d_loader, spectrum2d_loader, cutout_loader
+
+    def _open_in_specviz(self):
         if self._specviz_instance is None:
             self._specviz_instance = self.session.application.new_data_viewer(
-                SpecvizViewer)
+                SpecVizViewer)
+
+        spec1d_data = self._loaded_data['spec1d']
+
+        spec_data = Spectrum1DRef(
+            data=spec1d_data.get_component(spec1d_data.id['Flux']).data,
+            dispersion=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
+            uncertainty=StdDevUncertainty(spec1d_data.get_component(spec1d_data.id['Uncertainty']).data),
+            unit="", name=self.current_row['id'])
+
+        self._specviz_instance.open_data(spec_data)
 
     def load_selection(self, row):
         """
@@ -314,38 +352,20 @@ class MOSVizViewer(DataViewer):
             A `row` object representing a row in the MOS catalog. Each key
             should be a column name.
         """
-
-        if "loaders" in self.catalog.meta:
-            # if loader is specified
-            if "spec1d" in self.catalog.meta["loaders"]:
-                spectrum1d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec1d"]),
-                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 1D Spectrum"))
-
-            if "spec2d" in self.catalog.meta["loaders"]:
-                spectrum2d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec2d"]),
-                     next(x.function for x in config.data_factory.members if x.label == "NIRSpec 2D Spectrum"))
-
-            if "image" in self.catalog.meta["loaders"]:
-                cutout_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["image"]),
-                     next(x.function for x in config.data_factory.members if x.label == "Cutout Image"))
-        else:
-            # Use NIRSpec loaders by default.
-            spectrum1d_loader = mos_loaders.nirspec_spectrum1d_reader
-            spectrum2d_loader = mos_loaders.nirspec_spectrum2d_reader
-            cutout_loader = mos_loaders.acs_cutout_image_reader
+        self.current_row = row
+        spectrum1d_loader, spectrum2d_loader, cutout_loader = self._get_loaders()
 
         spec1d_data = spectrum1d_loader(row['spectrum1d'])
         spec2d_data = spectrum2d_loader(row['spectrum2d'])
         image_data = cutout_loader(row['cutout'])
 
-
-        self._update_data_components(spec1d_data)
-        self._update_data_components(spec2d_data)
-        self._update_data_components(image_data)
+        self._update_data_components(spec1d_data, key='spec1d')
+        self._update_data_components(spec2d_data, key='spec2d')
+        self._update_data_components(image_data, key='image')
 
         self.render_data(row, spec1d_data, spec2d_data, image_data)
 
-    def _update_data_components(self, data):
+    def _update_data_components(self, data, key):
         """
         Update the data components that act as containers for the displayed
         data in the MOSViz viewer. This obviates the need to keep creating new
@@ -355,13 +375,16 @@ class MOSVizViewer(DataViewer):
         ----------
         data : :class:`glue.core.data.Data`
             Data object to replace within the component.
+        key : str
+            References the particular data set type.
         """
-        for dc in self.session.data_collection.data:
-            if dc.label == data.label:
-                dc.update_values_from_data(data)
-                break
-        else:
+        cur_data = self._loaded_data.get(key, None)
+
+        if cur_data is None:
             self.session.data_collection.append(data)
+            self._loaded_data[key] = data
+        else:
+            cur_data.update_values_from_data(data)
 
     def render_data(self, row, spec1d_data=None, spec2d_data=None,
                     image_data=None):

@@ -67,6 +67,9 @@
             <property name="rightMargin">
              <number>24</number>
             </property>
+            <property name="bottomMargin">
+             <number>24</number>
+            </property>
            </layout>
           </widget>
          </widget>

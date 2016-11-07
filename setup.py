@@ -112,7 +112,10 @@ setup(name=PACKAGENAME,
       version=VERSION,
       description=DESCRIPTION,
       scripts=scripts,
-      install_requires=['astropy'],
+      install_requires=[
+          'astropy',
+          'specutils'
+      ],
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,
