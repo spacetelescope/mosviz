@@ -26,7 +26,7 @@ env:
         # to repeat them for all configurations.
         - NUMPY_VERSION=1.11
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='specutils'
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
