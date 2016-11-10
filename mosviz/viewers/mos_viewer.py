@@ -19,6 +19,9 @@ from astropy.table import Table
 
 from specutils.core.generic import Spectrum1DRef
 from astropy.nddata.nduncertainty import StdDevUncertainty
+from astropy.units import Unit
+from astropy.wcs import WCS
+
 
 try:
     from specviz.external.glue.data_viewer import SpecVizViewer
@@ -47,7 +50,7 @@ class MOSVizViewer(DataViewer):
         """
         Setup the MOSView viewer interface.
         """
-        self.central_widget = QWidget()
+        self.central_widget = QWidget(self)
 
         path = os.path.abspath(
             os.path.join(os.path.dirname(__file__),
@@ -246,7 +249,6 @@ class MOSVizViewer(DataViewer):
 
         # Clear the table
         self.catalog = Table()
-        self.catalog.meta = data.meta
 
         col_names = data.components
         for att in col_names:
@@ -273,22 +275,31 @@ class MOSVizViewer(DataViewer):
 
                 self.catalog[str(att)] = comp_data
 
-        # Update gui elements
-        self._update_navigation()
-        self._set_navigation(0)
+        if len(self.catalog) > 0:
+            # Load the first source in the catalog
+            self.load_selection(self.catalog[0])
 
-        # Load the first source in the catalog
-        self.load_selection(self.catalog[0])
+            # Update gui elements
+            self._update_navigation()
+            self._set_navigation(0)
 
     def _update_navigation(self):
         """
         Updates the :class:`qtpy.QtWidgets.QComboBox` widget with the
         appropriate source `id`s from the MOS catalog.
         """
+        if self.toolbar is None:
+            return
+
         self.toolbar.source_select.clear()
-        self.toolbar.source_select.addItems(self.catalog['id'][:])
+
+        if len(self.catalog) > 0 and 'id' in self.catalog.colnames:
+            self.toolbar.source_select.addItems(self.catalog['id'][:])
 
     def _set_navigation(self, index):
+        if len(self.catalog) < index:
+            return
+
         if 0 <= index < self.toolbar.source_select.count():
             self.toolbar.source_select.setCurrentIndex(index)
             self.load_selection(self.catalog[index])
@@ -304,7 +315,7 @@ class MOSVizViewer(DataViewer):
             self.toolbar.cycle_next_action.setDisabled(False)
 
     def _get_loaders(self):
-        loaders = self.catalog.meta.get("loaders", [])
+        loaders = self.catalog.meta.get("loaders", {})
         # if loader is specified
         if "spec1d" in loaders:
             spectrum1d_loader = next((x.function for x in config.data_factory.members if x.label ==  self.catalog.meta["loaders"]["spec1d"]),
@@ -326,9 +337,8 @@ class MOSVizViewer(DataViewer):
         return spectrum1d_loader, spectrum2d_loader, cutout_loader
 
     def _open_in_specviz(self):
-        if self._specviz_instance is None:
-            self._specviz_instance = self.session.application.new_data_viewer(
-                SpecVizViewer)
+        _specviz_instance = self.session.application.new_data_viewer(
+            SpecVizViewer)
 
         spec1d_data = self._loaded_data['spec1d']
 
@@ -336,9 +346,10 @@ class MOSVizViewer(DataViewer):
             data=spec1d_data.get_component(spec1d_data.id['Flux']).data,
             dispersion=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
             uncertainty=StdDevUncertainty(spec1d_data.get_component(spec1d_data.id['Uncertainty']).data),
-            unit="", name=self.current_row['id'])
+            unit="", name=self.current_row['id'],
+            wcs=WCS(spec1d_data.header))
 
-        self._specviz_instance.open_data(spec_data)
+        _specviz_instance.open_data(spec_data)
 
     def load_selection(self, row):
         """
@@ -398,8 +409,22 @@ class MOSVizViewer(DataViewer):
                 y=spec1d_data.get_component(spec1d_data.id['Flux']).data,
                 yerr=spec1d_data.get_component(spec1d_data.id['Uncertainty']).data)
 
-            self.spectrum1d_widget.axes.set_xlabel("Wavelength")
-            self.spectrum1d_widget.axes.set_ylabel("Flux")
+            # Try to retrieve the wcs information
+            try:
+                flux_unit = spec1d_data.header.get('BUNIT', 'Jy').lower()
+                flux_unit = flux_unit.replace('counts', 'count')
+                flux_unit = Unit(flux_unit)
+            except ValueError:
+                flux_unit = Unit("Jy")
+
+            try:
+                disp_unit = spec1d_data.header.get('CUNIT1', 'Angstrom').lower()
+                disp_unit = Unit(disp_unit)
+            except ValueError:
+                disp_unit = Unit("Angstrom")
+
+            self.spectrum1d_widget.axes.set_xlabel("Wavelength [{}]".format(disp_unit))
+            self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
 
         if spec2d_data is not None:
             wcs = spec2d_data.coords.wcs
@@ -407,7 +432,8 @@ class MOSVizViewer(DataViewer):
             self.spectrum2d_widget.set_image(
                 image=spec2d_data.get_component(
                     spec2d_data.id['Flux']).data,
-                wcs=wcs, interpolation='none', aspect='auto')
+                wcs=wcs, interpolation='none', aspect='auto',
+                header=spec2d_data.header)
 
             self.spectrum2d_widget.axes.set_xlabel("Wavelength")
             self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
