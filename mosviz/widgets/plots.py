@@ -9,8 +9,11 @@ from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
 
+import numpy as np
+from astropy.wcs import WCS, WCSSUB_SPECTRAL
+
 from matplotlib import rcParams
-rcParams.update({'figure.autolayout': True})
+# rcParams.update({'figure.autolayout': True})
 
 __all__ = ['Line1DWidget', 'ShareableAxesImageWidget', 'DrawableImageWidget']
 
@@ -63,8 +66,37 @@ class Line1DWidget(QMainWindow):
     def _redraw(self):
         self.central_widget.canvas.draw()
 
+    def set_status(self):
+        pass
 
-class ShareableAxesImageWidget(StandaloneImageWidget):
+
+class MOSImageWidget(StandaloneImageWidget):
+    def __init__(self, *args, **kwargs):
+        super(MOSImageWidget, self).__init__(*args, **kwargs)
+
+    def set_image(self, image=None, wcs=None, header=None, **kwargs):
+        super(MOSImageWidget, self).set_image(image, wcs, **kwargs)
+
+        if header is not None:
+            hwcs = WCS(header)
+
+            # Try to reference the spectral axis
+            hwcs_spec = hwcs.sub([WCSSUB_SPECTRAL])
+
+            # Check to see if it actually is a real coordinate description
+            if hwcs_spec.naxis == 0:
+                # It's not real, so attempt to get the spectral axis by
+                # specifying axis by integer
+                hwcs_spec = hwcs.sub([hwcs.naxis])
+
+            # Construct the dispersion array
+            dispersion = hwcs_spec.all_pix2world(
+                np.arange(image.shape[0]), 0)[0]
+
+            self.axes.set_xticklabels(["{}".format(x) for x in dispersion])
+
+
+class ShareableAxesImageWidget(MOSImageWidget):
     def __init__(self, *args, **kwargs):
         super(ShareableAxesImageWidget, self).__init__(*args, **kwargs)
 
@@ -96,11 +128,11 @@ class ShareableAxesImageWidget(StandaloneImageWidget):
         pass
 
 
-class DrawableImageWidget(StandaloneImageWidget):
+class DrawableImageWidget(MOSImageWidget):
     def __init__(self, *args, **kwargs):
         super(DrawableImageWidget, self).__init__(*args, **kwargs)
         self._slit_patch = None
 
     def draw_shapes(self, x=0, y=0, width=100, length=100):
         self._slit_patch = plt.Rectangle((x-length, y-width), width, length, fc='r')
-        self.axes.add_patch(self._slit_patch)
+        # self.axes.add_patch(self._slit_patch)
