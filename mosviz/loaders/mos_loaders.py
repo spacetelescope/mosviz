@@ -1,7 +1,17 @@
 from __future__ import absolute_import, division, print_function
 
+import os
+
+from qtpy import QtWidgets
+from qtpy.uic import loadUi
+
+from glue.external.echo import HasCallbackProperties, CallbackProperty
+from glue.external.echo.qt import autoconnect_callbacks_to_qt
+
+from glue.utils.qt import load_ui, update_combobox
 from glue.config import data_factory
 from glue.core import Data
+from glue.core.data_factories import load_data
 from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -12,8 +22,37 @@ __all__ = ['nirspec_spectrum1d_reader',
            'nircam_image_reader',
            'deimos_spectrum1D_reader',
            'deimos_spectrum2D_reader',
-           'acs_cutout_image_reader']
+           'acs_cutout_image_reader',
+           'LoaderSelectionDialog']
 
+SPECTRUM1D_LOADERS = {}
+SPECTRUM2D_LOADERS = {}
+CUTOUT_LOADERS = {}
+
+def factory_label(func):
+    for item in data_factory.members:
+        if item.function is func:
+            return item.label
+    else:
+        raise Exception("Could not determine label for data factory {0}".format(func))
+
+
+def mosviz_spectrum1d_loader(func):
+    SPECTRUM1D_LOADERS[factory_label(func)] = func
+    return func
+
+
+def mosviz_spectrum2d_loader(func):
+    SPECTRUM2D_LOADERS[factory_label(func)] = func
+    return func
+
+
+def mosviz_cutout_loader(func):
+    CUTOUT_LOADERS[factory_label(func)] = func
+    return func
+
+
+@mosviz_spectrum1d_loader
 @data_factory('NIRSpec 1D Spectrum')
 def nirspec_spectrum1d_reader(file_name):
     """
@@ -43,6 +82,7 @@ def nirspec_spectrum1d_reader(file_name):
     return data
 
 
+@mosviz_spectrum2d_loader
 @data_factory('NIRSpec 2D Spectrum')
 def nirspec_spectrum2d_reader(file_name):
     """
@@ -65,6 +105,7 @@ def nirspec_spectrum2d_reader(file_name):
     return data
 
 
+@mosviz_cutout_loader
 @data_factory('NIRCam Image')
 def nircam_image_reader(file_name):
     """
@@ -107,6 +148,7 @@ def nircam_image_reader(file_name):
     return data
 
 
+@mosviz_spectrum1d_loader
 @data_factory('DEIMOS 1D Spectrum')
 def deimos_spectrum1D_reader(file_name):
     """
@@ -134,6 +176,7 @@ def deimos_spectrum1D_reader(file_name):
     return data
 
 
+@mosviz_spectrum2d_loader
 @data_factory('DEIMOS 2D Spectrum')
 def deimos_spectrum2D_reader(file_name):
     """
@@ -156,7 +199,8 @@ def deimos_spectrum2D_reader(file_name):
     return data
 
 
-@data_factory('Cutout Image')
+@mosviz_cutout_loader
+@data_factory('ACS Cutout Image')
 def acs_cutout_image_reader(file_name):
     """
     Data loader for the ACS cut-outs for the DEIMOS spectra.
