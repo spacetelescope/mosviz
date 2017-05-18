@@ -10,14 +10,15 @@ from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImag
 from ..loaders import mos_loaders
 from ..widgets.viewer_options import OptionsWidget
 
-from glue.qt.widgets.data_viewer import DataViewer
 from glue import config
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
-from astropy.table import Table
+from glue.viewers.common.qt.data_viewer import DataViewer
 
 from specutils.core.generic import Spectrum1DRef
+
+from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy.units import Unit
 from astropy.wcs import WCS

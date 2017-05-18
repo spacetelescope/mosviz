@@ -7,7 +7,10 @@ import matplotlib.pyplot as plt
 
 from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
 from glue.viewers.common.qt.toolbar import BasicToolbar
-from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
+try:
+    from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
+except ImportError:
+    from glue.viewers.matplotlib.qt.toolbar import MatplotlibViewerToolbar
 
 import numpy as np
 from astropy.wcs import WCS, WCSSUB_SPECTRAL
@@ -71,6 +74,7 @@ class Line1DWidget(QMainWindow):
 
 
 class MOSImageWidget(StandaloneImageWidget):
+
     def __init__(self, *args, **kwargs):
         super(MOSImageWidget, self).__init__(*args, **kwargs)
 
@@ -95,6 +99,8 @@ class MOSImageWidget(StandaloneImageWidget):
 
             self.axes.set_xticklabels(["{}".format(x) for x in dispersion])
 
+    def set_status(self, status):
+        pass
 
 class ShareableAxesImageWidget(MOSImageWidget):
     def __init__(self, *args, **kwargs):
@@ -124,11 +130,9 @@ class ShareableAxesImageWidget(MOSImageWidget):
         self._axes._sharex = sharex
         self._axes._sharey = sharey
 
-    def set_status(self):
-        pass
-
 
 class DrawableImageWidget(MOSImageWidget):
+
     def __init__(self, *args, **kwargs):
         super(DrawableImageWidget, self).__init__(*args, **kwargs)
         self._slit_patch = None
