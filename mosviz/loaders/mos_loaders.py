@@ -1,17 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
-import os
-
-from qtpy import QtWidgets
-from qtpy.uic import loadUi
-
-from glue.external.echo import HasCallbackProperties, CallbackProperty
-from glue.external.echo.qt import autoconnect_callbacks_to_qt
-
-from glue.utils.qt import load_ui, update_combobox
 from glue.config import data_factory
 from glue.core import Data
-from glue.core.data_factories import load_data
 from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -22,12 +12,12 @@ __all__ = ['nirspec_spectrum1d_reader',
            'nircam_image_reader',
            'deimos_spectrum1D_reader',
            'deimos_spectrum2D_reader',
-           'acs_cutout_image_reader',
-           'LoaderSelectionDialog']
+           'acs_cutout_image_reader']
 
 SPECTRUM1D_LOADERS = {}
 SPECTRUM2D_LOADERS = {}
 CUTOUT_LOADERS = {}
+
 
 def factory_label(func):
     for item in data_factory.members:
@@ -70,8 +60,8 @@ def nirspec_spectrum1d_reader(file_name):
     # make wavelength a seperate component in addition to coordinate
     # so you can plot it on the x axis
     wavelength = np.linspace(hdulist['DATA'].header['CRVAL1'],
-        hdulist['DATA'].header['CRVAL1']*hdulist['DATA'].header['CDELT1'],
-        hdulist['DATA'].header['NAXIS1'])[::-1]
+                             hdulist['DATA'].header['CRVAL1'] * hdulist['DATA'].header['CDELT1'],
+                             hdulist['DATA'].header['NAXIS1'])[::-1]
 
     data = Data(label='1D Spectrum')
     data.header = hdulist['DATA'].header
@@ -171,7 +161,7 @@ def deimos_spectrum1D_reader(file_name):
 
     data.add_component(full_wl, 'Wavelength')
     data.add_component(full_spec, 'Flux')
-    data.add_component(1/np.sqrt(full_ivar), 'Uncertainty')
+    data.add_component(1 / np.sqrt(full_ivar), 'Uncertainty')
 
     return data
 
@@ -195,7 +185,7 @@ def deimos_spectrum2D_reader(file_name):
     data.coords = coordinates_from_wcs(wcs)
     data.header = hdulist[1].header
     data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
-    data.add_component(1/np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
+    data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
     return data
 
 

@@ -5,7 +5,6 @@ from qtpy import QtWidgets
 from glue.external.echo import HasCallbackProperties, CallbackProperty
 from glue.external.echo.qt import autoconnect_callbacks_to_qt
 from glue.utils.qt import load_ui, update_combobox
-from glue import config
 
 from mosviz.loaders.mos_loaders import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS)
 
@@ -118,10 +117,10 @@ if __name__ == "__main__":
     app = get_qapp()
 
     d = Data()
-    d['spectrum1d'] = [1,2,3]
-    d['spectrum2d'] = [4,5,5]
-    d['b'] = [1,2,2]
-    d['cutout'] = [1,1,1]
+    d['spectrum1d'] = [1, 2, 3]
+    d['spectrum2d'] = [4, 5, 5]
+    d['b'] = [1, 2, 2]
+    d['cutout'] = [1, 1, 1]
 
-    print(get_loaders_and_column_names(d))
-    print(get_loaders_and_column_names(d))
+    print(confirm_loaders_and_column_names(d))
+    print(confirm_loaders_and_column_names(d))

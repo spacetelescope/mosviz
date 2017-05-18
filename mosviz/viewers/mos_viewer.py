@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QLineEdit
+from qtpy.QtWidgets import QWidget, QLineEdit
 from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
@@ -11,7 +11,6 @@ from ..loaders.loader_selection import confirm_loaders_and_column_names
 from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
 from ..widgets.viewer_options import OptionsWidget
 
-from glue import config
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
