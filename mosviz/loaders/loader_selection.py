@@ -100,12 +100,15 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         self.data.meta['special_columns']['spec2d'] = self.colname_spectrum2d
         self.data.meta['special_columns']['image'] = self.colname_cutout
 
+        self.data.meta['loaders_confirmed'] = True
+
         super(LoaderSelectionDialog, self).accept()
 
 
-def confirm_loaders_and_column_names(data):
-    loader_selection = LoaderSelectionDialog(data=data)
-    loader_selection.exec_()
+def confirm_loaders_and_column_names(data, force=False):
+    if force or not data.meta.get('loaders_confirmed', False):
+        loader_selection = LoaderSelectionDialog(data=data)
+        loader_selection.exec_()
     return data
 
 

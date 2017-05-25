@@ -69,7 +69,7 @@ class Line1DWidget(QMainWindow):
     def _redraw(self):
         self.central_widget.canvas.draw()
 
-    def set_status(self):
+    def set_status(self, message):
         pass
 
 
