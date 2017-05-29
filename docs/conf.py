@@ -166,7 +166,7 @@ if eval(setup_cfg.get('edit_on_github')):
     edit_on_github_doc_root = "docs"
 
 
-intersphinx_mapping['https://glueviz.readthedocs.org/en/latest'] = None
+intersphinx_mapping['glue'] = ('https://glueviz.readthedocs.org/en/latest', None)
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
