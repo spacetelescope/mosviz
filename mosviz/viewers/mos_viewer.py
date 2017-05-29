@@ -323,7 +323,7 @@ class MOSVizViewer(DataViewer):
         _specviz_instance = self.session.application.new_data_viewer(
             SpecVizViewer)
 
-        spec1d_data = self._loaded_data['spec1d']
+        spec1d_data = self._loaded_data['spectrum1d']
 
         spec_data = Spectrum1DRef(
             data=spec1d_data.get_component(spec1d_data.id['Flux']).data,
@@ -349,22 +349,22 @@ class MOSVizViewer(DataViewer):
         self.current_row = row
 
         # Get loaders
-        loader_spectrum1d = SPECTRUM1D_LOADERS[self.catalog.meta["loaders"]["spec1d"]]
-        loader_spectrum2d = SPECTRUM2D_LOADERS[self.catalog.meta["loaders"]["spec2d"]]
-        loader_cutout = CUTOUT_LOADERS[self.catalog.meta["loaders"]["image"]]
+        loader_spectrum1d = SPECTRUM1D_LOADERS[self.catalog.meta["loaders"]["spectrum1d"]]
+        loader_spectrum2d = SPECTRUM2D_LOADERS[self.catalog.meta["loaders"]["spectrum2d"]]
+        loader_cutout = CUTOUT_LOADERS[self.catalog.meta["loaders"]["cutout"]]
 
         # Get column names
-        colname_spectrum1d = self.catalog.meta["special_columns"]["spec1d"]
-        colname_spectrum2d = self.catalog.meta["special_columns"]["spec2d"]
-        colname_cutout = self.catalog.meta["special_columns"]["image"]
+        colname_spectrum1d = self.catalog.meta["special_columns"]["spectrum1d"]
+        colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
+        colname_cutout = self.catalog.meta["special_columns"]["cutout"]
 
         spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
         spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
         image_data = loader_cutout(row[colname_cutout])
 
-        self._update_data_components(spec1d_data, key='spec1d')
-        self._update_data_components(spec2d_data, key='spec2d')
-        self._update_data_components(image_data, key='image')
+        self._update_data_components(spec1d_data, key='spectrum1d')
+        self._update_data_components(spec2d_data, key='spectrum2d')
+        self._update_data_components(image_data, key='cutout')
 
         self.render_data(row, spec1d_data, spec2d_data, image_data)
 
@@ -382,6 +382,8 @@ class MOSVizViewer(DataViewer):
             References the particular data set type.
         """
         cur_data = self._loaded_data.get(key, None)
+
+        print(data)
 
         if cur_data is None:
             self.session.data_collection.append(data)

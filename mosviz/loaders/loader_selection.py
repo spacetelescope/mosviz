@@ -5,7 +5,10 @@ from qtpy import QtWidgets
 from glue.external.echo import HasCallbackProperties, CallbackProperty
 from glue.external.echo.qt import autoconnect_callbacks_to_qt
 from glue.utils.qt import load_ui, update_combobox
-from glue.core.qt.data_combo_helper import ComponentIDComboHelper
+
+# TODO: uncomment first line and remove second once we support glueviz >= 0.11
+# from glue.core.qt.data_combo_helper import ComponentIDComboHelper
+from mosviz.compat import ComponentIDComboHelper
 
 from mosviz.loaders.mos_loaders import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS)
 
@@ -61,12 +64,12 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
             loaders = data.meta['loaders']
 
-            if "spec1d" in loaders and loaders['spec1d'] in SPECTRUM1D_LOADERS:
-                self.loader_spectrum1d = loaders['spec1d']
-            if "spec2d" in loaders and loaders['spec2d'] in SPECTRUM2D_LOADERS:
-                self.loader_spectrum2d = loaders['spec2d']
-            if "image" in loaders and loaders['image'] in CUTOUT_LOADERS:
-                self.loader_cutout = loaders['image']
+            if "spectrum1d" in loaders and loaders['spectrum1d'] in SPECTRUM1D_LOADERS:
+                self.loader_spectrum1d = loaders['spectrum1d']
+            if "spectrum2d" in loaders and loaders['spectrum2d'] in SPECTRUM2D_LOADERS:
+                self.loader_spectrum2d = loaders['spectrum2d']
+            if "cutout" in loaders and loaders['cutout'] in CUTOUT_LOADERS:
+                self.loader_cutout = loaders['cutout']
 
         if self.loader_spectrum1d is None:
             self.loader_spectrum1d = 'NIRSpec 1D Spectrum'
@@ -131,9 +134,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         if 'loaders' not in self.data.meta:
             self.data.meta['loaders'] = {}
 
-        self.data.meta['loaders']['spec1d'] = self.loader_spectrum1d
-        self.data.meta['loaders']['spec2d'] = self.loader_spectrum2d
-        self.data.meta['loaders']['image'] = self.loader_cutout
+        self.data.meta['loaders']['spectrum1d'] = self.loader_spectrum1d
+        self.data.meta['loaders']['spectrum2d'] = self.loader_spectrum2d
+        self.data.meta['loaders']['cutout'] = self.loader_cutout
 
         if 'special_columns' not in self.data.meta:
             self.data.meta['special_columns'] = {}
