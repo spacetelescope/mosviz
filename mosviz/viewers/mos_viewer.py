@@ -343,7 +343,7 @@ class MOSVizViewer(DataViewer):
         Parameters
         ----------
         row : :class:`astropy.table.Row`
-            A `row` object representing a row in the MOS catalog. Each key
+            A row object representing a row in the MOS catalog. Each key
             should be a column name.
         """
         self.current_row = row

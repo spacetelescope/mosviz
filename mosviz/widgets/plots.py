@@ -18,7 +18,8 @@ from astropy.wcs import WCS, WCSSUB_SPECTRAL
 from matplotlib import rcParams
 # rcParams.update({'figure.autolayout': True})
 
-__all__ = ['Line1DWidget', 'ShareableAxesImageWidget', 'DrawableImageWidget']
+__all__ = ['Line1DWidget', 'ShareableAxesImageWidget',
+           'DrawableImageWidget', 'MOSImageWidget']
 
 
 class Line1DWidget(QMainWindow):

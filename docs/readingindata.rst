@@ -85,7 +85,7 @@ be obtained from the `DEEP2 Data Release
 MOSViz is a Glue plugin so we'll write our own `Custom Data Loaders
 <http://glueviz.org/en/stable/customizing_guide/customization.html#custom-data-loaders>`_
 to read data. All we need to do is write a function which takes a filename as
-input and returns a glue `Data` object. For this example, we have three
+input and returns a glue `~glue.core.data.Data` object. For this example, we have three
 different types of data: a 1D Spectrum, a 2D spectrum, and a cutout image.
 
 1D Spectrum Reader
@@ -143,7 +143,7 @@ contents of our example FITS file to see which parts we need to pass to MOSViz::
       8  Horne-NL-R  BinTableHDU    140   1R x 15C   [4096E, 4096E, 4096E, 4096I, 4096I, 4096I, 4096I, 4096I, E, E, E, J, J, 4096E, E]
 
 The file contains pairs of red and blue spectra which have been filtered in
-various ways. For the sake of this example we'll choose the `Bxspf` spectra.
+various ways. For the sake of this example we'll choose the ``Bxspf`` spectra.
 Let's take a closer look at the relevant extension::
 
     >>> hdulist['Bxspf-R'].columns
@@ -184,8 +184,8 @@ Let's take a closer look at the relevant extension::
     )
 
 Again, there are a lot of options but for MOSViz we're only interested in three
-columns: `SPEC`, `LAMBDA`, `IVAR`. Further, MOSViz expects each of the arrays to
-be 1 dimensional and of the same size::
+columns: ``SPEC``, ``LAMBDA``, ``IVAR``. Further, MOSViz expects each of the
+arrays to be 1 dimensional and of the same size::
 
     >>> hdulist['Bxspf-R'].data['SPEC'].shape
     (1, 4096)
@@ -227,7 +227,7 @@ follows::
 'DEIMOS 1D Spectrum' is the label which is how we will identify this loader in
 our table header later. Let's now focus on what is needed inside the function.
 The function itself takes a filename to open as its only argument, so we open
-the file and instantiate a Glue :class:`~glue.core.Data` object::
+the file and instantiate a Glue :class:`~glue.core.data.Data` object::
 
         hdulist = fits.open(filename)
         data = Data(label='1D Spectrum')
@@ -242,8 +242,8 @@ be a single 1D array. We saw that the red and blue ends of the spectrum are
 stored in different extensions and that there are stored as 2D arrays. We take
 the first component of the each of the red and blue ends of the spectrum and
 combine them together. Then we take the full 1D array for each component and
-pass them to the ``data`` object using the :meth:`~glue.core.Data.add_component`
-method::
+pass them to the ``~glue.core.data.Data`` object using the
+:meth:`~glue.core.data.Data.add_component` method::
 
     full_wl = np.append(hdulist[1].data['LAMBDA'][0], hdulist[2].data['LAMBDA'][0])
     full_spec = np.append(hdulist[1].data['SPEC'][0], hdulist[2].data['SPEC'][0])
@@ -321,8 +321,8 @@ to pass to MOSViz::
         name = 'MASK'; format = 'B'
     )
 
-MOSViz needs Flux and Uncertainty so the relevant columns are `FLUX` and `IVAR`
-in the the first `slit` extension::
+MOSViz needs Flux and Uncertainty so the relevant columns are ``FLUX`` and
+``IVAR`` in the the first ``slit`` extension::
 
     >>> hdulist[1].data['FLUX'].shape
     (1, 59, 4096)
@@ -350,7 +350,7 @@ data::
 
 The WCS is here; however, the two axes both have name 'LAMBDA' and if we look at
 look at the second coordinate we can see that it isn't actually transformed.
-Glue expects that all of a `Data` object's components (including WCS axes) have
+Glue expects that all of a `~glue.core.data.Data` object's components (including WCS axes) have
 unique names. We can take care of this easily in the data loader function.
 
 Now that we know what data we want from our FITS files let's look at how to
@@ -363,15 +363,15 @@ spectra::
     def deimos_spectrum2D_reader(filename):
 
 The function itself takes a filename to open as its only argument. We open the
-data file and instantiate a :class:`~glue.core.Data` object::
+data file and instantiate a :class:`~glue.core.data.Data` object::
 
     hdulist = fits.open(filename)
     data = Data(label='2D Spectrum')
 
 As we noted above, the WCS axes should have different names. Since the second
 axis is not transformed we'll just change the header keyword which specifies its
-name to 'Spatial Y' Then we set the `coords` attribute of the `Data` object with
-`coordinates_from_wcs`. We also pass the FITS header to the data so that useful
+name to 'Spatial Y' Then we set the ``coords`` attribute of the `~glue.core.data.Data` object with
+:func:`glue.core.coordinates.coordinates_from_wcs`. We also pass the FITS header to the data so that useful
 information can be displayed in the MOSViz::
 
     hdulist[1].header['CTYPE2'] = 'Spatial Y'
@@ -380,7 +380,7 @@ information can be displayed in the MOSViz::
 
 As stated above, MOSViz expects the Flux and Uncertainty to be each be a single
 2D array. We take the first component of each array (a 2D array) pass them to
-the ``data`` object using the :meth:`~glue.core.Data.add_component` method::
+the ``~glue.core.data.Data`` object using the :meth:`~glue.core.data.Data.add_component` method::
 
     data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
     data.add_component(1/np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
@@ -454,12 +454,12 @@ and to tell MOSViz that it can handle cutout images::
     def acs_cutout_image(filename):
 
 The function itself takes a filename to open as its only argument. We open the
-data file and instantiate a :class:`~glue.core.Data` object::
+data file and instantiate a :class:`~glue.core.data.Data` object::
 
         hdulist = fits.open(filename)
         data = Data(label='Cutout Image')
 
-We set the `coords` attribute of the `Data` object with `coordinates_from_wcs`.
+We set the ``coords`` attribute of the `~glue.core.data.Data` object with :func:`glue.core.coordinates.coordinates_from_wcs`.
 We also pass the FITS header to the data so that useful information can be
 displayed in the MOSViz::
 
@@ -467,7 +467,7 @@ displayed in the MOSViz::
         data.header = hdulist[0].header
 
 We take the data in first extension data array (a 2D array) and pass it to the
-``data`` object using the :meth:`~glue.core.Data.add_component` method::
+``~glue.core.data.Data`` object using the :meth:`~glue.core.data.Data.add_component` method::
 
         data.add_component(hdulist[0].data, 'Flux')
 
