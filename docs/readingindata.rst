@@ -96,11 +96,9 @@ Flux, and Uncertainty. The final reader we are going to write is as follows::
 
     from astropy.io import fits
     from glue.core import Data
-    from glue.config import data_factory
     from mosviz.loaders.mos_loaders import mosviz_spectrum1d_loader
 
-    @mosviz_spectrum1d_loader
-    @data_factory('DEIMOS 1D Spectrum')
+    @mosviz_spectrum1d_loader('DEIMOS 1D Spectrum')
     def deimos_spectrum1D_reader(filename):
         """
         Data loader for Keck/DEIMOS 1D spectra.
@@ -199,33 +197,23 @@ All of our arrays are the same size but they are stored in 2 dimensional arrays
 element.
 
 Now that we know what data we want from our FITS files let's look at how to
-write the data loader function. The basic structure for a data loader for glue
-is::
+write the data loader function. The basic structure for a data loader for a 1D
+spectrum is::
 
     from glue.core import Data
-    from glue.config import data_factory
-
-    @data_factory('Data reader name')
-    def read_data(filename):
-        # code to read in data here
-        return data
-
-To tell MOSViz that the reader is specifically for a 1D spectrum, we then also
-add the ``@mosviz_spectrum1d_loader`` decorator. The function thus looks as
-follows::
-
-    from glue.core import Data
-    from glue.config import data_factory
     from mosviz.loaders.mos_loaders import mosviz_spectrum1d_loader
 
-    @mosviz_spectrum1d_loader
-    @data_factory('DEIMOS 1D Spectrum')
+    @mosviz_spectrum1d_loader('DEIMOS 1D Spectrum')
     def deimos_spectrum1D_reader(filename):
         # code to read in data here
         return data
 
-'DEIMOS 1D Spectrum' is the label which is how we will identify this loader in
-our table header later. Let's now focus on what is needed inside the function.
+``'DEIMOS 1D Spectrum'`` is the label which is how we will identify this loader.
+For users familiar with defining glue data factories,
+``@mosviz_spectrum1d_loader`` is equivalent to ``@data_factory`` but additionaly
+tells MOSViz that the loader is specifically for a 1D spectrum.
+
+Let's now focus on what is needed inside the function.
 The function itself takes a filename to open as its only argument, so we open
 the file and instantiate a Glue :class:`~glue.core.data.Data` object::
 
@@ -263,11 +251,9 @@ spectrum reader::
 
     from astropy.io import fits
     from glue.core import Data
-    from glue.config import data_factory
     from mosviz.loaders.mos_loaders import mosviz_spectrum1d_loader
 
-    @mosviz_spectrum2d_loader
-    @data_factory('DEIMOS 2D Spectrum')
+    @mosviz_spectrum2d_loader('DEIMOS 2D Spectrum')
     def deimos_spectrum2D_reader(filename):
         """
         Data loader for Keck/DEIMOS 2D spectra.
@@ -354,12 +340,11 @@ Glue expects that all of a `~glue.core.data.Data` object's components (including
 unique names. We can take care of this easily in the data loader function.
 
 Now that we know what data we want from our FITS files let's look at how to
-write the data loader function. As before, we use the following decorators
+write the data loader function. As before, we use the following decorator
 to tell glue that this is a data loader, and MOSViz that it can read in 2D
 spectra::
 
-    @mosviz_spectrum2d_loader
-    @data_factory('DEIMOS 2D Spectrum')
+    @mosviz_spectrum2d_loader('DEIMOS 2D Spectrum')
     def deimos_spectrum2D_reader(filename):
 
 The function itself takes a filename to open as its only argument. We open the
@@ -394,11 +379,9 @@ Finally, the custom reader for the image cutouts looks like::
 
     from astropy.io import fits
     from glue.core import Data
-    from glue.config import data_factory
     from mosviz.loaders.mos_loaders import mosviz_cutout_loader
 
-    @mosviz_cutout_loader
-    @data_factory('ACS Cutout Image')
+    @mosviz_cutout_loader('ACS Cutout Image')
     def acs_cutout_image_reader(filename):
         """
         Data loader for the ACS cut-outs for the DEIMOS spectra.
@@ -446,11 +429,10 @@ as the data::
 
 The WCS looks as we would expect. Now that we know what data we want from our
 FITS files let's look at how to write the data loader function. We use the
-following decorators on the function to tell glue that this is a data factory
-and to tell MOSViz that it can handle cutout images::
+following decorator on the function to tell glue that this is a data factory and
+to tell MOSViz that it can handle cutout images::
 
-    @mosviz_cutout_loader
-    @data_factory('ACS Cutout Image')
+    @mosviz_cutout_loader('ACS Cutout Image')
     def acs_cutout_image(filename):
 
 The function itself takes a filename to open as its only argument. We open the
@@ -483,7 +465,6 @@ The full contents of the ~/.glue/config.py is shown below::
     from astropy.io import fits
     from astropy.wcs import WCS
 
-    from glue.config import data_factory
     from glue.core import Data
     from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
 
@@ -492,8 +473,7 @@ The full contents of the ~/.glue/config.py is shown below::
                                             mosviz_cutout_loader)
 
 
-    @mosviz_spectrum1d_loader
-    @data_factory('DEIMOS 1D Spectrum')
+    @mosviz_spectrum1d_loader('DEIMOS 1D Spectrum')
     def deimos_spectrum1D_reader(filename):
         """
         Data loader for Keck/DEIMOS 1D spectra.
@@ -519,8 +499,7 @@ The full contents of the ~/.glue/config.py is shown below::
 
         return data
 
-    @mosviz_spectrum2d_loader
-    @data_factory('DEIMOS 2D Spectrum')
+    @mosviz_spectrum2d_loader('DEIMOS 2D Spectrum')
     def deimos_spectrum2D_reader(filename):
         """
         Data loader for Keck/DEIMOS 2D spectra.
@@ -537,8 +516,7 @@ The full contents of the ~/.glue/config.py is shown below::
         data.add_component(1/np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
         return data
 
-    @mosviz_cutout_loader
-    @data_factory('ACS Cutout Image')
+    @mosviz_cutout_loader('ACS Cutout Image')
     def acs_cutout_image_reader(filename):
         """
         Data loader for the ACS cut-outs for the DEIMOS spectra.
