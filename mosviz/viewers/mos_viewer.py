@@ -453,7 +453,7 @@ class MOSVizViewer(DataViewer):
             slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
             slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
 
-            skycoord = SkyCoord(ra, dec)
+            skycoord = SkyCoord(ra, dec, frame='fk5')
             xp, yp = skycoord.to_pixel(wcs)
 
             scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
