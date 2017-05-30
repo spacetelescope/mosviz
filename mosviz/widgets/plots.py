@@ -138,6 +138,7 @@ class DrawableImageWidget(MOSImageWidget):
         super(DrawableImageWidget, self).__init__(*args, **kwargs)
         self._slit_patch = None
 
-    def draw_shapes(self, x=0, y=0, width=100, length=100):
-        self._slit_patch = plt.Rectangle((x-length, y-width), width, length, fc='r')
-        # self.axes.add_patch(self._slit_patch)
+    def draw_region(self, region):
+        if self._slit_patch is not None:
+            self._slit_patch.remove()
+        self._slit_patch = self._axes.add_patch(region.as_patch(edgecolor='red', facecolor='none'))

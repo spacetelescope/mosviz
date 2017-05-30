@@ -216,6 +216,13 @@
      <item row="9" column="1">
       <widget class="QComboBox" name="combotext_slit_ra"/>
      </item>
+     <item row="13" column="2">
+      <widget class="QCheckBox" name="bool_slit_north_aligned">
+       <property name="text">
+        <string>North-aligned</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
