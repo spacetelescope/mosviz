@@ -46,7 +46,6 @@ Right ascension of the slit center (FK5 J2000)                 ``ra``           
 Declination of the slit center (FK5 J2000)                     ``dec``          degrees
 Width of the slit                                              ``slit_width``   arcseconds
 Length of the slit                                             ``slit_length``  arcseconds
-Position angle of the slit (counter-clockwise from North)      ``slit_angle``   degrees
 ============================================================== =============== =============
 
 The columns can have any name, but if they are given the name in the **Default
@@ -586,7 +585,6 @@ expected names:
     # - {name: cutout, datatype: string}
     # - {name: slit_width, unit: arcsec, datatype: float64}
     # - {name: slit_length, unit: arcsec, datatype: float64}
-    # - {name: slit_angle, unit: degree, datatype: float64}
     # - {name: pix_scale, datatype: float64}
     id ra dec spectrum2d spectrum1d cutout slit_width slit_length pix_scale
     deimos_12004808 214.21968 52.410386 Spectra/slit.1153.151R.fits.gz Spectra/spec1d.1153.151.12004808.fits Cutouts/12004808.acs.v_6ac_.fits 0.2 3.3 0.0 0.66

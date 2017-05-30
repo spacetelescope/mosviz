@@ -23,8 +23,7 @@ from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy import units as u
 from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
-
-from regions import RectangleSkyRegion
+from astropy.wcs.utils import proj_plane_pixel_area
 
 
 try:
@@ -451,20 +450,19 @@ class MOSVizViewer(DataViewer):
 
             ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
             dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
-            slit_width = row[self.catalog.meta["special_columns"]["slit_width"]] * u.arcsec
-            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]] * u.arcsec
-            if 'slit_angle' in self.catalog.meta["special_columns"]:
-                slit_angle = 0. * u.degree
-            else:
-                slit_angle = row[self.catalog.meta["special_columns"]["slit_angle"]] * u.degree
+            slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
+            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
 
             skycoord = SkyCoord(ra, dec)
+            xp, yp = skycoord.to_pixel(wcs)
 
-            slit_sky = RectangleSkyRegion(skycoord, width=slit_width,
-                                          height=slit_length, angle=slit_angle)
-            slit_pixel = slit_sky.to_pixel(wcs)
+            scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
 
-            self.image_widget.draw_region(slit_pixel)
+            dx = slit_width / scale
+            dy = slit_length / scale
+
+            self.image_widget.draw_rectangle(x=xp, y=yp,
+                                             width=dx, height=dy)
 
             self.image_widget._redraw()
 

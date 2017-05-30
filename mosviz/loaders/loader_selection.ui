@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>446</width>
-    <height>554</height>
+    <width>452</width>
+    <height>550</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,22 +16,6 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="1">
-      <widget class="QLabel" name="label_5">
-       <property name="font">
-        <font>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Column</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0" colspan="3">
       <widget class="QLabel" name="label">
        <property name="sizePolicy">
@@ -57,43 +41,8 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
-      <widget class="QComboBox" name="combotext_slit_width"/>
-     </item>
-     <item row="9" column="0">
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>Right Ascension</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
-      <widget class="QComboBox" name="combotext_loader_spectrum1d"/>
-     </item>
-     <item row="5" column="2">
-      <widget class="QComboBox" name="combotext_loader_cutout"/>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Image Cutouts</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="combotext_spectrum1d"/>
-     </item>
-     <item row="13" column="1">
-      <widget class="QComboBox" name="combotext_slit_angle"/>
-     </item>
-     <item row="1" column="0" colspan="3">
-      <widget class="Line" name="line">
+     <item row="7" column="0" colspan="3">
+      <widget class="Line" name="line_3">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -118,31 +67,18 @@
      <item row="12" column="1">
       <widget class="QComboBox" name="combotext_slit_length"/>
      </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_3">
+     <item row="5" column="2">
+      <widget class="QComboBox" name="combotext_loader_cutout"/>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_9">
        <property name="text">
-        <string>2D Spectra</string>
+        <string>Declination</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QComboBox" name="combotext_spectrum2d"/>
-     </item>
-     <item row="7" column="0" colspan="3">
-      <widget class="Line" name="line_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QComboBox" name="combotext_cutout"/>
-     </item>
-     <item row="4" column="2">
-      <widget class="QComboBox" name="combotext_loader_spectrum2d"/>
      </item>
      <item row="8" column="1">
       <widget class="QLabel" name="label_7">
@@ -160,10 +96,71 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="label_9">
+     <item row="1" column="0" colspan="3">
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QComboBox" name="combotext_loader_spectrum2d"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Declination</string>
+        <string>2D Spectra</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Right Ascension</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="combotext_spectrum2d"/>
+     </item>
+     <item row="9" column="1">
+      <widget class="QComboBox" name="combotext_slit_ra"/>
+     </item>
+     <item row="5" column="1">
+      <widget class="QComboBox" name="combotext_cutout"/>
+     </item>
+     <item row="11" column="1">
+      <widget class="QComboBox" name="combotext_slit_width"/>
+     </item>
+     <item row="3" column="2">
+      <widget class="QComboBox" name="combotext_loader_spectrum1d"/>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLabel" name="label_5">
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Column</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Image Cutouts</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -180,8 +177,8 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
-      <widget class="QComboBox" name="combotext_slit_dec"/>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="combotext_spectrum1d"/>
      </item>
      <item row="11" column="0">
       <widget class="QLabel" name="label_10">
@@ -193,15 +190,8 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
-      <widget class="QLabel" name="label_12">
-       <property name="text">
-        <string>Position Angle</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
+     <item row="10" column="1">
+      <widget class="QComboBox" name="combotext_slit_dec"/>
      </item>
      <item row="12" column="0">
       <widget class="QLabel" name="label_11">
@@ -213,13 +203,13 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
-      <widget class="QComboBox" name="combotext_slit_ra"/>
-     </item>
-     <item row="13" column="2">
-      <widget class="QCheckBox" name="bool_slit_north_aligned">
+     <item row="13" column="0" colspan="3">
+      <widget class="QLabel" name="label_12">
        <property name="text">
-        <string>North-aligned</string>
+        <string>Note that the slit is assumed to be aligned with the y-axis of the cutouts</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>

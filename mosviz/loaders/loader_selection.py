@@ -32,8 +32,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                {'property': 'slit_width', 'default': 'slit_width',
                 'categorical': False, 'numeric': True},
                {'property': 'slit_length', 'default': 'slit_length',
-                'categorical': False, 'numeric': True},
-               {'property': 'slit_angle', 'default': 'slit_angle',
                 'categorical': False, 'numeric': True}]
 
     loader_spectrum1d = CallbackProperty()
@@ -48,7 +46,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
     slit_dec = CallbackProperty()
     slit_width = CallbackProperty()
     slit_length = CallbackProperty()
-    slit_angle = CallbackProperty()
 
     slit_north_aligned = CallbackProperty()
 
@@ -131,12 +128,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         self.data = data
 
-        self.add_callback('slit_north_aligned', self._toggle_slit_angle_combo)
-        self._toggle_slit_angle_combo()
-
-    def _toggle_slit_angle_combo(self, *args):
-        self.ui.combotext_slit_angle.setEnabled(not self.slit_north_aligned)
-
     def accept(self):
 
         if 'loaders' not in self.data.meta:
@@ -150,8 +141,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             self.data.meta['special_columns'] = {}
 
         for column in self.columns:
-            if self.slit_north_aligned and column == 'slit_north_aligned':
-                continue
             self.data.meta['special_columns'][column['property']] = getattr(self, column['property'])
 
         self.data.meta['loaders_confirmed'] = True
@@ -181,7 +170,6 @@ if __name__ == "__main__":
     d['dec'] = [1, 2, 2]
     d['slit_width'] = [1, 2, 2]
     d['slit_length'] = [1, 2, 2]
-    d['slit_angle'] = [1, 2, 2]
 
     print(confirm_loaders_and_column_names(d))
     print(confirm_loaders_and_column_names(d))
