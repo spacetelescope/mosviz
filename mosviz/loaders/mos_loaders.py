@@ -14,7 +14,36 @@ __all__ = ['nirspec_spectrum1d_reader',
            'deimos_spectrum2D_reader',
            'acs_cutout_image_reader']
 
-@data_factory('NIRSpec 1D Spectrum')
+SPECTRUM1D_LOADERS = {}
+SPECTRUM2D_LOADERS = {}
+CUTOUT_LOADERS = {}
+
+
+def mosviz_spectrum1d_loader(label, *args, **kwargs):
+    adder = data_factory(label, *args, **kwargs)
+    def wrapper(func):
+        SPECTRUM1D_LOADERS[label] = func
+        return adder(func)
+    return wrapper
+
+
+def mosviz_spectrum2d_loader(label, *args, **kwargs):
+    adder = data_factory(label, *args, **kwargs)
+    def wrapper(func):
+        SPECTRUM2D_LOADERS[label] = func
+        return adder(func)
+    return wrapper
+
+
+def mosviz_cutout_loader(label, *args, **kwargs):
+    adder = data_factory(label, *args, **kwargs)
+    def wrapper(func):
+        CUTOUT_LOADERS[label] = func
+        return adder(func)
+    return wrapper
+
+
+@mosviz_spectrum1d_loader('NIRSpec 1D Spectrum')
 def nirspec_spectrum1d_reader(file_name):
     """
     Data loader for MOSViz 1D spectrum.
@@ -31,8 +60,8 @@ def nirspec_spectrum1d_reader(file_name):
     # make wavelength a seperate component in addition to coordinate
     # so you can plot it on the x axis
     wavelength = np.linspace(hdulist['DATA'].header['CRVAL1'],
-        hdulist['DATA'].header['CRVAL1']*hdulist['DATA'].header['CDELT1'],
-        hdulist['DATA'].header['NAXIS1'])[::-1]
+                             hdulist['DATA'].header['CRVAL1'] * hdulist['DATA'].header['CDELT1'],
+                             hdulist['DATA'].header['NAXIS1'])[::-1]
 
     data = Data(label='1D Spectrum')
     data.header = hdulist['DATA'].header
@@ -43,7 +72,7 @@ def nirspec_spectrum1d_reader(file_name):
     return data
 
 
-@data_factory('NIRSpec 2D Spectrum')
+@mosviz_spectrum2d_loader('NIRSpec 2D Spectrum')
 def nirspec_spectrum2d_reader(file_name):
     """
     Data loader for simulated NIRSpec 2D spectrum.
@@ -65,7 +94,7 @@ def nirspec_spectrum2d_reader(file_name):
     return data
 
 
-@data_factory('NIRCam Image')
+@mosviz_cutout_loader('NIRCam Image')
 def nircam_image_reader(file_name):
     """
     Data loader for simulated NIRCam image. This is for the
@@ -100,14 +129,18 @@ def nircam_image_reader(file_name):
     wcs = WCS(hdulist[0].header)
 
     # drop the last axis since the cube will be split
-    data.coords = coordinates_from_wcs(wcs.sub(2))
-    data.add_component(hdulist[0].data[0], 'Flux')
-    data.add_component(hdulist[0].data[1], 'Uncertainty')
+    data.coords = coordinates_from_wcs(wcs)
+    data.add_component(hdulist[0].data, 'Flux')
+    data.add_component(hdulist[0].data / 100, 'Uncertainty')
+
+    print(data)
+
+    print('-' * 72)
 
     return data
 
 
-@data_factory('DEIMOS 1D Spectrum')
+@mosviz_spectrum1d_loader('DEIMOS 1D Spectrum')
 def deimos_spectrum1D_reader(file_name):
     """
     Data loader for Keck/DEIMOS 1D spectra.
@@ -129,12 +162,12 @@ def deimos_spectrum1D_reader(file_name):
 
     data.add_component(full_wl, 'Wavelength')
     data.add_component(full_spec, 'Flux')
-    data.add_component(1/np.sqrt(full_ivar), 'Uncertainty')
+    data.add_component(1 / np.sqrt(full_ivar), 'Uncertainty')
 
     return data
 
 
-@data_factory('DEIMOS 2D Spectrum')
+@mosviz_spectrum2d_loader('DEIMOS 2D Spectrum')
 def deimos_spectrum2D_reader(file_name):
     """
     Data loader for Keck/DEIMOS 2D spectra.
@@ -152,11 +185,11 @@ def deimos_spectrum2D_reader(file_name):
     data.coords = coordinates_from_wcs(wcs)
     data.header = hdulist[1].header
     data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
-    data.add_component(1/np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
+    data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
     return data
 
 
-@data_factory('Cutout Image')
+@mosviz_cutout_loader('ACS Cutout Image')
 def acs_cutout_image_reader(file_name):
     """
     Data loader for the ACS cut-outs for the DEIMOS spectra.

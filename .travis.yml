@@ -51,12 +51,10 @@ matrix:
         #- python: 2.7
         #  env: SETUP_CMD='test --coverage'
 
-        # NOTE: DISABLED THIS BECAUSE AUTO-CREATING NOTEBOOKS IN DOC
-        #       IS HARD TO DO ON TRAVIS CI. WE HAVE RTD SET UP ANYWAY.
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
-        #- python: 2.7
-        #  env: SETUP_CMD='build_sphinx -w'
+        - python: 2.7
+          env: SETUP_CMD='build_sphinx -w'
 
         # Try Astropy development version
         #- python: 2.7
@@ -88,6 +86,8 @@ install:
     # well as at the start of the install section or in the before_install
     # section if they are needed before setting up conda) to install any
     # other dependencies.
+
+    - if [[ $SETUP_CMD == build_sphinx* ]]; then conda install sphinx sphinx_rtd_theme; fi
 
 script:
    - python setup.py $SETUP_CMD

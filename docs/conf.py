@@ -164,3 +164,49 @@ if eval(setup_cfg.get('edit_on_github')):
 
     edit_on_github_source_root = ""
     edit_on_github_doc_root = "docs"
+
+
+intersphinx_mapping['glue'] = ('https://glueviz.readthedocs.org/en/latest', None)
+
+# Enable nitpicky mode - which ensures that all references in the docs
+# resolve.
+
+nitpicky = True
+nitpick_ignore = [('py:class', 'object'), ('py:class', 'str'),
+                  ('py:class', 'list'), ('py:obj', 'numpy array'),
+                  ('py:obj', 'integer'), ('py:obj', 'Callable'),
+                  ('py:class', 'PySide.QtGui.QMainWindow'),
+                  ('py:class', 'PySide.QtGui.QWidget'),
+                  ('py:class', 'PyQt4.QtGui.QMainWindow'),
+                  ('py:class', 'PyQt4.QtGui.QWidget'),
+                  ('py:class', 'PyQt4.QtGui.QTextEdit'),
+                  ('py:class', 'PyQt4.QtGui.QTabBar'),
+                  ('py:class', 'PyQt4.QtGui.QLabel'),
+                  ('py:class', 'PyQt4.QtGui.QComboBox'),
+                  ('py:class', 'PyQt4.QtGui.QMessageBox'),
+                  ('py:class', 'PyQt4.QtGui.QToolBar'),
+                  ('py:class', 'PyQt4.QtCore.QMimeData'),
+                  ('py:class', 'PyQt4.QtCore.QAbstractListModel'),
+                  ('py:class', 'PyQt4.QtCore.QThread'),
+                  ('py:class', 'PyQt4.QtGui.QStyledItemDelegate'),
+                  ('py:class', 'PyQt5.QtWidgets.QMainWindow'),
+                  ('py:class', 'PyQt5.QtWidgets.QWidget'),
+                  ('py:class', 'PyQt5.QtWidgets.QTextEdit'),
+                  ('py:class', 'PyQt5.QtWidgets.QTabBar'),
+                  ('py:class', 'PyQt5.QtWidgets.QLabel'),
+                  ('py:class', 'PyQt5.QtWidgets.QComboBox'),
+                  ('py:class', 'PyQt5.QtWidgets.QMessageBox'),
+                  ('py:class', 'PyQt5.QtWidgets.QToolBar'),
+                  ('py:class', 'PyQt5.QtWidgets.QStyledItemDelegate'),
+                  ('py:class', 'PyQt5.QtCore.QMimeData'),
+                  ('py:class', 'PyQt5.QtCore.QAbstractListModel'),
+                  ('py:class', 'PyQt5.QtCore.QThread'),
+                  ('py:class', 'PyQt5.QtCore.QObject'),
+                  ('py:class', 'PyQt5.QtGui.QPaintDevice'),
+                  ('py:class', 'builtins.object'),
+                  ('py:class', 'builtins.list'),
+                  ('py:class', 'builtins.type'),
+                  ('py:class', 'sip.wrapper'),
+                  ('py:class', 'sip.simplewrapper'),
+              ]
+

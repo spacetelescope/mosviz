@@ -49,7 +49,7 @@ install::
     $ cd mosviz
     $ python setup.py install
 
-Or, have the `pip` package manager do everything for you::
+Or, have the `pip <http://pip.pypa.org>`_ package manager do everything for you::
 
     $ pip install git+https://github.com/spacetelescope/mosviz.git
 
