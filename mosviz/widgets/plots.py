@@ -80,27 +80,6 @@ class MOSImageWidget(StandaloneImageWidget):
     def __init__(self, *args, **kwargs):
         super(MOSImageWidget, self).__init__(*args, **kwargs)
 
-    def set_image(self, image=None, wcs=None, header=None, **kwargs):
-        super(MOSImageWidget, self).set_image(image, wcs, **kwargs)
-
-        if header is not None:
-            hwcs = WCS(header)
-
-            # Try to reference the spectral axis
-            hwcs_spec = hwcs.sub([WCSSUB_SPECTRAL])
-
-            # Check to see if it actually is a real coordinate description
-            if hwcs_spec.naxis == 0:
-                # It's not real, so attempt to get the spectral axis by
-                # specifying axis by integer
-                hwcs_spec = hwcs.sub([hwcs.naxis])
-
-            # Construct the dispersion array
-            dispersion = hwcs_spec.all_pix2world(
-                np.arange(image.shape[0]), 0)[0]
-
-            self.axes.set_xticklabels(["{}".format(x) for x in dispersion])
-
     def set_status(self, status):
         pass
 

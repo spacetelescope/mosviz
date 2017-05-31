@@ -78,12 +78,12 @@ class MOSViewerToolbar(BasicToolbar):
         self.settings_menu = QMenu(self)
 
         # Add lock x axis action
-        self.lock_x_action = QAction("Lock X Axis",
+        self.lock_x_action = QAction("Lock spectral axis",
                                      self.settings_menu)
         self.lock_x_action.setCheckable(True)
 
         # Add lock y axis action
-        self.lock_y_action = QAction("Lock Y Axis",
+        self.lock_y_action = QAction("Lock vertical displacement axis",
                                      self.settings_menu)
         self.lock_y_action.setCheckable(True)
 
