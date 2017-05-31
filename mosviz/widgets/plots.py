@@ -16,6 +16,7 @@ import numpy as np
 from astropy.wcs import WCS, WCSSUB_SPECTRAL
 
 from matplotlib import rcParams
+from matplotlib.patches import Rectangle
 # rcParams.update({'figure.autolayout': True})
 
 __all__ = ['Line1DWidget', 'ShareableAxesImageWidget',
@@ -138,6 +139,10 @@ class DrawableImageWidget(MOSImageWidget):
         super(DrawableImageWidget, self).__init__(*args, **kwargs)
         self._slit_patch = None
 
-    def draw_shapes(self, x=0, y=0, width=100, length=100):
-        self._slit_patch = plt.Rectangle((x-length, y-width), width, length, fc='r')
-        # self.axes.add_patch(self._slit_patch)
+    def draw_rectangle(self, x=None, y=None, width=None, height=None):
+        if self._slit_patch is not None:
+            self._slit_patch.remove()
+        self._slit_patch = Rectangle((x - width / 2, y - height / 2),
+                                     width=width, height=height,
+                                     edgecolor='red', facecolor='none')
+        self._axes.add_patch(self._slit_patch)

@@ -20,8 +20,10 @@ from specutils.core.generic import Spectrum1DRef
 
 from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
-from astropy.units import Unit
+from astropy import units as u
 from astropy.wcs import WCS
+from astropy.coordinates import SkyCoord
+from astropy.wcs.utils import proj_plane_pixel_area
 
 
 try:
@@ -407,15 +409,15 @@ class MOSVizViewer(DataViewer):
             try:
                 flux_unit = spec1d_data.header.get('BUNIT', 'Jy').lower()
                 flux_unit = flux_unit.replace('counts', 'count')
-                flux_unit = Unit(flux_unit)
+                flux_unit = u.Unit(flux_unit)
             except ValueError:
-                flux_unit = Unit("Jy")
+                flux_unit = u.Unit("Jy")
 
             try:
                 disp_unit = spec1d_data.header.get('CUNIT1', 'Angstrom').lower()
-                disp_unit = Unit(disp_unit)
+                disp_unit = u.Unit(disp_unit)
             except ValueError:
-                disp_unit = Unit("Angstrom")
+                disp_unit = u.Unit("Angstrom")
 
             self.spectrum1d_widget.axes.set_xlabel("Wavelength [{}]".format(disp_unit))
             self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
@@ -438,16 +440,29 @@ class MOSVizViewer(DataViewer):
             wcs = image_data.coords.wcs
 
             self.image_widget.set_image(
-                image_data.get_component(
-                    image_data.id['Flux']).data, wcs=wcs,
-                interpolation='none')
+                image_data.get_component(image_data.id['Flux']).data, wcs=wcs,
+                                         interpolation='none')
 
             self.image_widget.axes.set_xlabel("Spatial X")
             self.image_widget.axes.set_ylabel("Spatial Y")
 
             # Add the slit patch to the plot
-            self.image_widget.draw_shapes(width=row['slit_width'],
-                                          length=row['slit_length'])
+
+            ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
+            dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
+            slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
+            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
+
+            skycoord = SkyCoord(ra, dec, frame='fk5')
+            xp, yp = skycoord.to_pixel(wcs)
+
+            scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
+
+            dx = slit_width / scale
+            dy = slit_length / scale
+
+            self.image_widget.draw_rectangle(x=xp, y=yp,
+                                             width=dx, height=dy)
 
             self.image_widget._redraw()
 

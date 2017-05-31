@@ -32,8 +32,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                {'property': 'slit_width', 'default': 'slit_width',
                 'categorical': False, 'numeric': True},
                {'property': 'slit_length', 'default': 'slit_length',
-                'categorical': False, 'numeric': True},
-               {'property': 'slit_angle', 'default': 'slit_angle',
                 'categorical': False, 'numeric': True}]
 
     loader_spectrum1d = CallbackProperty()
@@ -48,7 +46,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
     slit_dec = CallbackProperty()
     slit_width = CallbackProperty()
     slit_length = CallbackProperty()
-    slit_angle = CallbackProperty()
+
+    slit_north_aligned = CallbackProperty()
 
     def __init__(self, parent=None, data=None):
 
@@ -171,7 +170,6 @@ if __name__ == "__main__":
     d['dec'] = [1, 2, 2]
     d['slit_width'] = [1, 2, 2]
     d['slit_length'] = [1, 2, 2]
-    d['slit_angle'] = [1, 2, 2]
 
     print(confirm_loaders_and_column_names(d))
     print(confirm_loaders_and_column_names(d))
