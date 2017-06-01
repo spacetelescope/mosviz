@@ -1,15 +1,19 @@
+from __future__ import print_function, division, absolute_import
+
 import os
 
 from glue.viewers.common.qt.toolbar import BasicToolbar
-from glue.viewers.common.qt.tool import CheckableTool, Tool
+from glue.viewers.common.qt.tool import Tool
 
-from qtpy.QtWidgets import QAction, QComboBox, QSpacerItem, QMenu, QToolButton, QWidgetAction
+from qtpy.QtWidgets import QAction, QComboBox, QMenu, QToolButton, QWidgetAction
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Qt
 
 __all__ = ['CyclePreviousTool', 'CycleForwardTool', 'MOSViewerToolbar']
 
+
 class CyclePreviousTool(Tool):
+
     def __init__(self, viewer, toolbar=None):
         super(CyclePreviousTool, self).__init__(viewer=viewer)
         self.tool_id = 'mv:previous'
@@ -24,6 +28,7 @@ class CyclePreviousTool(Tool):
 
 
 class CycleForwardTool(Tool):
+
     def __init__(self, viewer, toolbar=None):
         super(CycleForwardTool, self).__init__(viewer=viewer)
         self.tool_id = 'mv:next'
@@ -78,12 +83,12 @@ class MOSViewerToolbar(BasicToolbar):
         self.settings_menu = QMenu(self)
 
         # Add lock x axis action
-        self.lock_x_action = QAction("Lock X Axis",
+        self.lock_x_action = QAction("Lock spectral axis",
                                      self.settings_menu)
         self.lock_x_action.setCheckable(True)
 
         # Add lock y axis action
-        self.lock_y_action = QAction("Lock Y Axis",
+        self.lock_y_action = QAction("Lock vertical displacement axis",
                                      self.settings_menu)
         self.lock_y_action.setCheckable(True)
 

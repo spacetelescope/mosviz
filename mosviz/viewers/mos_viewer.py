@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 import os
 
 import numpy as np
@@ -5,16 +7,11 @@ from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QLineEdit
 from qtpy.uic import loadUi
 
-from ..widgets.toolbars import MOSViewerToolbar
-from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImageWidget
-from ..loaders.loader_selection import confirm_loaders_and_column_names
-from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
-from ..widgets.viewer_options import OptionsWidget
-
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
 from glue.viewers.common.qt.data_viewer import DataViewer
+from glue.utils.matplotlib import defer_draw
 
 from specutils.core.generic import Spectrum1DRef
 
@@ -25,11 +22,17 @@ from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import proj_plane_pixel_area
 
-
 try:
     from specviz.external.glue.data_viewer import SpecVizViewer
 except ImportError:
     SpecVizViewer = None
+
+from ..widgets.toolbars import MOSViewerToolbar
+from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
+from ..loaders.loader_selection import confirm_loaders_and_column_names
+from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
+from ..widgets.viewer_options import OptionsWidget
+from ..widgets.share_axis import SharedAxisHelper
 
 __all__ = ['MOSVizViewer']
 
@@ -61,8 +64,22 @@ class MOSVizViewer(DataViewer):
         loadUi(path, self.central_widget)
 
         self.image_widget = DrawableImageWidget()
-        self.spectrum2d_widget = ShareableAxesImageWidget()
+        self.spectrum2d_widget = MOSImageWidget()
         self.spectrum1d_widget = Line1DWidget()
+
+        # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
+        # and we control the sharing later by setting .sharex and .sharey on the
+        # helper
+        self.spectrum2d_spectrum1d_share = SharedAxisHelper(self.spectrum2d_widget._axes,
+                                                            self.spectrum1d_widget._axes)
+        self.spectrum2d_image_share = SharedAxisHelper(self.spectrum2d_widget._axes,
+                                                       self.image_widget._axes)
+
+        # We only need to set the image widget to keep the same aspect ratio
+        # since the two other viewers don't require square pixels, so the axes
+        # should not change shape.
+        self.image_widget._axes.set_adjustable('datalim')
+
         self.meta_form_layout = self.central_widget.meta_form_layout
 
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
@@ -400,10 +417,14 @@ class MOSVizViewer(DataViewer):
         MOSViz viewer.
         """
         if spec1d_data is not None:
-            self.spectrum1d_widget.set_data(
-                x=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
-                y=spec1d_data.get_component(spec1d_data.id['Flux']).data,
-                yerr=spec1d_data.get_component(spec1d_data.id['Uncertainty']).data)
+
+            spectrum1d_x = spec1d_data[spec1d_data.id['Wavelength']]
+            spectrum1d_y = spec1d_data[spec1d_data.id['Flux']]
+            spectrum1d_yerr = spec1d_data[spec1d_data.id['Uncertainty']]
+
+            self.spectrum1d_widget.set_data(x=spectrum1d_x,
+                                            y=spectrum1d_y,
+                                            yerr=spectrum1d_yerr)
 
             # Try to retrieve the wcs information
             try:
@@ -422,26 +443,12 @@ class MOSVizViewer(DataViewer):
             self.spectrum1d_widget.axes.set_xlabel("Wavelength [{}]".format(disp_unit))
             self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
 
-        if spec2d_data is not None:
-            wcs = spec2d_data.coords.wcs
-
-            self.spectrum2d_widget.set_image(
-                image=spec2d_data.get_component(
-                    spec2d_data.id['Flux']).data,
-                wcs=wcs, interpolation='none', aspect='auto',
-                header=spec2d_data.header)
-
-            self.spectrum2d_widget.axes.set_xlabel("Wavelength")
-            self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
-
-            self.spectrum2d_widget._redraw()
-
         if image_data is not None:
             wcs = image_data.coords.wcs
 
             self.image_widget.set_image(
                 image_data.get_component(image_data.id['Flux']).data, wcs=wcs,
-                                         interpolation='none')
+                                         interpolation='none', origin='lower')
 
             self.image_widget.axes.set_xlabel("Spatial X")
             self.image_widget.axes.set_ylabel("Spatial Y")
@@ -466,6 +473,39 @@ class MOSVizViewer(DataViewer):
 
             self.image_widget._redraw()
 
+        # Plot the 2D spectrum data last because by then we can make sure that
+        # we set up the extent of the image appropriately if the cutout and the
+        # 1D spectrum are present so that the axes can be locked.
+
+        if spec2d_data is not None:
+            wcs = spec2d_data.coords.wcs
+
+            xp2d = np.arange(spec2d_data.shape[1])
+            yp2d = np.repeat(0, spec2d_data.shape[1])
+            spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
+            x_min = spectrum2d_disp.min()
+            x_max = spectrum2d_disp.max()
+
+            if image_data is None:
+                y_min = -0.5
+                y_max = spec2d_data.shape[0] - 0.5
+            else:
+                y_min = yp - dy / 2.
+                y_max = yp + dy / 2.
+
+            extent = [x_min, x_max, y_min, y_max]
+
+            self.spectrum2d_widget.set_image(
+                image=spec2d_data.get_component(
+                    spec2d_data.id['Flux']).data,
+                interpolation='none', aspect='auto',
+                extent=extent, origin='lower')
+
+            self.spectrum2d_widget.axes.set_xlabel("Wavelength")
+            self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
+
+            self.spectrum2d_widget._redraw()
+
         # Clear the meta information widget
         # NOTE: this process is inefficient
         for i in range(self.meta_form_layout.count()):
@@ -486,14 +526,22 @@ class MOSVizViewer(DataViewer):
 
             self.meta_form_layout.addRow(col, line_edit)
 
+    @defer_draw
     def set_locked_axes(self, x=None, y=None):
-        self.spectrum2d_widget.set_locked_axes(
-            sharex=self.spectrum1d_widget.axes if x else x,
-            sharey=self.image_widget.axes if y else y)
 
+        # Here we only change the setting if x or y are not None
+        # since if set_locked_axes is called with eg. x=True, then
+        # we shouldn't change the y setting.
+
+        if x is not None:
+            self.spectrum2d_spectrum1d_share.sharex = x
+
+        if y is not None:
+            self.spectrum2d_image_share.sharey = y
+
+        self.spectrum1d_widget._redraw()
         self.spectrum2d_widget._redraw()
         self.image_widget._redraw()
-        self.spectrum1d_widget._redraw()
 
     def closeEvent(self, event):
         """

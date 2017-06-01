@@ -1,11 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
+
+from astropy.io import fits
+from astropy.wcs import WCS
+
 from glue.config import data_factory
 from glue.core import Data
 from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
-from astropy.io import fits
-from astropy.wcs import WCS
-import numpy as np
 
 __all__ = ['nirspec_spectrum1d_reader',
            'nirspec_spectrum2d_reader',
@@ -20,26 +22,35 @@ CUTOUT_LOADERS = {}
 
 
 def mosviz_spectrum1d_loader(label, *args, **kwargs):
+
     adder = data_factory(label, *args, **kwargs)
+
     def wrapper(func):
         SPECTRUM1D_LOADERS[label] = func
         return adder(func)
+
     return wrapper
 
 
 def mosviz_spectrum2d_loader(label, *args, **kwargs):
+
     adder = data_factory(label, *args, **kwargs)
+
     def wrapper(func):
         SPECTRUM2D_LOADERS[label] = func
         return adder(func)
+
     return wrapper
 
 
 def mosviz_cutout_loader(label, *args, **kwargs):
+
     adder = data_factory(label, *args, **kwargs)
+
     def wrapper(func):
         CUTOUT_LOADERS[label] = func
         return adder(func)
+
     return wrapper
 
 

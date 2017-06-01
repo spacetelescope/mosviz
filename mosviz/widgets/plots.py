@@ -1,26 +1,21 @@
-from qtpy.QtWidgets import QMainWindow, QWidget
+from __future__ import print_function, division, absolute_import
+
+from qtpy.QtWidgets import QMainWindow
 from qtpy.QtCore import Signal
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.patches import Rectangle
 
 from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
-from glue.viewers.common.qt.toolbar import BasicToolbar
+
 try:
     from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
 except ImportError:
     from glue.viewers.matplotlib.qt.toolbar import MatplotlibViewerToolbar
 
-import numpy as np
-from astropy.wcs import WCS, WCSSUB_SPECTRAL
 
-from matplotlib import rcParams
-from matplotlib.patches import Rectangle
-# rcParams.update({'figure.autolayout': True})
-
-__all__ = ['Line1DWidget', 'ShareableAxesImageWidget',
-           'DrawableImageWidget', 'MOSImageWidget']
+__all__ = ['Line1DWidget', 'DrawableImageWidget', 'MOSImageWidget']
 
 
 class Line1DWidget(QMainWindow):
@@ -46,24 +41,28 @@ class Line1DWidget(QMainWindow):
         self.addToolBar(self.toolbar)
         self.setCentralWidget(self.central_widget)
 
-        self._axes = None
+        self._axes = self.figure.add_subplot(111)
+        self._artists = []
 
     @property
     def axes(self):
         return self._axes
 
     def set_data(self, x, y, yerr=None):
-        # Create an axis
-        self._axes = self.figure.add_subplot(111)
 
-        # Discards the old graph
-        self._axes.hold(False)
+        # Note: we can't use self._axes.cla() here since that removes events
+        # which will cause the locked axes to not work.
+        for artist in self._artists:
+            try:
+                artist.remove()
+            except ValueError:  # some artists may already not be in plot
+                pass
 
         # Plot data
         if yerr is None:
-            self._axes.plot(x, y)
+            self._artists = self._axes.plot(x, y, color='k')
         else:
-            self._axes.errorbar(x, y, yerr=yerr)
+            self._artists = [self._axes.errorbar(x, y, yerr=yerr, color='k')]
 
         # Refresh canvas
         self._redraw()
@@ -80,57 +79,8 @@ class MOSImageWidget(StandaloneImageWidget):
     def __init__(self, *args, **kwargs):
         super(MOSImageWidget, self).__init__(*args, **kwargs)
 
-    def set_image(self, image=None, wcs=None, header=None, **kwargs):
-        super(MOSImageWidget, self).set_image(image, wcs, **kwargs)
-
-        if header is not None:
-            hwcs = WCS(header)
-
-            # Try to reference the spectral axis
-            hwcs_spec = hwcs.sub([WCSSUB_SPECTRAL])
-
-            # Check to see if it actually is a real coordinate description
-            if hwcs_spec.naxis == 0:
-                # It's not real, so attempt to get the spectral axis by
-                # specifying axis by integer
-                hwcs_spec = hwcs.sub([hwcs.naxis])
-
-            # Construct the dispersion array
-            dispersion = hwcs_spec.all_pix2world(
-                np.arange(image.shape[0]), 0)[0]
-
-            self.axes.set_xticklabels(["{}".format(x) for x in dispersion])
-
     def set_status(self, status):
         pass
-
-class ShareableAxesImageWidget(MOSImageWidget):
-    def __init__(self, *args, **kwargs):
-        super(ShareableAxesImageWidget, self).__init__(*args, **kwargs)
-
-    def set_locked_axes(self, sharex=None, sharey=None):
-        if sharex is not None and sharex is not False:
-            self.axes._shared_x_axes.join(self.axes, sharex)
-            if sharex._adjustable == 'box':
-                sharex._adjustable = 'datalim'
-                #warnings.warn(
-                #    'shared axes: "adjustable" is being changed to "datalim"')
-            self._adjustable = 'datalim'
-        elif self._axes._sharex is not None and sharex is False:
-            self.axes._shared_x_axes.remove(self._axes._sharex)
-
-        if sharey is not None and sharey is not False:
-            self.axes._shared_y_axes.join(self.axes, sharey)
-            if sharey._adjustable == 'box':
-                sharey._adjustable = 'datalim'
-                #warnings.warn(
-                #    'shared axes: "adjustable" is being changed to "datalim"')
-            self._adjustable = 'datalim'
-        elif self._axes._sharey is not None and sharey is False:
-            self.axes._shared_y_axes.remove(self._axes._sharey)
-
-        self._axes._sharex = sharex
-        self._axes._sharey = sharey
 
 
 class DrawableImageWidget(MOSImageWidget):
