@@ -38,7 +38,7 @@ __all__ = ['MOSVizViewer']
 
 
 class MOSVizViewer(DataViewer):
-    LABEL = "MosViz Viewer"
+    LABEL = "MOSViz Viewer"
     window_closed = Signal()
     _toolbar_cls = MOSViewerToolbar
 
