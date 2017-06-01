@@ -1,16 +1,11 @@
+from __future__ import print_function, division, absolute_import
+
 import os
 
 import numpy as np
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QLineEdit
 from qtpy.uic import loadUi
-
-from ..widgets.toolbars import MOSViewerToolbar
-from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
-from ..loaders.loader_selection import confirm_loaders_and_column_names
-from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
-from ..widgets.viewer_options import OptionsWidget
-from ..widgets.share_axis import SharedAxisHelper
 
 from glue.core import message as msg
 from glue.core import Subset
@@ -27,11 +22,17 @@ from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import proj_plane_pixel_area
 
-
 try:
     from specviz.external.glue.data_viewer import SpecVizViewer
 except ImportError:
     SpecVizViewer = None
+
+from ..widgets.toolbars import MOSViewerToolbar
+from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
+from ..loaders.loader_selection import confirm_loaders_and_column_names
+from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
+from ..widgets.viewer_options import OptionsWidget
+from ..widgets.share_axis import SharedAxisHelper
 
 __all__ = ['MOSVizViewer']
 
@@ -500,7 +501,6 @@ class MOSVizViewer(DataViewer):
 
             self.spectrum2d_widget._redraw()
 
-
         # Clear the meta information widget
         # NOTE: this process is inefficient
         for i in range(self.meta_form_layout.count()):
@@ -527,8 +527,6 @@ class MOSVizViewer(DataViewer):
         # Here we only change the setting if x or y are not None
         # since if set_locked_axes is called with eg. x=True, then
         # we shouldn't change the y setting.
-
-        print('x, y', x, y)
 
         if x is not None:
             self.spectrum2d_spectrum1d_share.sharex = x

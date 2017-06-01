@@ -1,23 +1,19 @@
-from qtpy.QtWidgets import QMainWindow, QWidget
+from __future__ import print_function, division, absolute_import
+
+from qtpy.QtWidgets import QMainWindow
 from qtpy.QtCore import Signal
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.patches import Rectangle
 
 from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
-from glue.viewers.common.qt.toolbar import BasicToolbar
+
 try:
     from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
 except ImportError:
     from glue.viewers.matplotlib.qt.toolbar import MatplotlibViewerToolbar
 
-import numpy as np
-from astropy.wcs import WCS, WCSSUB_SPECTRAL
-
-from matplotlib import rcParams
-from matplotlib.patches import Rectangle
-# rcParams.update({'figure.autolayout': True})
 
 __all__ = ['Line1DWidget', 'DrawableImageWidget', 'MOSImageWidget']
 
