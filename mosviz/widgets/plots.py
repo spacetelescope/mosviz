@@ -19,8 +19,7 @@ from matplotlib import rcParams
 from matplotlib.patches import Rectangle
 # rcParams.update({'figure.autolayout': True})
 
-__all__ = ['Line1DWidget', 'ShareableAxesImageWidget',
-           'DrawableImageWidget', 'MOSImageWidget']
+__all__ = ['Line1DWidget', 'DrawableImageWidget', 'MOSImageWidget']
 
 
 class Line1DWidget(QMainWindow):
@@ -46,18 +45,15 @@ class Line1DWidget(QMainWindow):
         self.addToolBar(self.toolbar)
         self.setCentralWidget(self.central_widget)
 
-        self._axes = None
+        self._axes = self.figure.add_subplot(111)
 
     @property
     def axes(self):
         return self._axes
 
     def set_data(self, x, y, yerr=None):
-        # Create an axis
-        self._axes = self.figure.add_subplot(111)
 
-        # Discards the old graph
-        self._axes.hold(False)
+        self._axes.cla()
 
         # Plot data
         if yerr is None:
@@ -83,28 +79,6 @@ class MOSImageWidget(StandaloneImageWidget):
 
     def set_status(self, status):
         pass
-
-
-class ShareableAxesImageWidget(MOSImageWidget):
-
-    def set_locked_axes(self, sharex=None, sharey=None):
-
-        # Note that Matplotlib does not have a public API for making axes
-        # shareable after instantiation, so we need to access private attributes
-        # here. This is not ideal,
-
-        if sharex is not None and sharex is not False:
-            self.axes._shared_x_axes.join(self.axes, sharex)
-        elif self._axes._sharex is not None and sharex is False:
-            self.axes._shared_x_axes.remove(self._axes._sharex)
-
-        if sharey is not None and sharey is not False:
-            self.axes._shared_y_axes.join(self.axes, sharey)
-        elif self._axes._sharey is not None and sharey is False:
-            self.axes._shared_y_axes.remove(self._axes._sharey)
-
-        self._axes._sharex = sharex
-        self._axes._sharey = sharey
 
 
 class DrawableImageWidget(MOSImageWidget):

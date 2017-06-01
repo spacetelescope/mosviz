@@ -6,15 +6,17 @@ from qtpy.QtWidgets import QWidget, QLineEdit
 from qtpy.uic import loadUi
 
 from ..widgets.toolbars import MOSViewerToolbar
-from ..widgets.plots import Line1DWidget, ShareableAxesImageWidget, DrawableImageWidget
+from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
 from ..loaders.loader_selection import confirm_loaders_and_column_names
 from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
 from ..widgets.viewer_options import OptionsWidget
+from ..widgets.share_axis import SharedAxisHelper
 
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
 from glue.viewers.common.qt.data_viewer import DataViewer
+from glue.utils.matplotlib import defer_draw
 
 from specutils.core.generic import Spectrum1DRef
 
@@ -61,8 +63,17 @@ class MOSVizViewer(DataViewer):
         loadUi(path, self.central_widget)
 
         self.image_widget = DrawableImageWidget()
-        self.spectrum2d_widget = ShareableAxesImageWidget()
+        self.spectrum2d_widget = MOSImageWidget()
         self.spectrum1d_widget = Line1DWidget()
+
+        # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
+        # and we control the sharing later by setting .sharex and .sharey on the
+        # helper
+        self.spectrum2d_spectrum1d_share = SharedAxisHelper(self.spectrum2d_widget._axes,
+                                                            self.spectrum1d_widget._axes)
+        self.spectrum2d_image_share = SharedAxisHelper(self.spectrum2d_widget._axes,
+                                                       self.image_widget._axes)
+
         self.meta_form_layout = self.central_widget.meta_form_layout
 
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
@@ -510,14 +521,24 @@ class MOSVizViewer(DataViewer):
 
             self.meta_form_layout.addRow(col, line_edit)
 
+    @defer_draw
     def set_locked_axes(self, x=None, y=None):
-        self.spectrum2d_widget.set_locked_axes(
-            sharex=self.spectrum1d_widget.axes if x else x,
-            sharey=self.image_widget.axes if y else y)
 
+        # Here we only change the setting if x or y are not None
+        # since if set_locked_axes is called with eg. x=True, then
+        # we shouldn't change the y setting.
+
+        print('x, y', x, y)
+
+        if x is not None:
+            self.spectrum2d_spectrum1d_share.sharex = x
+
+        if y is not None:
+            self.spectrum2d_image_share.sharey = y
+
+        self.spectrum1d_widget._redraw()
         self.spectrum2d_widget._redraw()
         self.image_widget._redraw()
-        self.spectrum1d_widget._redraw()
 
     def closeEvent(self, event):
         """
