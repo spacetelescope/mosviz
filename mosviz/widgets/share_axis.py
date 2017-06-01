@@ -91,7 +91,10 @@ class SharedAxisHelper(object):
         # too with set_xlim_from_ylim so that the aspect ratio is correct. This
         # will hopefully be fixed in Matplotlib in future. In the mean time, we
         # apply this 'hack' to ylim only since this is what's needed here for
-        # MOSViz
+        # MOSViz. Hopefully, Matplotlib 2.1 will include adjustable='xlim' and
+        # adjustable='ylim' options that will mean this workaround is not
+        # needed, see https://github.com/matplotlib/matplotlib/pull/8700 for
+        # details.
         if self._sharey:
             if axes is self._axes1:
                 self._axes2.set_ylim(*self._axes1.get_ylim())
