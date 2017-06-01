@@ -79,32 +79,27 @@ class MOSImageWidget(StandaloneImageWidget):
 
     def __init__(self, *args, **kwargs):
         super(MOSImageWidget, self).__init__(*args, **kwargs)
+        self._axes.set_adjustable('datalim')
 
     def set_status(self, status):
         pass
 
+
 class ShareableAxesImageWidget(MOSImageWidget):
-    def __init__(self, *args, **kwargs):
-        super(ShareableAxesImageWidget, self).__init__(*args, **kwargs)
 
     def set_locked_axes(self, sharex=None, sharey=None):
+
+        # Note that Matplotlib does not have a public API for making axes
+        # shareable after instantiation, so we need to access private attributes
+        # here. This is not ideal,
+
         if sharex is not None and sharex is not False:
             self.axes._shared_x_axes.join(self.axes, sharex)
-            if sharex._adjustable == 'box':
-                sharex._adjustable = 'datalim'
-                #warnings.warn(
-                #    'shared axes: "adjustable" is being changed to "datalim"')
-            self._adjustable = 'datalim'
         elif self._axes._sharex is not None and sharex is False:
             self.axes._shared_x_axes.remove(self._axes._sharex)
 
         if sharey is not None and sharey is not False:
             self.axes._shared_y_axes.join(self.axes, sharey)
-            if sharey._adjustable == 'box':
-                sharey._adjustable = 'datalim'
-                #warnings.warn(
-                #    'shared axes: "adjustable" is being changed to "datalim"')
-            self._adjustable = 'datalim'
         elif self._axes._sharey is not None and sharey is False:
             self.axes._shared_y_axes.remove(self._axes._sharey)
 
