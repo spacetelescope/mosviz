@@ -75,6 +75,11 @@ class MOSVizViewer(DataViewer):
         self.spectrum2d_image_share = SharedAxisHelper(self.spectrum2d_widget._axes,
                                                        self.image_widget._axes)
 
+        # We only need to set the image widget to keep the same aspect ratio
+        # since the two other viewers don't require square pixels, so the axes
+        # should not change shape.
+        self.image_widget._axes.set_adjustable('datalim')
+
         self.meta_form_layout = self.central_widget.meta_form_layout
 
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)

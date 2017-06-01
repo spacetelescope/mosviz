@@ -42,6 +42,7 @@ class Line1DWidget(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self._axes = self.figure.add_subplot(111)
+        self._artists = []
 
     @property
     def axes(self):
@@ -49,13 +50,19 @@ class Line1DWidget(QMainWindow):
 
     def set_data(self, x, y, yerr=None):
 
-        self._axes.cla()
+        # Note: we can't use self._axes.cla() here since that removes events
+        # which will cause the locked axes to not work.
+        for artist in self._artists:
+            try:
+                artist.remove()
+            except ValueError:  # some artists may already not be in plot
+                pass
 
         # Plot data
         if yerr is None:
-            self._axes.plot(x, y)
+            self._artists = self._axes.plot(x, y, color='k')
         else:
-            self._axes.errorbar(x, y, yerr=yerr)
+            self._artists = [self._axes.errorbar(x, y, yerr=yerr, color='k')]
 
         # Refresh canvas
         self._redraw()
@@ -71,7 +78,6 @@ class MOSImageWidget(StandaloneImageWidget):
 
     def __init__(self, *args, **kwargs):
         super(MOSImageWidget, self).__init__(*args, **kwargs)
-        self._axes.set_adjustable('datalim')
 
     def set_status(self, status):
         pass
