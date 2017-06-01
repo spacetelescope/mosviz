@@ -8,7 +8,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 
 from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
-
+from glue.viewers.common.viz_client import init_mpl
 try:
     from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
 except ImportError:
@@ -41,7 +41,7 @@ class Line1DWidget(QMainWindow):
         self.addToolBar(self.toolbar)
         self.setCentralWidget(self.central_widget)
 
-        self._axes = self.figure.add_subplot(111)
+        _, self._axes = init_mpl(figure=self.figure)
         self._artists = []
 
     @property
