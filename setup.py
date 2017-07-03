@@ -116,7 +116,7 @@ setup(name=PACKAGENAME,
       install_requires=[
           'numpy',
           'astropy',
-          'specutils',
+          'specutils==0.2.2',
           'glueviz>=0.9.0,<=0.10.3',
           'matplotlib>=1.5.3'
       ],
