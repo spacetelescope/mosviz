@@ -78,6 +78,7 @@ package_info = get_package_info()
 package_info['package_data'].setdefault(PACKAGENAME, [])
 package_info['package_data'][PACKAGENAME].append('widgets/ui/*.ui')
 package_info['package_data'][PACKAGENAME].append('widgets/ui/icons/*.png')
+package_info['package_data'][PACKAGENAME].append('loaders/*.ui')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}
