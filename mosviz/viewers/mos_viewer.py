@@ -12,6 +12,7 @@ from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.matplotlib import defer_draw
+from glue.utils.decorators import avoid_circular
 
 from specutils.core.generic import Spectrum1DRef
 
@@ -38,7 +39,7 @@ __all__ = ['MOSVizViewer']
 
 
 class MOSVizViewer(DataViewer):
-    LABEL = "MosViz Viewer"
+    LABEL = "MOSViz Viewer"
     window_closed = Signal()
     _toolbar_cls = MOSViewerToolbar
 
@@ -96,11 +97,25 @@ class MOSVizViewer(DataViewer):
         self.central_widget.horizontal_splitter.setStretchFactor(0, 1)
         self.central_widget.horizontal_splitter.setStretchFactor(1, 2)
 
+        # Keep the left and right splitters in sync otherwise the axes don't line up
+        self.central_widget.left_vertical_splitter.splitterMoved.connect(self._left_splitter_moved)
+        self.central_widget.right_vertical_splitter.splitterMoved.connect(self._right_splitter_moved)
+
         # Set the central widget
         self.setCentralWidget(self.central_widget)
 
         # Define the options widget
         self._options_widget = OptionsWidget()
+
+    @avoid_circular
+    def _right_splitter_moved(self, *args, **kwargs):
+        sizes = self.central_widget.right_vertical_splitter.sizes()
+        self.central_widget.left_vertical_splitter.setSizes(sizes)
+
+    @avoid_circular
+    def _left_splitter_moved(self, *args, **kwargs):
+        sizes = self.central_widget.left_vertical_splitter.sizes()
+        self.central_widget.right_vertical_splitter.setSizes(sizes)
 
     def setup_connections(self):
         """
