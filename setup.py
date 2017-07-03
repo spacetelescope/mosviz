@@ -78,6 +78,7 @@ package_info = get_package_info()
 package_info['package_data'].setdefault(PACKAGENAME, [])
 package_info['package_data'][PACKAGENAME].append('widgets/ui/*.ui')
 package_info['package_data'][PACKAGENAME].append('widgets/ui/icons/*.png')
+package_info['package_data'][PACKAGENAME].append('loaders/*.ui')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}
@@ -115,7 +116,7 @@ setup(name=PACKAGENAME,
       install_requires=[
           'numpy',
           'astropy',
-          'specutils',
+          'specutils==0.2.2',
           'glueviz>=0.9.0,<=0.10.3',
           'matplotlib>=1.5.3'
       ],
