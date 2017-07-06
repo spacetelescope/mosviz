@@ -18,12 +18,14 @@ if not _ASTROPY_SETUP_:
 def setup():
     from .viewers.mos_viewer import MOSVizViewer
     from glue.config import qt_client
+
     qt_client.add(MOSVizViewer)
 
 
-# Store the root directory of the package
+# Store package path information
 import os
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Store the qt designer ui path
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 UI_DIR = os.path.join(ROOT_DIR, "data", "ui")
+ICON_DIR = os.path.join(ROOT_DIR, "data", "ui", "icons")
+

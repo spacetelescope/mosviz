@@ -9,6 +9,8 @@ from qtpy.QtWidgets import QAction, QComboBox, QMenu, QToolButton, QWidgetAction
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import Qt
 
+from .. import ICON_DIR
+
 __all__ = ['CyclePreviousTool', 'CycleForwardTool', 'MOSViewerToolbar']
 
 
@@ -47,10 +49,6 @@ class MOSViewerToolbar(BasicToolbar):
         super(MOSViewerToolbar, self).__init__(*args, **kwargs)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
-        # Define icon path
-        icon_path = os.path.join(os.path.dirname(__file__),
-                                 'ui', 'icons')
-
         # Define the toolbar actions
         self.cycle_previous_action = QAction(
             QIcon(os.path.join(icon_path, "Previous-96.png")),
@@ -69,13 +67,13 @@ class MOSViewerToolbar(BasicToolbar):
 
         # Include a button to open spectrum in specviz
         self.open_specviz = QAction(
-            QIcon(os.path.join(icon_path, "External-96.png")),
+            QIcon(os.path.join(ICON_DIR, "External-96.png")),
             "Open in SpecViz", self)
 
         # Create a tool button to hold the lock axes menu object
         tool_button = QToolButton(self)
         tool_button.setText("Axes Settings")
-        tool_button.setIcon(QIcon(os.path.join(icon_path, "Settings-96.png")))
+        tool_button.setIcon(QIcon(os.path.join(ICON_DIR, "Settings-96.png")))
         tool_button.setPopupMode(QToolButton.MenuButtonPopup)
         tool_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
