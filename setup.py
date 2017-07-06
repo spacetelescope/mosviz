@@ -117,7 +117,7 @@ setup(name=PACKAGENAME,
           'numpy',
           'astropy',
           'specutils==0.2.2',
-          'glueviz>=0.9.0,<=0.10.3',
+          'glueviz>=0.9.0',
           'matplotlib>=1.5.3'
       ],
       author=AUTHOR,
