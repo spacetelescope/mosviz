@@ -208,5 +208,6 @@ nitpick_ignore = [('py:class', 'object'), ('py:class', 'str'),
                   ('py:class', 'builtins.type'),
                   ('py:class', 'sip.wrapper'),
                   ('py:class', 'sip.simplewrapper'),
+                  ('py:class', 'glue.viewers.image.qt.viewer_widget.StandaloneImageWidget'),
               ]
 
