@@ -47,10 +47,14 @@ try:
 except ImportError:
     from configparser import ConfigParser
 conf = ConfigParser()
+
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
 # -- General configuration ----------------------------------------------------
+
+# By default, highlight as Python 3.
+highlight_language = 'python3'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.2'
@@ -80,18 +84,16 @@ copyright = '{0}, {1}'.format(
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-#__import__(setup_cfg['package_name'])
-#package = sys.modules[setup_cfg['package_name']]
+__import__(setup_cfg['package_name'])
+package = sys.modules[setup_cfg['package_name']]
 
 # The short X.Y version.
-#version = package.__version__.split('-', 1)[0]
+version = package.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
-#release = package.__version__
+release = package.__version__
 
-version = 'unknown'
-release = 'unknown'
 
-# -- Options for HTML output ---------------------------------------------------
+# -- Options for HTML output --------------------------------------------------
 
 # A NOTE ON HTML THEMES
 # The global astropy configuration uses a custom theme, 'bootstrap-astropy',
@@ -100,6 +102,7 @@ release = 'unknown'
 # variables set in the global configuration. The variables set in the
 # global configuration are listed below, commented out.
 
+
 # Add any paths that contain custom themes here, relative to this directory.
 # To use a different custom theme, add the directory containing the theme.
 #html_theme_path = []
@@ -107,15 +110,18 @@ release = 'unknown'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes. To override the custom theme, set this to the
 # name of a builtin theme or the name of a custom theme in html_theme_path.
-html_theme = 'sphinx_rtd_theme'
+#html_theme = None
+
+html_theme = "sphinx_rtd_theme"
+
+
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 
-html_static_path = ['_static']
-
-# Logo
-html_logo = '_static/stsci_logo.png'
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+#html_logo = ''
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -134,7 +140,7 @@ html_title = '{0} v{1}'.format(project, release)
 htmlhelp_basename = project + 'doc'
 
 
-# -- Options for LaTeX output --------------------------------------------------
+# -- Options for LaTeX output -------------------------------------------------
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
@@ -142,7 +148,7 @@ latex_documents = [('index', project + '.tex', project + u' Documentation',
                     author, 'manual')]
 
 
-# -- Options for manual page output --------------------------------------------
+# -- Options for manual page output -------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
@@ -150,7 +156,7 @@ man_pages = [('index', project.lower(), project + u' Documentation',
               [author], 1)]
 
 
-## -- Options for the edit_on_github extension ---------------------------------
+# -- Options for the edit_on_github extension ---------------------------------
 
 if eval(setup_cfg.get('edit_on_github')):
     extensions += ['astropy_helpers.sphinx.ext.edit_on_github']
@@ -165,48 +171,6 @@ if eval(setup_cfg.get('edit_on_github')):
     edit_on_github_source_root = ""
     edit_on_github_doc_root = "docs"
 
-
-intersphinx_mapping['glue'] = ('https://glueviz.readthedocs.org/en/latest', None)
-
-# Enable nitpicky mode - which ensures that all references in the docs
-# resolve.
-
-nitpicky = True
-nitpick_ignore = [('py:class', 'object'), ('py:class', 'str'),
-                  ('py:class', 'list'), ('py:obj', 'numpy array'),
-                  ('py:obj', 'integer'), ('py:obj', 'Callable'),
-                  ('py:class', 'PySide.QtGui.QMainWindow'),
-                  ('py:class', 'PySide.QtGui.QWidget'),
-                  ('py:class', 'PyQt4.QtGui.QMainWindow'),
-                  ('py:class', 'PyQt4.QtGui.QWidget'),
-                  ('py:class', 'PyQt4.QtGui.QTextEdit'),
-                  ('py:class', 'PyQt4.QtGui.QTabBar'),
-                  ('py:class', 'PyQt4.QtGui.QLabel'),
-                  ('py:class', 'PyQt4.QtGui.QComboBox'),
-                  ('py:class', 'PyQt4.QtGui.QMessageBox'),
-                  ('py:class', 'PyQt4.QtGui.QToolBar'),
-                  ('py:class', 'PyQt4.QtCore.QMimeData'),
-                  ('py:class', 'PyQt4.QtCore.QAbstractListModel'),
-                  ('py:class', 'PyQt4.QtCore.QThread'),
-                  ('py:class', 'PyQt4.QtGui.QStyledItemDelegate'),
-                  ('py:class', 'PyQt5.QtWidgets.QMainWindow'),
-                  ('py:class', 'PyQt5.QtWidgets.QWidget'),
-                  ('py:class', 'PyQt5.QtWidgets.QTextEdit'),
-                  ('py:class', 'PyQt5.QtWidgets.QTabBar'),
-                  ('py:class', 'PyQt5.QtWidgets.QLabel'),
-                  ('py:class', 'PyQt5.QtWidgets.QComboBox'),
-                  ('py:class', 'PyQt5.QtWidgets.QMessageBox'),
-                  ('py:class', 'PyQt5.QtWidgets.QToolBar'),
-                  ('py:class', 'PyQt5.QtWidgets.QStyledItemDelegate'),
-                  ('py:class', 'PyQt5.QtCore.QMimeData'),
-                  ('py:class', 'PyQt5.QtCore.QAbstractListModel'),
-                  ('py:class', 'PyQt5.QtCore.QThread'),
-                  ('py:class', 'PyQt5.QtCore.QObject'),
-                  ('py:class', 'PyQt5.QtGui.QPaintDevice'),
-                  ('py:class', 'builtins.object'),
-                  ('py:class', 'builtins.list'),
-                  ('py:class', 'builtins.type'),
-                  ('py:class', 'sip.wrapper'),
-                  ('py:class', 'sip.simplewrapper'),
-              ]
+# -- Resolving issue number to links in changelog -----------------------------
+github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 

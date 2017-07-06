@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from __future__ import absolute_import
-
 """
 This is an Astropy affiliated package.
 """
@@ -12,14 +10,20 @@ This is an Astropy affiliated package.
 from ._astropy_init import *
 # ----------------------------------------------------------------------------
 
-# For egg_info test builds to pass, put package imports here.
 if not _ASTROPY_SETUP_:
-    from . import loaders
-    from . import viewers
-    from . import widgets
+    # For egg_info test builds to pass, put package imports here.
+    pass
 
 
 def setup():
     from .viewers.mos_viewer import MOSVizViewer
     from glue.config import qt_client
     qt_client.add(MOSVizViewer)
+
+
+# Store the root directory of the package
+import os
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Store the qt designer ui path
+UI_DIR = os.path.join(ROOT_DIR, "data", "ui")
