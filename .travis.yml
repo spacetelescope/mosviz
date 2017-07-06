@@ -32,17 +32,16 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES=''
         - EVENT_TYPE='pull_request push'
 
         
         # List other runtime dependencies for the package that are available as
         # conda packages here.
-        - CONDA_DEPENDENCIES=''
+        - CONDA_DEPENDENCIES='cython pyqt scipy'
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        # - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx<1.6 sphinx_automodapi qtpy glueviz specutils==0.2.2'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
