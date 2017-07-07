@@ -37,18 +37,18 @@ env:
 
         # List other runtime dependencies for the package that are available as
         # conda packages here.
-        - CONDA_DEPENDENCIES='cython pyqt scipy'
+        - CONDA_DEPENDENCIES='glueviz astropy matplotlib numpy cython pyqt scipy'
 
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx<1.6 sphinx_automodapi qtpy glueviz>0.9.0 specutils==0.2.2 qtpy'
+        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx_automodapi specutils==0.2.2 qtpy'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
         # are in astropy-ci-extras. If your package uses either of these,
         # add the channels to CONDA_CHANNELS along with any other channels
         # you want to use.
-        - CONDA_CHANNELS='astropy-ci-extras astropy'
+        - CONDA_CHANNELS='astropy-ci-extras astropy conda-forge'
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
