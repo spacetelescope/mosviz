@@ -41,7 +41,7 @@ env:
 
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx<1.6 sphinx_automodapi qtpy glueviz specutils==0.2.2'
+        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx<1.6 sphinx_automodapi qtpy glueviz>0.9.0 specutils==0.2.2 qtpy'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
