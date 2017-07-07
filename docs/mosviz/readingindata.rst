@@ -57,7 +57,7 @@ but including them will allow selections to be done on those parameters.
 When adding a dataset to the MOSViz viewer for the first time in glue, the
 following dialog will appear:
 
-.. image:: _static/images/MOSViz_wizard.png
+.. image:: images/MOSViz_wizard.png
    :align: center
    :width: 600px
 

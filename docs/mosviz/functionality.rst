@@ -20,7 +20,7 @@ As described below, and as shown in Figures 1, MOSViz includes a:
 •	mosaic viewer where the targets are indicated.
 
 
-.. figure::  _static/images/MOSViz_screenshot_labeled_flt_crp.png
+.. figure::  images/MOSViz_screenshot_labeled_flt_crp.png
    :align:   center
 
    Figure 1: A screen shot of MOSViz with its components labeled is shown.  MOSViz is embedded in the Glue visualization tool.
