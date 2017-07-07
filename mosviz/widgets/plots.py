@@ -7,7 +7,11 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 
-from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget
+try:
+    from glue.viewers.image.qt.standalone_image_viewer import StandaloneImageViewer
+except ImportError:
+    from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget as StandaloneImageViewer
+
 from glue.viewers.common.viz_client import init_mpl
 try:
     from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
@@ -74,7 +78,7 @@ class Line1DWidget(QMainWindow):
         pass
 
 
-class MOSImageWidget(StandaloneImageWidget):
+class MOSImageWidget(StandaloneImageViewer):
 
     def __init__(self, *args, **kwargs):
         super(MOSImageWidget, self).__init__(*args, **kwargs)

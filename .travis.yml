@@ -34,11 +34,11 @@ env:
         - SETUP_CMD='test'
         - EVENT_TYPE='pull_request push'
 
-        
+
         # List other runtime dependencies for the package that are available as
         # conda packages here.
         - CONDA_DEPENDENCIES='cython pyqt scipy'
-        
+
         # List other runtime dependencies for the package that are available as
         # pip packages here.
         - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx<1.6 sphinx_automodapi qtpy glueviz specutils==0.2.2'
@@ -52,7 +52,7 @@ env:
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
-        # - SETUP_XVFB=True
+        - SETUP_XVFB=True
 
     matrix:
         # Make sure that egg_info works without dependencies
