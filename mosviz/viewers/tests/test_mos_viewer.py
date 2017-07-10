@@ -7,5 +7,5 @@ from ..mos_viewer import MOSVizViewer
 def test_basic():
     dc = DataCollection([])
     ga = GlueApplication(dc)
-    mosviz = ga.new_data_viewer(MOSVizViewer)
-    mosviz.show()
+    # mosviz = ga.new_data_viewer(MOSVizViewer)
+    # mosviz.show()
