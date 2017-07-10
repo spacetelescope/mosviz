@@ -336,12 +336,12 @@ class MOSVizViewer(DataViewer):
             self.toolbar.source_select.addItems(self.catalog['id'][:])
 
     def _set_navigation(self, index):
+
         if len(self.catalog) < index:
             return
 
         if 0 <= index < self.toolbar.source_select.count():
             self.toolbar.source_select.setCurrentIndex(index)
-            self.load_selection(self.catalog[index])
 
         if index <= 0:
             self.toolbar.cycle_previous_action.setDisabled(True)
@@ -416,8 +416,6 @@ class MOSVizViewer(DataViewer):
             References the particular data set type.
         """
         cur_data = self._loaded_data.get(key, None)
-
-        print(data)
 
         if cur_data is None:
             self.session.data_collection.append(data)
