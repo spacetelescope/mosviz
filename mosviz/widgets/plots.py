@@ -1,10 +1,14 @@
 from __future__ import print_function, division, absolute_import
 
+from qtpy import PYQT5
 from qtpy.QtWidgets import QMainWindow
 from qtpy.QtCore import Signal
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+if PYQT5:
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+else:
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 
 try:
