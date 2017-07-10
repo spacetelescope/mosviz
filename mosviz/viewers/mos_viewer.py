@@ -52,6 +52,7 @@ class MOSVizViewer(DataViewer):
         self.current_row = None
         self._specviz_instance = None
         self._loaded_data = {}
+        self._primary_data = None
 
     def load_ui(self):
         """
@@ -175,17 +176,29 @@ class MOSVizViewer(DataViewer):
     def register_to_hub(self, hub):
         super(MOSVizViewer, self).register_to_hub(hub)
 
+        def has_data_or_subset(x):
+            if x.sender is self._primary_data:
+                return True
+            elif isinstance(x.sender, Subset) and x.sender.data is self._primary_data:
+                return True
+            else:
+                return False
+
         hub.subscribe(self, msg.SubsetCreateMessage,
-                      handler=self._add_subset)
+                      handler=self._add_subset,
+                      filter=has_data_or_subset)
 
         hub.subscribe(self, msg.SubsetUpdateMessage,
-                      handler=self._update_subset)
+                      handler=self._update_subset,
+                      filter=has_data_or_subset)
 
         hub.subscribe(self, msg.SubsetDeleteMessage,
-                      handler=self._remove_subset)
+                      handler=self._remove_subset,
+                      filter=has_data_or_subset)
 
         hub.subscribe(self, msg.DataUpdateMessage,
-                      handler=self._update_data)
+                      handler=self._update_data,
+                      filter=has_data_or_subset)
 
     def add_data(self, data):
         """
@@ -196,6 +209,7 @@ class MOSVizViewer(DataViewer):
         data : :class:`glue.core.data.Data`
             Data object.
         """
+        self._primary_data = data
         self._unpack_selection(data)
         return True
 
@@ -208,6 +222,7 @@ class MOSVizViewer(DataViewer):
         subset :
             Subset object.
         """
+        self._primary_data = subset
         self._unpack_selection(subset)
         return True
 
@@ -269,6 +284,7 @@ class MOSVizViewer(DataViewer):
             Glue data object to decompose.
 
         """
+
         mask = None
 
         if isinstance(data, Subset):
@@ -315,25 +331,30 @@ class MOSVizViewer(DataViewer):
                 self.catalog[str(att)] = comp_data
 
         if len(self.catalog) > 0:
-            # Load the first source in the catalog
-            self.load_selection(self.catalog[0])
-
             # Update gui elements
-            self._update_navigation()
-            self._set_navigation(0)
+            self._update_navigation(select=0)
 
-    def _update_navigation(self):
+    def _update_navigation(self, select=0):
         """
         Updates the :class:`qtpy.QtWidgets.QComboBox` widget with the
         appropriate source `id`s from the MOS catalog.
         """
+
         if self.toolbar is None:
             return
+
+        self.toolbar.source_select.blockSignals(True)
 
         self.toolbar.source_select.clear()
 
         if len(self.catalog) > 0 and 'id' in self.catalog.colnames:
             self.toolbar.source_select.addItems(self.catalog['id'][:])
+
+        self.toolbar.source_select.setCurrentIndex(select)
+
+        self.toolbar.source_select.blockSignals(False)
+
+        self.toolbar.source_select.currentIndexChanged.emit(select)
 
     def _set_navigation(self, index):
 
@@ -380,6 +401,7 @@ class MOSVizViewer(DataViewer):
             A row object representing a row in the MOS catalog. Each key
             should be a column name.
         """
+
         self.current_row = row
 
         # Get loaders
@@ -459,9 +481,8 @@ class MOSVizViewer(DataViewer):
         if image_data is not None:
             wcs = image_data.coords.wcs
 
-            self.image_widget.set_image(
-                image_data.get_component(image_data.id['Flux']).data, wcs=wcs,
-                                         interpolation='none', origin='lower')
+            self.image_widget.set_image(image_data.get_component(image_data.id['Flux']).data,
+                                        wcs=wcs, interpolation='none', origin='lower')
 
             self.image_widget.axes.set_xlabel("Spatial X")
             self.image_widget.axes.set_ylabel("Spatial Y")
