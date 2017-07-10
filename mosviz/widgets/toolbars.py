@@ -51,10 +51,10 @@ class MOSViewerToolbar(BasicToolbar):
 
         # Define the toolbar actions
         self.cycle_previous_action = QAction(
-            QIcon(os.path.join(icon_path, "Previous-96.png")),
+            QIcon(os.path.join(ICON_DIR, "Previous-96.png")),
             "Previous", self)
         self.cycle_next_action = QAction(
-            QIcon(os.path.join(icon_path, "Next-96.png")),
+            QIcon(os.path.join(ICON_DIR, "Next-96.png")),
             "Next", self)
 
         # Include the dropdown widget

@@ -96,7 +96,8 @@ package_info = get_package_info()
 # Add the project-global data
 root_dir = os.path.join(PACKAGENAME, 'data')
 package_info['package_data'].setdefault(
-    PACKAGENAME, [os.path.join("data", os.path.relpath(x[0], root_dir))
+    PACKAGENAME, [os.path.normpath(
+        os.path.join("data", os.path.relpath(x[0], root_dir), "*"))
                   for x in os.walk(root_dir)])
 
 # Define entry points for command-line scripts
