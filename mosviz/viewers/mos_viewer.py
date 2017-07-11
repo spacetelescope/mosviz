@@ -34,6 +34,7 @@ from ..loaders.loader_selection import confirm_loaders_and_column_names
 from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
 from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
+from .. import UI_DIR
 
 __all__ = ['MOSVizViewer']
 
@@ -59,9 +60,7 @@ class MOSVizViewer(DataViewer):
         """
         self.central_widget = QWidget(self)
 
-        path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__),
-                         '..', 'widgets', 'ui', 'mos_widget.ui'))
+        path = os.path.join(UI_DIR, 'mos_widget.ui')
         loadUi(path, self.central_widget)
 
         self.image_widget = DrawableImageWidget()

@@ -10,9 +10,11 @@ from glue.utils.qt import load_ui, update_combobox
 
 # TODO: uncomment first line and remove second once we support glueviz >= 0.11
 # from glue.core.qt.data_combo_helper import ComponentIDComboHelper
-from mosviz.compat import ComponentIDComboHelper
+from ..compat import ComponentIDComboHelper
 
-from mosviz.loaders.mos_loaders import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS)
+from ..loaders.mos_loaders import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
+                                   CUTOUT_LOADERS)
+from .. import UI_DIR
 
 
 class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
@@ -55,7 +57,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         QtWidgets.QDialog.__init__(self, parent=parent)
 
-        self.ui = load_ui('loader_selection.ui', self, directory=os.path.dirname(__file__))
+        self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
 
         update_combobox(self.ui.combotext_loader_spectrum1d, zip(SPECTRUM1D_LOADERS, repeat(None)))
         update_combobox(self.ui.combotext_loader_spectrum2d, zip(SPECTRUM2D_LOADERS, repeat(None)))

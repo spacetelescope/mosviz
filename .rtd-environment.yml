@@ -1,0 +1,14 @@
+name: mosviz
+
+channels:
+  - astropy
+  - http://ssb.stsci.edu/astroconda
+
+dependencies:
+  - astropy
+  - numpy
+  - glueviz>=0.9.0
+  - matplotlib>=1.5.3
+  - pyqt
+#   - pip:
+#       - dependency_from_pip
