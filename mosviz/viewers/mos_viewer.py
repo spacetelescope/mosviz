@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QLineEdit
+from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox
 from qtpy.uic import loadUi
 
 from glue.core import message as msg
@@ -212,6 +212,42 @@ class MOSVizViewer(DataViewer):
         data : :class:`glue.core.data.Data`
             Data object.
         """
+
+        # Check whether the data is suitable for the MOSViz viewer - basically
+        # we expect a table of 1D columns with at least three string and four
+        # floating-point columns.
+
+        if data.ndim != 1:
+            QMessageBox.critical(self, "Error", "MOSViz viewer can only be used "
+                                 "for data with 1-dimensional components",
+                                 buttons=QMessageBox.Ok)
+            return False
+
+        components = [data.get_component(cid) for cid in data.visible_components]
+
+        categorical = [c for c in components if c.categorical]
+        if len(categorical) < 3:
+            QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
+                                 "three string components/columns, representing "
+                                 "the filenames of the 1D and 2D spectra and "
+                                 "cutouts", buttons=QMessageBox.Ok)
+            return False
+
+        # We can relax the following requirement if we make the slit parameters
+        # optional
+        numerical = [c for c in components if c.numeric]
+        if len(numerical) < 4:
+            QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
+                                 "four numerical components/columns, representing "
+                                 "the slit position, length, and position angle",
+                                 buttons=QMessageBox.Ok)
+            return False
+
+        # Make sure the loaders and column names are correct
+        result = confirm_loaders_and_column_names(data)
+        if not result:
+            return False
+
         self._primary_data = data
         self._layer_view.data = data
         self._unpack_selection(data)
@@ -303,9 +339,6 @@ class MOSVizViewer(DataViewer):
                 return
 
             data = data.data
-
-        # Make sure the loaders and column names are correct
-        confirm_loaders_and_column_names(data)
 
         # Clear the table
         self.catalog = Table()
