@@ -35,11 +35,13 @@ from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT
 from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
+from ..widgets.layer_widget import SimpleLayerWidget
 
 __all__ = ['MOSVizViewer']
 
 
 class MOSVizViewer(DataViewer):
+
     LABEL = "MOSViz Viewer"
     window_closed = Signal()
     _toolbar_cls = MOSViewerToolbar
@@ -54,6 +56,8 @@ class MOSVizViewer(DataViewer):
         self._specviz_instance = None
         self._loaded_data = {}
         self._primary_data = None
+        self._layer_view = SimpleLayerWidget(parent=self)
+        self._layer_view.layer_combo.currentIndexChanged.connect(self._selection_changed)
 
     def load_ui(self):
         """
@@ -209,6 +213,7 @@ class MOSVizViewer(DataViewer):
             Data object.
         """
         self._primary_data = data
+        self._layer_view.data = data
         self._unpack_selection(data)
         return True
 
@@ -221,8 +226,9 @@ class MOSVizViewer(DataViewer):
         subset :
             Subset object.
         """
-        self._primary_data = subset
-        self._unpack_selection(subset)
+        self._layer_view.refresh()
+        index = self._layer_view.layer_combo.findData(subset)
+        self._layer_view.layer_combo.setCurrentIndex(index)
         return True
 
     def _update_data(self, message):
@@ -234,8 +240,7 @@ class MOSVizViewer(DataViewer):
         message : :class:`glue.core.message.Message`
             Data message object.
         """
-        data = message.data
-        # self._unpack_selection(data)
+        self._layer_view.refresh()
 
     def _add_subset(self, message):
         """
@@ -246,7 +251,7 @@ class MOSVizViewer(DataViewer):
         message : :class:`glue.core.message.Message`
             Subset message object.
         """
-        self._unpack_selection(message.subset)
+        self._layer_view.refresh()
 
     def _update_subset(self, message):
         """
@@ -257,8 +262,7 @@ class MOSVizViewer(DataViewer):
         message : :class:`glue.core.message.Message`
             Update message object.
         """
-        subset = message.subset
-        self._unpack_selection(subset)
+        self._layer_view.refresh()
 
     def _remove_subset(self, message):
         """
@@ -269,7 +273,10 @@ class MOSVizViewer(DataViewer):
         message : :class:`glue.core.message.Message`
             Subset message object.
         """
-        self._unpack_selection(message.subset)
+        self._layer_view.refresh()
+
+    def _selection_changed(self):
+        self._unpack_selection(self._layer_view.layer_combo.currentData())
 
     def _unpack_selection(self, data):
         """
@@ -585,3 +592,6 @@ class MOSVizViewer(DataViewer):
 
         for data in self._loaded_data.values():
             self.session.data_collection.remove(data)
+
+    def layer_view(self):
+        return self._layer_view
