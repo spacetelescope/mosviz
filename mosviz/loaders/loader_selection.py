@@ -121,7 +121,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         # sophisticated auto-testing.
 
         for column in self.columns:
-            if column['components'] == []:
+            if not column['components']:
                 continue
             if getattr(self, column['property']) is None:
                 if column['default'] in column['components']:
