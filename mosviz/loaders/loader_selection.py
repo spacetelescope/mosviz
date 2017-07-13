@@ -57,6 +57,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         QtWidgets.QDialog.__init__(self, parent=parent)
 
+        self.data = data
+
         self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
 
         update_combobox(self.ui.combotext_loader_spectrum1d, zip(SPECTRUM1D_LOADERS, repeat(None)))
@@ -119,6 +121,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         # sophisticated auto-testing.
 
         for column in self.columns:
+            if not column['components']:
+                continue
             if getattr(self, column['property']) is None:
                 if column['default'] in column['components']:
                     setattr(self, column['property'], column['default'])
@@ -130,7 +134,12 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         autoconnect_callbacks_to_qt(self, self.ui)
 
-        self.data = data
+        self.button_cancel.clicked.connect(self.reject)
+        self.button_ok.clicked.connect(self.accept)
+
+        self.add_global_callback(self._validation_checks)
+
+        self._validation_checks()
 
     def accept(self):
 
@@ -151,12 +160,60 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         super(LoaderSelectionDialog, self).accept()
 
+    def _validation_checks(self, *args, **kwargs):
+
+        # Check whether the files indicated by the filename columns do in fact
+        # exist
+        for column in ['spectrum1d', 'spectrum2d', 'cutout']:
+            column_name = getattr(self, column)
+            filenames = self.data.get_component(column_name).labels
+            for filename in filenames:
+                if not os.path.exists(filename):
+                    self.validate(False, "File '{0}' listed in column '{1}' "
+                                  "(currently selected for {2}) does not "
+                                  "exist.".format(filename, column_name, column))
+                    return
+
+        # Check whether the loaders are able to read in the spectra/cutouts. We
+        # can't check whether all spectra/cutouts can be read since this would
+        # be too computationally intensive, but we can at least check the first
+        # one.
+
+        loaders = [SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS]
+
+        for column, loaders in zip(['spectrum1d', 'spectrum2d', 'cutout'], loaders):
+
+            loader_name = getattr(self, 'loader_' + column)
+            loader = loaders[loader_name]
+            column_name = getattr(self, column)
+            filenames = self.data.get_component(column_name).labels
+
+            try:
+                loader(filenames[0])
+            except:
+                self.validate(False, "An error occurred when trying to read in "
+                              "'{0}' using the loader '{1}' (see terminal for "
+                              "the full error).".format(filenames[0], loader_name))
+                raise
+
+        self.validate(True, "All spectra and cutout files exist and the loaders "
+                      "are able to read in the first one of each.")
+
+    def validate(self, valid, message):
+        if valid:
+            self.button_ok.setEnabled(True)
+            self.label_status.setStyleSheet('color: green')
+        else:
+            self.button_ok.setEnabled(False)
+            self.label_status.setStyleSheet('color: red')
+        self.label_status.setText(message)
+
 
 def confirm_loaders_and_column_names(data, force=False):
     if force or not data.meta.get('loaders_confirmed', False):
         loader_selection = LoaderSelectionDialog(data=data)
-        loader_selection.exec_()
-    return data
+        return loader_selection.exec_()
+    return True
 
 
 if __name__ == "__main__":
