@@ -86,7 +86,7 @@ class MOSVizViewer(DataViewer):
         self.image_widget._axes.set_adjustable('datalim')
 
         self.meta_form_layout = self.central_widget.meta_form_layout
-
+        self.meta_form_layout.setFieldGrowthPolicy(self.meta_form_layout.ExpandingFieldsGrow)
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
         self.central_widget.right_vertical_splitter.addWidget(self.spectrum2d_widget)
         self.central_widget.right_vertical_splitter.addWidget(self.spectrum1d_widget)
