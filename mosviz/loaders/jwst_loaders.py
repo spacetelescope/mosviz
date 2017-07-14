@@ -17,7 +17,6 @@ def nirspec_spectrum1d_reader(file_name):
     with fits.open(file_name) as hdulist:
         header = hdulist['PRIMARY'].header
 
-    print("reading from {}".format(file_name))
     tab = Table.read(file_name)
 
     data = Data(label="1D Spectrum")
