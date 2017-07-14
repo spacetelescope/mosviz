@@ -12,7 +12,7 @@ from glue.utils.qt import load_ui, update_combobox
 # from glue.core.qt.data_combo_helper import ComponentIDComboHelper
 from ..compat import ComponentIDComboHelper
 
-from ..loaders.mos_loaders import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
+from ..loaders.utils import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
                                    CUTOUT_LOADERS)
 from .. import UI_DIR
 
