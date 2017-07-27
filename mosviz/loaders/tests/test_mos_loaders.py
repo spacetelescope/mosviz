@@ -1,8 +1,11 @@
 import os
 
-from ..mos_loaders import (nirspec_spectrum1d_reader, nirspec_spectrum2d_reader,
-                           nircam_image_reader, deimos_spectrum1D_reader,
-                           deimos_spectrum2D_reader, acs_cutout_image_reader)
+from ..jwst_loaders import (pre_nirspec_spectrum1d_reader, 
+                            pre_nirspec_spectrum2d_reader,
+                            pre_nircam_image_reader)
+from ..deimos_loaders import (deimos_spectrum1D_reader,
+                              deimos_spectrum2D_reader)
+from ..hst_loaders import acs_cutout_image_reader
 
 DATA = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -15,18 +18,18 @@ DEIMOS2D = os.path.join(DATA, 'deimos', 'slit.1153.151R.fits.gz')
 DEIMOSCUTOUT = os.path.join(DATA, 'deimos', '12004808.acs.v_6ac_.fits.gz')
 
 
-def test_nirspec_spectrum1d_reader():
-    data = nirspec_spectrum1d_reader(JWST1D)
+def test_pre_nirspec_spectrum1d_reader():
+    data = pre_nirspec_spectrum1d_reader(JWST1D)
     assert data.ndim == 1
 
 
-def test_nirspec_spectrum2d_reader():
-    data = nirspec_spectrum2d_reader(JWST2D)
+def test_pre_nirspec_spectrum2d_reader():
+    data = pre_nirspec_spectrum2d_reader(JWST2D)
     assert data.ndim == 2
 
 
-def test_nircam_image_reader():
-    data = nircam_image_reader(JWSTCUTOUT)
+def test_pre_nircam_image_reader():
+    data = pre_nircam_image_reader(JWSTCUTOUT)
     assert data.ndim == 2
 
 

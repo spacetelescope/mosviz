@@ -31,7 +31,7 @@ except ImportError:
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
 from ..loaders.loader_selection import confirm_loaders_and_column_names
-from ..loaders.mos_loaders import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
+from ..loaders.utils import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
 from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
@@ -86,7 +86,7 @@ class MOSVizViewer(DataViewer):
         self.image_widget._axes.set_adjustable('datalim')
 
         self.meta_form_layout = self.central_widget.meta_form_layout
-
+        self.meta_form_layout.setFieldGrowthPolicy(self.meta_form_layout.ExpandingFieldsGrow)
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
         self.central_widget.right_vertical_splitter.addWidget(self.spectrum2d_widget)
         self.central_widget.right_vertical_splitter.addWidget(self.spectrum1d_widget)

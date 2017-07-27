@@ -12,7 +12,7 @@ from glue.utils.qt import load_ui, update_combobox
 # from glue.core.qt.data_combo_helper import ComponentIDComboHelper
 from ..compat import ComponentIDComboHelper
 
-from ..loaders.mos_loaders import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
+from ..loaders.utils import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
                                    CUTOUT_LOADERS)
 from .. import UI_DIR
 
@@ -167,8 +167,13 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         for column in ['spectrum1d', 'spectrum2d', 'cutout']:
             column_name = getattr(self, column)
             filenames = self.data.get_component(column_name).labels
+            path = os.sep.join(
+                self.data._load_log.path.split(os.sep)[:-1])
+
             for filename in filenames:
-                if not os.path.exists(filename):
+                file_path = os.path.join(path, filename)
+
+                if not os.path.exists(file_path):
                     self.validate(False, "File '{0}' listed in column '{1}' "
                                   "(currently selected for {2}) does not "
                                   "exist.".format(filename, column_name, column))
@@ -190,11 +195,11 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
             try:
                 loader(filenames[0])
-            except:
+            except Exception as e:
                 self.validate(False, "An error occurred when trying to read in "
                               "'{0}' using the loader '{1}' (see terminal for "
                               "the full error).".format(filenames[0], loader_name))
-                raise
+                print(e)
 
         self.validate(True, "All spectra and cutout files exist and the loaders "
                       "are able to read in the first one of each.")
