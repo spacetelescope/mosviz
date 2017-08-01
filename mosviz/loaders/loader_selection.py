@@ -193,10 +193,11 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             column_name = getattr(self, column)
             filenames = self.data.get_component(column_name).labels
 
+            path = os.sep.join(
+                self.data._load_log.path.split(os.sep)[:-1])
+            file_path = os.path.join(path, filenames[0])
+
             try:
-                path = os.sep.join(
-                    self.data._load_log.path.split(os.sep)[:-1])
-                file_path = os.path.join(path, filenames[0])
                 loader(file_path)
             except:
                 self.validate(False, "An error occurred when trying to read in "
