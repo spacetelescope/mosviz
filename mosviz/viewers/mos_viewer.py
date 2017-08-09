@@ -482,6 +482,7 @@ class MOSVizViewer(DataViewer):
                 return
 
             data = data.data
+            self.mask = mask
 
         # Clear the table
         self.catalog = Table()
