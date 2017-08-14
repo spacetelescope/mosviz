@@ -657,7 +657,6 @@ class MOSVizViewer(DataViewer):
             self.input_save = QPushButton('Save', 
                 self.central_widget.meta_form_widget)
             self.input_save.clicked.connect(self.update_comments)
-            #self.input_save.setStyleSheet("color: rgb(255, 255, 255); background-color: rgb(0, 0, 255);")
 
             self.input_refresh = QPushButton('Reload', 
                 self.central_widget.meta_form_widget)
