@@ -3,17 +3,20 @@ from __future__ import print_function, division, absolute_import
 import os
 
 import numpy as np
+from qtpy import compat
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox, QPlainTextEdit
+from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton
 from qtpy.uic import loadUi
 
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
+from glue.core.data_exporters import astropy_table
 from glue.core.component import Component, CategoricalComponent
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
+from glue.utils.qt import pick_item, get_text
 
 from specutils.core.generic import Spectrum1DRef
 
@@ -52,10 +55,11 @@ class MOSVizViewer(DataViewer):
         self.load_ui()
 
         # Define some data containers
-        self.file_path = None
+        self.filepath = None
+        self.savepath = None
         self.data_idx = None
-        self.writeComments = False
         self.comments = False
+        self.textChangedAt = None
         self.mask = None
 
         self.catalog = None
@@ -210,9 +214,6 @@ class MOSVizViewer(DataViewer):
                       handler=self._update_data,
                       filter=has_data_or_subset)
 
-        hub.subscribe(self, msg.ApplicationClosedMessage,
-                      handler=self.appExit)
-
     def add_data(self, data):
         """
         Processes data message from the central communication hub.
@@ -277,138 +278,6 @@ class MOSVizViewer(DataViewer):
         self._layer_view.layer_combo.setCurrentIndex(index)
         return True
 
-
-    def data_collection_index(self, label):
-        idx = -1
-        for i, l in enumerate(self.session.data_collection):
-            if l.label == label:
-                idx = i
-                break 
-        if idx == -1:
-            return -1
-        self.data_idx = idx
-        return idx
-
-    def load_comments(self, label):
-        if self.file_path == None:
-            return False
-        
-        idx = self.data_collection_index(label)
-        if idx == -1:
-            return False
-        data = self.session.data_collection[idx]
-        
-        base = "MOSViz_Comments_"+os.path.basename(self.file_path)
-        dirname = os.path.dirname(self.file_path)
-        fn = os.path.join(dirname,base)
-        if os.path.isfile(fn):
-            new_comments = []
-            new_flags = []
-            fail = True
-            try:
-                with open(fn) as f:
-                    for line in f:
-                        line = line.replace("\n","")
-                        line = line.split("}::")
-                        flg = line[0].replace("{","")
-                        if len(line) > 2:
-                            comnt = "}::".join(line[1:])
-                        else:
-                            comnt = line[1]
-                            if comnt == "None":
-                                comnt = ""
-
-                        new_flags.append(flg)
-                        new_comments.append(comnt)
-
-                new_flags = np.array(new_flags, dtype=object)
-                new_comments = np.array(new_comments, dtype=object)
-                fail = False
-            except:
-                fail = True
-            if fail:
-                print("Loading MOSViz Comment file failed")                
-            else:
-                data.add_component(CategoricalComponent(new_flags, "flag"),"flag")
-                data.add_component(CategoricalComponent(new_comments, "comments"),"comments")
-                return True
-
-        length = data.shape[0]
-        new_comments = np.array(["" for i in range(length)], dtype=object)
-        new_flags = np.array(["0" for i in range(length)], dtype=object)
-        self.writeComments = True
-        data.add_component(CategoricalComponent(new_flags, "flag"),"flag")
-        data.add_component(CategoricalComponent(new_comments, "comments"),"comments")
-        return True
-
-    def index_hash(self, i):
-        if type(self.mask) != type(None):
-            return self.mask[i]
-        else:
-            return i
-
-    def get_comment(self):
-        idx = self.data_idx
-        i = self.toolbar.source_select.currentIndex()
-        i = self.index_hash(i)
-        comp = self.session.data_collection[idx].get_component("comments")
-        return comp._categorical_data[i]
-
-    def get_flag(self):
-        idx = self.data_idx
-        i = self.toolbar.source_select.currentIndex()
-        i = self.index_hash(i)
-        comp = self.session.data_collection[idx].get_component("flag")
-        return comp._categorical_data[i]
-
-    def update_comments(self):
-        idx = self.data_idx
-        i = self.toolbar.source_select.currentIndex()
-        i = self.index_hash(i)
-        comp = self.session.data_collection[idx].get_component("comments")
-        comp._categorical_data.flags.writeable = True
-        comp._categorical_data[i] = self.input_comments.toPlainText()
-        self.writeComments = True
-
-    def update_flag(self):
-        if self.input_flag.text() == "":
-            self.input_flag.setStyleSheet("background-color: rgba(255, 0, 0);")
-            return
-
-        i = None
-        try:
-            i = int(self.input_flag.text())
-        except ValueError:
-            self.input_flag.setStyleSheet("background-color: rgba(255, 0, 0);")
-            info = "Flag must be an int!"
-            info = QMessageBox.information(self, "Status:", info)
-            return
-
-        self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
-        idx = self.data_idx
-        i = self.toolbar.source_select.currentIndex()
-        i = self.index_hash(i)
-        comp = self.session.data_collection[idx].get_component("flag")
-        comp._categorical_data.flags.writeable = True
-        comp._categorical_data[i] = self.input_flag.text()
-        self.writeComments = True
-
-    def write_comments(self):
-        idx = self.data_idx
-        save_comments = self.session.data_collection[idx].get_component("comments")._categorical_data
-        save_flag = self.session.data_collection[idx].get_component("flag")._categorical_data
-        base = "MOSViz_Comments_"+os.path.basename(self.file_path)
-        dirname = os.path.dirname(self.file_path)
-        fn = os.path.join(dirname,base)
-        try:
-            with open(fn, "w") as f:
-                for flg, com in zip(save_flag, save_comments):
-                    if com == "":
-                        com = "None"
-                    line = "{"+str(flg)+"}::"+com.replace("\n", " ")+"\n"
-                    f.write(line)
-        except Exception as e:
-            print("Comment write failed:",e)
 
     def _update_data(self, message):
         """
@@ -482,7 +351,7 @@ class MOSVizViewer(DataViewer):
                 return
 
             data = data.data
-            self.mask = mask
+        self.mask = mask
 
         # Clear the table
         self.catalog = Table()
@@ -502,7 +371,7 @@ class MOSVizViewer(DataViewer):
                 if str(att) in ["comments", "flag"]:
                     self.comments = True
                 elif str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
-                    self.file_path = component._load_log.path
+                    self.filepath = component._load_log.path
                     path = '/'.join(component._load_log.path.split('/')[:-1])
                     self.catalog[str(att)] = [os.path.join(path, x)
                                               for x in comp_labels]
@@ -517,11 +386,12 @@ class MOSVizViewer(DataViewer):
                 self.catalog[str(att)] = comp_data
 
         if len(self.catalog) > 0:
-            # Update gui elements
             if not self.comments:
                 self.comments = self.load_comments(data.label) #Returns bool
             else:
                 self.data_collection_index(data.label)
+                self.get_save_path()
+            # Update gui elements
             self._update_navigation(select=0)
 
     def _update_navigation(self, select=0):
@@ -634,8 +504,8 @@ class MOSVizViewer(DataViewer):
         cur_data = self._loaded_data.get(key, None)
 
         if cur_data is None:
-            self.session.data_collection.append(data)
             self._loaded_data[key] = data
+            self.session.data_collection.append(data)
         else:
             cur_data.update_values_from_data(data)
 
@@ -645,6 +515,8 @@ class MOSVizViewer(DataViewer):
         Render the updated data sets in the individual plot widgets within the
         MOSViz viewer.
         """
+        self.check_unsaved_comments()
+
         if spec1d_data is not None:
 
             spectrum1d_x = spec1d_data[spec1d_data.id['Wavelength']]
@@ -758,17 +630,41 @@ class MOSVizViewer(DataViewer):
                 self.meta_form_layout.addRow(col, line_edit)
 
         if self.comments:
-                self.input_flag = QLineEdit(self.get_flag(), 
-                    self.central_widget.meta_form_widget)
-                self.input_flag.textChanged.connect(self.update_flag)
-                self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
-                self.meta_form_layout.addRow("Flag", self.input_flag)
+            if self.savepath is not None:
+                if self.savepath == -1:
+                    line_edit = QLineEdit(os.path.basename("Not Saving to File."),
+                                      self.central_widget.meta_form_widget)
+                    line_edit.setReadOnly(True)
+                    self.meta_form_layout.addRow("Save File", line_edit)
+                else:
+                    line_edit = QLineEdit(os.path.basename(self.savepath),
+                                      self.central_widget.meta_form_widget)
+                    line_edit.setReadOnly(True)
+                    self.meta_form_layout.addRow("Save File", line_edit)
+
+            self.input_flag = QLineEdit(self.get_flag(), 
+                self.central_widget.meta_form_widget)
+            self.input_flag.textChanged.connect(self.text_changed)
+            self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
+            self.meta_form_layout.addRow("Flag", self.input_flag)
+        
+            self.input_comments = QPlainTextEdit(self.get_comment(),
+                self.central_widget.meta_form_widget)
+            self.input_comments.textChanged.connect(self.text_changed)
+            self.input_comments.setStyleSheet("background-color: rgba(255, 255, 255);")
+            self.meta_form_layout.addRow("Comments", self.input_comments)
+
+            self.input_save = QPushButton('Save', 
+                self.central_widget.meta_form_widget)
+            self.input_save.clicked.connect(self.update_comments)
+            #self.input_save.setStyleSheet("color: rgb(255, 255, 255); background-color: rgb(0, 0, 255);")
+
+            self.input_refresh = QPushButton('Reload', 
+                self.central_widget.meta_form_widget)
+            self.input_refresh.clicked.connect(self.refresh_comments)
             
-                self.input_comments = QPlainTextEdit(self.get_comment(),
-                    self.central_widget.meta_form_widget)
-                self.input_comments.textChanged.connect(self.update_comments)
-                self.input_comments.setStyleSheet("background-color: rgba(255, 255, 255);")
-                self.meta_form_layout.addRow("Comments", self.input_comments)
+            self.meta_form_layout.addRow(self.input_save, self.input_refresh)
+
 
     @defer_draw
     def set_locked_axes(self, x=None, y=None):
@@ -792,18 +688,237 @@ class MOSVizViewer(DataViewer):
         Clean up the extraneous data components created when opening the
         MOSViz viewer by overriding the parent class's close event.
         """
-        if self.writeComments:
-            self.write_comments()
         super(MOSVizViewer, self).closeEvent(event)
 
         for data in self._loaded_data.values():
             self.session.data_collection.remove(data)
 
-    def appExit(self, event):
-        if self.writeComments:
-            self.write_comments()
-        for data in self._loaded_data.values():
-            self.session.data_collection.remove(data)
-
     def layer_view(self):
         return self._layer_view
+
+    def text_changed(self):
+        if self.textChangedAt is None:
+            i = self.toolbar.source_select.currentIndex()
+            self.textChangedAt = self.index_hash(i)
+
+    def check_unsaved_comments(self):
+        if self.textChangedAt is None:
+            return #Nothing to be changed
+        i = self.toolbar.source_select.currentIndex()
+        i = self.index_hash(i)
+        if self.textChangedAt == i:
+            self.textChangedAt = None
+            return #This is a refresh 
+        info = "Comments or flags changed but were not saved. Would you like to save them?"
+        reply = QMessageBox.question(self,'', info, QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.update_comments(True)
+        self.textChangedAt = None
+        
+    def data_collection_index(self, label):
+        idx = -1
+        for i, l in enumerate(self.session.data_collection):
+            if l.label == label:
+                idx = i
+                break 
+        if idx == -1:
+            return -1
+        self.data_idx = idx
+        return idx
+
+    def load_comments(self, label):
+        """Populate the comments and flag columns. Attempt to load comments from file."""
+
+        #Just to make sure its the right data 
+        #(beacuse subset data is masked)
+        idx = self.data_collection_index(label)
+        if idx == -1:
+            return False
+        data = self.session.data_collection[idx] 
+
+        #Fill in default comments:
+        length = data.shape[0]
+        new_comments = np.array(["" for i in range(length)], dtype=object)
+        new_flags = np.array(["0" for i in range(length)], dtype=object)
+
+        #Fill in any saved comments:
+        meta = data.meta
+        for key in meta.keys():
+            try:
+                if "MOSViz_Comment[" in key:
+                    line = meta[key]
+                    key = key.split("MOSViz_Comment[")[1]
+                    index = int(key[:-1])
+                    new_comments[index] = line
+                elif "MOSViz_Flag[" in key:
+                    line = meta[key]
+                    key = key.split("MOSViz_Flag[")[1]
+                    index = int(key[:-1])
+                    new_comments[index] = line
+            except:
+                pass #Can not do anything
+        
+        #Send to DC
+        data.add_component(CategoricalComponent(new_flags, "flag"),"flag")
+        data.add_component(CategoricalComponent(new_comments, "comments"),"comments")  
+        return True
+
+    def index_hash(self, i):
+        """Local selection index -> Table index"""
+        if self.mask is not None:
+            size = self.mask.size
+            temp = np.arange(size)
+            return temp[self.mask][i]
+        else:
+            return i
+
+    def get_comment(self):
+        idx = self.data_idx
+        i = self.toolbar.source_select.currentIndex()
+        i = self.index_hash(i)
+        comp = self.session.data_collection[idx].get_component("comments")
+        return comp._categorical_data[i]
+
+    def get_flag(self):
+        idx = self.data_idx
+        i = self.toolbar.source_select.currentIndex()
+        i = self.index_hash(i)
+        comp = self.session.data_collection[idx].get_component("flag")
+        return comp._categorical_data[i]
+
+    def send_NumericalDataChangedMessage(self):
+        idx = self.data_idx
+        data = self.session.data_collection[idx]
+        data.hub.broadcast(msg.NumericalDataChangedMessage(data,"comments"))
+
+    def refresh_comments(self):
+        self.input_flag.setText(self.get_flag())
+        self.input_comments.setPlainText(self.get_comment())
+        self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
+        self.textChangedAt = None
+
+    def get_save_path(self):
+        """Try to get save path from other MOSVizViewer instances"""
+        for v in self.session.application.viewers[0]:
+            if isinstance(v, MOSVizViewer):
+                if v.savepath is not None:
+                    if v.data_idx == self.data_idx:
+                        self.savepath = v.savepath
+                        break
+
+    def setup_save_path(self):
+        """Prompt the user for a file to save comments and flags into."""
+        fail = True
+        success = False
+        info = "Where would you like to save comments and flags?"
+        option = pick_item([0, 1, 2],
+            [os.path.basename(self.filepath), "New MOSViz Table file","Update but do not save to file"],
+            label=info,  title="Comment Setup") 
+        if option == 0:
+            self.savepath = self.filepath
+        elif option == 1:
+            dirname = os.path.dirname(self.filepath)
+            path = compat.getsavefilename(caption="New MOSViz Table File", 
+                basedir=dirname, filters="*.txt")[0]
+            if path == "":
+                return fail
+            self.savepath = path
+        elif option == 2:
+            self.savepath = -1
+        else:
+            return fail
+            
+        for v in self.session.application.viewers[0]:
+            if isinstance(v, MOSVizViewer):
+                if v.data_idx == self.data_idx:
+                    v.savepath = self.savepath
+        self._layer_view.refresh()
+        return success
+
+    def update_comments(self, pastSelection = False):
+        """Process comment and flag changes and save to file."""
+        if self.input_flag.text() == "":
+            self.input_flag.setStyleSheet("background-color: rgba(255, 0, 0);")
+            return
+
+        i = None
+        try:
+            i = int(self.input_flag.text())
+        except ValueError:
+            self.input_flag.setStyleSheet("background-color: rgba(255, 0, 0);")
+            info = "Flag must be an int!"
+            info = QMessageBox.information(self, "Status:", info)
+            return
+        self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
+
+        idx = self.data_idx
+        if pastSelection:
+            i = self.textChangedAt
+            self.textChangedAt = None
+        else:
+            i = self.toolbar.source_select.currentIndex()
+            i = self.index_hash(i)
+        data = self.session.data_collection[idx]
+
+        comp = data.get_component("comments")
+        comp._categorical_data.flags.writeable = True
+        comp._categorical_data[i] = self.input_comments.toPlainText()
+
+        comp = data.get_component("flag")
+        comp._categorical_data.flags.writeable = True
+        comp._categorical_data[i] = self.input_flag.text()
+
+        self.send_NumericalDataChangedMessage()
+        self.write_comments() 
+
+        self.textChangedAt = None
+
+    def write_comments(self):
+        """Write comments to file"""
+        if self.savepath is None:
+            fail = self.setup_save_path()
+            if fail:return
+        if self.savepath == -1:
+            return #Do not save to file option
+
+        idx = self.data_idx
+        data = self.session.data_collection[idx]
+        save_comments = data.get_component("comments")._categorical_data
+        save_flag = data.get_component("flag")._categorical_data
+
+        fn = self.savepath
+        folder = os.path.dirname(fn)
+        
+        t = astropy_table.data_to_astropy_table(data)
+        
+        #Check if load and save dir paths match
+        temp = os.path.dirname(self.filepath)
+        if not  os.path.samefile(folder,temp):
+            t['spectrum1d'].flags.writeable = True
+            t['spectrum2d'].flags.writeable = True
+            t['cutout'].flags.writeable = True
+            for i in range(len(t)):
+                t['spectrum1d'][i] = os.path.abspath(t['spectrum1d'][i])
+                t['spectrum2d'][i] = os.path.abspath(t['spectrum2d'][i])
+                t['cutout'][i] = os.path.abspath(t['cutout'][i])
+        try:
+            t.remove_column("comments")
+            t.remove_column("flag")
+            #The next line may be needed in the future:
+            #t.meta.clear() 
+            for i, line in enumerate(save_comments):
+                if line != "":
+                    line = line.replace("\n", " ")
+                    key = "MOSViz_Comment[%s]" %i 
+                    t.meta[key] = line
+
+            for i, line in enumerate(save_flag):
+                if line != "0" and line != "":
+                    line = com.replace("\n", " ")
+                    key = "MOSViz_Flag[%s]" %i 
+                    t.meta[key] = line
+
+            t.write(fn, format="ascii.ecsv", overwrite=True)
+        except Exception as e:
+            print("Comment write failed:",e)   
+
