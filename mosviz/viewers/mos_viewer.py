@@ -904,7 +904,11 @@ class MOSVizViewer(DataViewer):
             t.remove_column("comments")
             t.remove_column("flag")
             #The next line may be needed in the future:
-            #t.meta.clear() 
+            #t.meta.clear()
+            for k in t.meta:
+                if "MOSViz_Comment" in k or "MOSViz_Flag" in k:
+                    t.meta.pop(k)
+                    
             for i, line in enumerate(save_comments):
                 if line != "":
                     line = line.replace("\n", " ")
