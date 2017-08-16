@@ -905,8 +905,9 @@ class MOSVizViewer(DataViewer):
             t.remove_column("flag")
             #The next line may be needed in the future:
             #t.meta.clear()
-            for k in t.meta:
-                if "MOSViz_Comment" in k or "MOSViz_Flag" in k:
+            keys = t.meta.keys()
+            for k in keys:
+                if "MOSViz_Comment" in str(k) or "MOSViz_Flag" in str(k):
                     t.meta.pop(k)
                     
             for i, line in enumerate(save_comments):
