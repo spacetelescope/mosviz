@@ -85,9 +85,11 @@ class cutoutTool (QMainWindow):
                 self.inSave.setText(os.path.join(self.savePath,"[Name]_cutouts",""))
 
     def custom_path(self):
-        info = "Changing the default save path will result in absolute paths to be saved into the MOSViz Table."
-        info+= "This means the MOSViz Table will only work on your computer and cannot be shared."
-        info = QMessageBox.information(self, "Status:", info)
+        """User specified save path. Renders paths in output absolute. Can also revert to default."""
+        if self.savePathButton.text() == "Change":
+            info = "Changing the default save path will result in absolute paths to be saved into the MOSViz Table."
+            info+= "This means the MOSViz Table will only work on your computer and cannot be shared."
+            info = QMessageBox.information(self, "Status:", info)
         if self.customSavePath == False:
             self.savePath = compat.getexistingdirectory()
             if self.savePath == "":
@@ -102,6 +104,12 @@ class cutoutTool (QMainWindow):
 
 
     def collect_text(self):
+        """
+        Process information in the input boxes.
+        Checks if user inputs are functional.
+        Returns:
+            bool: userOk. True for success, False otherwise.
+        """
         self.statusBar().showMessage("Reading input")
         self.specPath = self.inSpectra.text()
         self.imgPath = self.inImage.text()
@@ -119,7 +127,7 @@ class cutoutTool (QMainWindow):
             self.cutout_y_size = 0
 
 
-        userOk = True #meaning did the user input?
+        userOk = True #meaning did the user input correctly?
 
         if self.specPath == "":
             self.inSpectra.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
@@ -162,7 +170,9 @@ class cutoutTool (QMainWindow):
 
         return userOk
 
+    #This function will be modified further to add features.
     def make_cutouts(self,imagename, catalog, image_label, image_ext=0, clobber=False, verbose=True):
+        """Function to generate cutouts."""
         from reproject import reproject_interp
 
         table = QTable()
@@ -285,6 +295,7 @@ class cutoutTool (QMainWindow):
             
 
     def main(self):
+        """Main function that processes info from user and files to make cutout."""
         userOK = self.collect_text() #meaning did the user input ok?
         if not userOK:
             self.statusBar().showMessage("Please fill in all fields")
@@ -307,6 +318,7 @@ class cutoutTool (QMainWindow):
             fb.append(fn)
             
 
+        #If no files are found, close the app
         if len(fb) == 0:
             self.statusBar().showMessage("NIRSpec files not found")
             self.start.setDisabled(False)
@@ -314,13 +326,16 @@ class cutoutTool (QMainWindow):
             info+= "File Name Format:\n\n"
             info+= "programName_objectName_instrument_filter_ grating_(s2d|x1d).fits"
             info = QMessageBox.information(self, "Status:", info)
-            
+            self.close()            
             return
 
+        #Change working path to save path
         cwd = os.getcwd()
         os.chdir(self.savePath)
         self.statusBar().showMessage("Making catalog")
 
+        #Setup local catalog. 
+        #TODO: type(catalog): dic -> table.Table
         catalog = {}
         catalog["id"] = {"name": "id", "datatype": "str", "data": []}
         catalog["ra"] = {"name": "ra", "unit": u.deg, "datatype": "float64", "data": []}
@@ -335,6 +350,7 @@ class cutoutTool (QMainWindow):
         catalog["spectrum2d"] = {"name": "spectrum2d", "datatype": "str", "data": []}
         catalog["cutout"] = {"name": "cutout", "datatype": "string", "data": []}
 
+        #Extract info from spectra files and save to catalog.
         projectName = os.path.basename(fn).split("_")[0]
         for idx, fn in enumerate(fb): #Fore file name in file base:
             headx1d = fits.open(fn.replace("s2d.fits", "x1d.fits"))['extract1d'].header
@@ -346,8 +362,8 @@ class cutoutTool (QMainWindow):
             head = fits.getheader(fn)
             ID = target_names[idx]
             catalog["id"]["data"].append(ID)
-            catalog["ra"]["data"].append(w1)#rn.uniform(359.999, 359.980393928))#head["TARG_RA"]
-            catalog["dec"]["data"].append(w2)#rn.uniform(0.0197402256312, 0.00394170958794))#head["TARG_DEC"]
+            catalog["ra"]["data"].append(w1)
+            catalog["dec"]["data"].append(w2)
             catalog["cutout_x_size"]["data"].append(self.cutout_x_size)
             catalog["cutout_y_size"]["data"].append(self.cutout_y_size)
             catalog["spatial_pixel_scale"]["data"].append(head["CDELT2"])
@@ -363,15 +379,16 @@ class cutoutTool (QMainWindow):
                 catalog["spectrum2d"]["data"].append(os.path.join(".",os.path.basename(fn)))
                 catalog["cutout"]["data"].append(os.path.join(".",os.path.join(projectName+"_cutouts/"+ID+"_"+projectName+"_cutout.fits")))
 
+        #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        
         success_counter, success_table = self.make_cutouts(self.imgPath, catalog, projectName, clobber=True)
-        
-        #self.make_cutouts(self.imgPath, catalog, projectName, clobber=True)
+
+        #For files that do not have a cutout, place "None" as a filename place holder.
         for idx, success in enumerate(success_table):
             if not success:
                 catalog["cutout"]["data"][idx] = "None"
 
+        #Make MOSViz Table using info in local catalog.
         self.statusBar().showMessage("Making MOSViz catalog")
         moscatalog = ["# %ECSV 0.9\n"+
         "# ---\n"+
@@ -405,20 +422,24 @@ class cutoutTool (QMainWindow):
                 +slit_length+" "+pix_scale+"\n")
 
         self.statusBar().showMessage("Saving MOSViz catalog")
-        #moscatalogname = self.savePath+projectName+"-MOStable.txt"
+
+        #Write MOSViz Table to file.
         moscatalogname = os.path.join(self.savePath,projectName+"_MOSViz_Table.txt")
         with open(moscatalogname,"w") as f:
             for line in moscatalog:
                 f.write(line)
-            
+        #Change back dir.
         self.statusBar().showMessage("DONE!")
         os.chdir(cwd)
 
+        #Give notice to user on status.
         info = "Cutouts were made for %s out of %s files\n\nSaved at: %s" %(
             success_counter,len(set(target_names)),
             os.path.join(self.savePath,projectName+"_cutouts/"))
         info = QMessageBox.information(self, "Status:", info)
 
+        #If some spectra files do not have a cutout, a list of their names will be saved to
+        # 'skipped_cutout_files.txt' in the save dir as the MOSViz Table file. 
         if success_counter != len(set(target_names)):
             info = "A list of spectra files without cutouts is saved in 'skipped_cutout_files.txt' at:\n\n"
             info += os.path.join(self.savePath,"skipped_cutout_files.txt")
