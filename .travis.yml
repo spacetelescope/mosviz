@@ -33,7 +33,7 @@ env:
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
         - EVENT_TYPE='pull_request push'
-        - GLUEVIZ_VERSION=0.10.4
+        - GLUEVIZ_VERSION=0.11.0
 
 
         # List other runtime dependencies for the package that are available as
