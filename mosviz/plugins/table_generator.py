@@ -150,9 +150,19 @@ class TableGen(QMainWindow):
 
         return "None", IDList
 
-    def get_cutout(self, fn):
+    def get_cutout(self, fn, ID):
         name = os.path.basename(fn)
         name = name.split("_")
+
+        img_fn = "_".join([ID,name[0],"cutout.fits"])
+        img_fn = os.path.join(self.img_path, img_fn)
+
+        if os.path.isfile(img_fn):
+            if self.abs_path:
+                return os.path.abspath(img_fn)
+            else:
+                return os.path.relpath(img_fn, self.spec_path)
+
         img_fn = "_".join([name[1],name[0],"cutout.fits"])
         img_fn = os.path.join(self.img_path, img_fn)
 
@@ -214,7 +224,7 @@ class TableGen(QMainWindow):
 
         #Extract info from spectra files and save to catalog.
         projectName = os.path.basename(fn).split("_")[0]
-        for idx, fn in enumerate(fb): #Fore file name in file base:
+        for idx, fn in enumerate(fb): #For file name in file base:
             row = []
             headx1d = fits.open(fn.replace("s2d.fits", "x1d.fits"))['extract1d'].header
             wcs = WCS(headx1d)
@@ -227,7 +237,7 @@ class TableGen(QMainWindow):
             ID, IDList = self.unique_id(ID, IDList)
 
             if self.addCutoutsRadioButton.isChecked():
-                cutout = self.get_cutout(fn)
+                cutout = self.get_cutout(fn, ID)
             else:
                 cutout = "None"
 
@@ -266,6 +276,9 @@ class TableGen(QMainWindow):
         #Write MOSViz Table to file.
         moscatalogname = projectName+"_MOSViz_Table.txt"
         t.write(moscatalogname, format="ascii.ecsv", overwrite=True)
+        
+        #Change back dir.
+        self.statusBar().showMessage("DONE!")
         os.chdir(cwd)
 
         moscatalogname = os.path.abspath(os.path.join(self.spec_path,moscatalogname))

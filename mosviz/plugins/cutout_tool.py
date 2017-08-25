@@ -352,7 +352,7 @@ class CutoutTool (QMainWindow):
 
         #Extract info from spectra files and save to catalog.
         projectName = os.path.basename(fn).split("_")[0]
-        for idx, fn in enumerate(fb): #Fore file name in file base:
+        for idx, fn in enumerate(fb): #For file name in file base:
             row = []
             headx1d = fits.open(fn.replace("s2d.fits", "x1d.fits"))['extract1d'].header
             wcs = WCS(headx1d)
