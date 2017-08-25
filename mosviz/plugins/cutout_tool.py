@@ -25,21 +25,23 @@ from astropy.nddata.utils import (Cutout2D, NoOverlapError)
 from astropy import log
 from astropy.coordinates import Angle 
 
-from .. import UI_DIR       
+from .. import UI_DIR
 
-class cutoutTool (QMainWindow):
+__all__ = ['CutoutTool','nIRSpec_cutout_tool']
+
+class CutoutTool (QMainWindow):
 
     def __init__ (self, parent=None):
-        super(cutoutTool,self).__init__(parent,Qt.WindowStaysOnTopHint)
+        super(CutoutTool,self).__init__(parent,Qt.WindowStaysOnTopHint)
         self.title = "NIRSpec Cutout Tool"
-        self.specPath = ""
-        self.imgPath = ""
-        self.savePath = ""
+        self.spec_path = ""
+        self.img_path = ""
+        self.save_path  = ""
         self.cutout_x_size = 0
         self.cutout_y_size = 0
         self.cutout_x_size_default = ""
         self.cutout_y_size_default = ""
-        self.customSavePath = False
+        self.custom_save_path  = False
         self.imageExt = ['*.fits', '*.FITS', '*.fit', '*.FIT',
          '*.fts', '*.FTS', '*.fits.Z', '*.fits.z', '*.fitz',
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
@@ -68,54 +70,72 @@ class cutoutTool (QMainWindow):
         self.show()
 
     def get_spec_path(self):
-        self.specPath = compat.getexistingdirectory()
-        self.inSpectra.setText(self.specPath)
+        self.spec_path = compat.getexistingdirectory()
+        self.inSpectra.setText(self.spec_path)
         self.update_save()
 
     def get_img_path(self):
-        self.imgPath = compat.getopenfilename(filters=" ".join(self.imageExt))[0]
-        self.inImage.setText(self.imgPath)
+        self.img_path = compat.getopenfilename(filters=" ".join(self.imageExt))[0]
+        self.inImage.setText(self.img_path)
 
     def update_save(self):
-        if not self.customSavePath:
-            self.savePath = self.inSpectra.text() 
-            if self.savePath == "":
+        if not self.custom_save_path :
+            self.save_path  = self.inSpectra.text() 
+            if self.save_path  == "":
                 self.inSave.setText("")
             else:
-                self.inSave.setText(os.path.join(self.savePath,"[Name]_cutouts",""))
+                self.inSave.setText(os.path.join(self.save_path ,"[Name]_cutouts",""))
 
     def custom_path(self):
-        """User specified save path. Renders paths in output absolute. Can also revert to default."""
+        """
+        User specified save path. Renders paths in output absolute. 
+        Can also revert to default.
+        """
         if self.savePathButton.text() == "Change":
-            info = "Changing the default save path will result in absolute paths to be saved into the MOSViz Table."
-            info+= "This means the MOSViz Table will only work on your computer and cannot be shared."
-            info = QMessageBox.information(self, "Status:", info)
-        if self.customSavePath == False:
-            self.savePath = compat.getexistingdirectory()
-            if self.savePath == "":
+            info = QMessageBox.information(self, "Info", "The Resulting MOSViz Table will be "
+                                            "unique to your computer")
+        if self.custom_save_path  == False:
+            self.save_path  = compat.getexistingdirectory()
+            if self.save_path  == "":
                 return
-            self.inSave.setText(os.path.join(self.savePath,"[Name]_cutouts",""))
+            self.inSave.setText(os.path.join(self.save_path ,"[Name]_cutouts",""))
             self.savePathButton.setText("Revert")
-            self.customSavePath = True
+            self.custom_save_path  = True
         else:
-            self.customSavePath = False
+            self.custom_save_path  = False
             self.savePathButton.setText("Change")
             self.update_save()
 
+    def unique_id(self, ID, IDList):
+        if ID not in IDList:
+            IDList.append(ID)
+            return ID, IDList
+
+        c = 1
+        while c < 10000:
+            temp = ID + "-%s"%(c)
+            if temp not in IDList:
+                ID = temp
+                IDList.append(ID)
+                return ID, IDList
+            c += 1
+
+        return "None", IDList
 
     def collect_text(self):
         """
         Process information in the input boxes.
         Checks if user inputs are functional.
+
         Returns:
             bool: userOk. True for success, False otherwise.
         """
         self.statusBar().showMessage("Reading input")
-        self.specPath = self.inSpectra.text()
-        self.imgPath = self.inImage.text()
+        self.spec_path = self.inSpectra.text()
+        self.img_path = self.inImage.text()
 
-        if not self.customSavePath: #Just in case
-            self.savePath = self.specPath  
+        if not self.custom_save_path : #Just in case
+            self.save_path  = self.spec_path  
 
         if self.xSize.text() != "":
             self.cutout_x_size = float(self.xSize.text())
@@ -129,13 +149,13 @@ class cutoutTool (QMainWindow):
 
         userOk = True #meaning did the user input correctly?
 
-        if self.specPath == "":
+        if self.spec_path == "":
             self.inSpectra.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
             userOk = False
         else:
             self.inSpectra.setStyleSheet("")
 
-        if self.imgPath == "":
+        if self.img_path == "":
             self.inImage.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
             userOk = False
         else:
@@ -154,16 +174,14 @@ class cutoutTool (QMainWindow):
             self.ySize.setStyleSheet("")
 
         if userOk:
-            if not os.path.isdir(self.specPath):
-                info = "Broken path:\n\n"
-                info+= self.specPath
-                info = QMessageBox.information(self, "Status:", info)
+            if not os.path.isdir(self.spec_path):
+                info = QMessageBox.information(self, "Status:", 
+                                               "Broken path:\n\n"+self.spec_path)
                 self.inSpectra.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
                 userOk = False
-            if not os.path.isfile(self.imgPath):
-                info = "Broken path:\n\n"
-                info+= self.imgPath
-                info = QMessageBox.information(self, "Status:", info)
+            if not os.path.isfile(self.img_path):
+                info = QMessageBox.information(self, "Status:", 
+                                               "Broken path:\n\n"+self.img_path)
                 self.inImage.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
                 userOk = False
 
@@ -171,20 +189,12 @@ class cutoutTool (QMainWindow):
         return userOk
 
     #This function will be modified further to add features.
-    def make_cutouts(self,imagename, catalog, image_label, image_ext=0, clobber=False, verbose=True):
-        """Function to generate cutouts."""
+    def make_cutouts(self, imagename, table, image_label, image_ext=0, 
+                     clobber=False, verbose=True):
+        """
+        Function to generate cutouts.
+        """
         from reproject import reproject_interp
-
-        table = QTable()
-        table['id'] = catalog['id']['data']
-        table['ra'] = catalog['ra']['data']*catalog['ra']['unit']
-        table['dec'] = catalog['dec']['data']*catalog['dec']['unit']
-        table['cutout_x_size'] = catalog['cutout_x_size']['data']*catalog['cutout_x_size']['unit']
-        table['cutout_y_size'] = catalog['cutout_y_size']['data']*catalog['cutout_y_size']['unit']
-        table['spatial_pixel_scale'] = catalog['spatial_pixel_scale']['data']*catalog['spatial_pixel_scale']['unit']
-        table['cutout_pa'] = catalog['slit_pa']['data']*catalog['slit_pa']['unit']
-        table['slit_width'] = catalog['slit_width']['data']*catalog['slit_width']['unit']
-        table['slit_length'] = catalog['slit_length']['data']*catalog['slit_length']['unit']
         
         with fits.open(imagename) as pf:
             data = pf[image_ext].data
@@ -192,9 +202,9 @@ class cutoutTool (QMainWindow):
 
         # It is more efficient to operate on an entire column at once.
         c = SkyCoord(table['ra'], table['dec'])
-        x = (table['cutout_x_size'] / table['spatial_pixel_scale']).value  # pix
-        y = (table['cutout_y_size'] / table['spatial_pixel_scale']).value  # pix
-        pscl = table['spatial_pixel_scale'].to(u.deg / u.pix)
+        x = (table['cutout_x_size'] / table['pix_scale']).value  # pix
+        y = (table['cutout_y_size'] / table['pix_scale']).value  # pix
+        pscl = table['pix_scale'].to(u.deg / u.pix)
 
         apply_rotation = False
 
@@ -206,11 +216,11 @@ class cutoutTool (QMainWindow):
         cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
 
         self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(len(catalog['id']['data'])-1)
+        self.progressBar.setMaximum(len(table)-1)
         self.progressBar.reset()
         counter = 0
         success_counter = 0 
-        success_table = [False for x in catalog['id']['data']]
+        success_table = [False for x in table['id']]
         for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
             self.progressBar.setValue(counter)
             counter += 1
@@ -285,17 +295,19 @@ class cutoutTool (QMainWindow):
         QApplication.processEvents()
         if success_counter != len(success_table):
             with open("skipped_cutout_files.txt","w") as f:
-                for i, x in enumerate(catalog['id']['data']):
+                for i, x in enumerate(table['id']):
                     status = success_table[i]
                     if status == False:
-                        f.write(catalog["spectrum2d"]["data"][i]+"\n")
+                        f.write(table["spectrum2d"][i]+"\n")
 
 
         return success_counter, success_table
             
-
     def main(self):
-        """Main function that processes info from user and files to make cutout."""
+        """
+        Main function that processes info from user and 
+        files to make cutout.
+        """
         userOK = self.collect_text() #meaning did the user input ok?
         if not userOK:
             self.statusBar().showMessage("Please fill in all fields")
@@ -307,7 +319,7 @@ class cutoutTool (QMainWindow):
         
         target_names = []
         fb = [] # File Base
-        searchPath = os.path.join(self.specPath,"*s2d.fits")
+        searchPath = os.path.join(self.spec_path,"*s2d.fits")
         for fn in glob(searchPath):
             name = os.path.basename(fn)
             name = name.split("_") #Split up file name
@@ -331,28 +343,17 @@ class cutoutTool (QMainWindow):
 
         #Change working path to save path
         cwd = os.getcwd()
-        os.chdir(self.savePath)
+        os.chdir(self.save_path )
         self.statusBar().showMessage("Making catalog")
 
         #Setup local catalog. 
-        #TODO: type(catalog): dic -> table.Table
-        catalog = {}
-        catalog["id"] = {"name": "id", "datatype": "str", "data": []}
-        catalog["ra"] = {"name": "ra", "unit": u.deg, "datatype": "float64", "data": []}
-        catalog["dec"] = {"name": "dec", "unit": u.deg, "datatype": "float64", "data": []}
-        catalog["cutout_x_size"] = {"name": "cutout_x_size", "unit": u.arcsec, "datatype": "float64", "data": []}
-        catalog["cutout_y_size"] = {"name": "cutout_y_size", "unit": u.arcsec, "datatype": "float64", "data": []}
-        catalog["spatial_pixel_scale"] ={"name": "spatial_pixel_scale", "unit": u.arcsec / u.pix, "datatype": "float64", "data": []}
-        catalog["slit_pa"] = {"name": "slit_pa", "unit": u.deg, "datatype": "float64", "data": []}
-        catalog["slit_width"] = {"name": "slit_width", "unit": u.arcsec, "datatype": "float64", "data": []}
-        catalog["slit_length"] = {"name": "slit_length", "unit": u.arcsec, "datatype": "float64", "data": []}
-        catalog["spectrum1d"] = {"name": "spectrum1d", "datatype": "str", "data": []}
-        catalog["spectrum2d"] = {"name": "spectrum2d", "datatype": "str", "data": []}
-        catalog["cutout"] = {"name": "cutout", "datatype": "string", "data": []}
+        catalog = []
+        IDList = []        
 
         #Extract info from spectra files and save to catalog.
         projectName = os.path.basename(fn).split("_")[0]
         for idx, fn in enumerate(fb): #Fore file name in file base:
+            row = []
             headx1d = fits.open(fn.replace("s2d.fits", "x1d.fits"))['extract1d'].header
             wcs = WCS(headx1d)
             w1, w2 = wcs.wcs_pix2world(0., 0., 1)
@@ -361,99 +362,92 @@ class cutoutTool (QMainWindow):
 
             head = fits.getheader(fn)
             ID = target_names[idx]
-            catalog["id"]["data"].append(ID)
-            catalog["ra"]["data"].append(w1)
-            catalog["dec"]["data"].append(w2)
-            catalog["cutout_x_size"]["data"].append(self.cutout_x_size)
-            catalog["cutout_y_size"]["data"].append(self.cutout_y_size)
-            catalog["spatial_pixel_scale"]["data"].append(head["CDELT2"])
-            catalog["slit_pa"]["data"].append(head["PA_APER"]) #todo check this because it might be none
-            catalog["slit_width"]["data"].append(0.2)
-            catalog["slit_length"]["data"].append(3.3)
-            if self.customSavePath:
-                catalog["spectrum1d"]["data"].append(fn.replace("s2d.fits", "x1d.fits"))
-                catalog["spectrum2d"]["data"].append(fn)
-                catalog["cutout"]["data"].append(os.path.join(self.savePath,projectName+"_cutouts/"+ID+"_"+projectName+"_cutout.fits"))
+            ID, IDList = self.unique_id(ID, IDList)
+
+            if self.custom_save_path:
+                spectrum1d = os.path.abspath(fn.replace("s2d.fits", "x1d.fits"))
+                spectrum2d = os.path.abspath(fn)
+                cutout = os.path.join(self.save_path ,projectName+"_cutouts/"+ID+"_"+projectName+"_cutout.fits")
             else:
-                catalog["spectrum1d"]["data"].append(os.path.join(".",os.path.basename(fn).replace("s2d.fits", "x1d.fits")))
-                catalog["spectrum2d"]["data"].append(os.path.join(".",os.path.basename(fn)))
-                catalog["cutout"]["data"].append(os.path.join(".",os.path.join(projectName+"_cutouts/"+ID+"_"+projectName+"_cutout.fits")))
+                spectrum1d = os.path.join(".",os.path.basename(fn).replace("s2d.fits", "x1d.fits"))
+                spectrum2d = os.path.join(".",os.path.basename(fn))
+                cutout = os.path.join(".",os.path.join(projectName+"_cutouts/"+ID+"_"+projectName+"_cutout.fits"))
+
+            row.append(ID) #id
+            row.append(w1) #ra
+            row.append(w2) #dec
+            row.append(spectrum1d) #spectrum1d
+            row.append(spectrum2d) #spectrum2d
+            row.append(cutout) #cutout
+            row.append(0.2) #slit_width
+            row.append(3.3) #slit_length
+            row.append(head["CDELT2"]) #pix_scale (spatial_pixel_scale)
+            row.append(self.cutout_x_size) #cutout_x_size
+            row.append(self.cutout_y_size) #cutout_y_size
+            row.append(head["PA_APER"]) #slit_pa
+
+            catalog.append(row) #Add row to catalog
+
+        #Make MOSViz Table using info in local catalog.
+        self.statusBar().showMessage("Making MOSViz Table")
+        colNames = ["id","ra","dec","spectrum1d","spectrum2d","cutout",
+                    "slit_width","slit_length","pix_scale",
+                    "cutout_x_size", "cutout_y_size", "slit_pa"]
+
+        t = QTable(rows=catalog, names=colNames)
+        t["ra"].unit = u.deg
+        t["dec"].unit = u.deg
+        t["slit_width"].unit = u.arcsec
+        t["slit_length"].unit = u.arcsec
+        t["pix_scale"].unit = (u.arcsec/u.pix)
+        t["cutout_x_size"].unit = u.arcsec
+        t["cutout_y_size"].unit = u.arcsec
+        t["slit_pa"].unit = u.deg
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        success_counter, success_table = self.make_cutouts(self.imgPath, catalog, projectName, clobber=True)
+        success_counter, success_table = self.make_cutouts(self.img_path, t, projectName, clobber=True)
 
         #For files that do not have a cutout, place "None" as a filename place holder.
         for idx, success in enumerate(success_table):
             if not success:
-                catalog["cutout"]["data"][idx] = "None"
-
-        #Make MOSViz Table using info in local catalog.
-        self.statusBar().showMessage("Making MOSViz catalog")
-        moscatalog = ["# %ECSV 0.9\n"+
-        "# ---\n"+
-        "# datatype:\n"+
-        "# - {name: id, datatype: string}\n"+
-        "# - {name: ra, unit: deg, datatype: float64}\n"+
-        "# - {name: dec, unit: deg, datatype: float64}\n"+
-        "# - {name: spectrum1d, datatype: string}\n"+
-        "# - {name: spectrum2d, datatype: string}\n"+
-        "# - {name: cutout, datatype: string}\n"+
-        "# - {name: slit_width, unit: arcsec, datatype: float64}\n"+
-        "# - {name: slit_length, unit: arcsec, datatype: float64}\n"+
-        "# - {name: pix_scale, unit: arcsec / pix, datatype: float64}\n"+
-        "# - {name: flag, datatype: string}\n"+
-        "# - {name: comments, datatype: string}\n"+
-        "id ra dec spectrum1d spectrum2d cutout slit_width slit_length pix_scale\n"]
-
-        for i, fn in enumerate(fb):
-            ID = catalog["id"]["data"][i]
-            ra = "%.10f"%(catalog["ra"]["data"][i])
-            dec = "%.10f"%(catalog["dec"]["data"][i])
-            spectrum1d = catalog["spectrum1d"]["data"][i] 
-            spectrum2d = catalog["spectrum2d"]["data"][i] 
-            cutout = catalog["cutout"]["data"][i]
-            slit_width =  "%.10f"%(catalog["slit_width"]["data"][i])
-            slit_length = "%.10f"%(catalog["slit_length"]["data"][i])
-            pix_scale = "%.10f"%(catalog["spatial_pixel_scale"]["data"][i])
-
-            moscatalog.append(ID+" "+ra+" "+dec+" "+spectrum1d+" "+
-                spectrum2d+" "+cutout+" "+slit_width+" "
-                +slit_length+" "+pix_scale+"\n")
-
-        self.statusBar().showMessage("Saving MOSViz catalog")
+                t["cutout"][idx] = "None"
 
         #Write MOSViz Table to file.
-        moscatalogname = os.path.join(self.savePath,projectName+"_MOSViz_Table.txt")
-        with open(moscatalogname,"w") as f:
-            for line in moscatalog:
-                f.write(line)
+        self.statusBar().showMessage("Saving MOSViz Table")
+        moscatalogname = os.path.join(self.save_path ,projectName+"_MOSViz_Table.txt")
+        t.remove_column("cutout_x_size")
+        t.remove_column("cutout_y_size")
+        t.remove_column("slit_pa")
+        t.write(moscatalogname, format="ascii.ecsv", overwrite=True)
+
         #Change back dir.
         self.statusBar().showMessage("DONE!")
         os.chdir(cwd)
 
         #Give notice to user on status.
-        info = "Cutouts were made for %s out of %s files\n\nSaved at: %s" %(
+        string = "Cutouts were made for %s out of %s files\n\nSaved at: %s" %(
             success_counter,len(set(target_names)),
-            os.path.join(self.savePath,projectName+"_cutouts/"))
-        info = QMessageBox.information(self, "Status:", info)
+            os.path.join(self.save_path ,projectName+"_cutouts/"))
+        info = QMessageBox.information(self, "Status:", string)
 
         #If some spectra files do not have a cutout, a list of their names will be saved to
         # 'skipped_cutout_files.txt' in the save dir as the MOSViz Table file. 
         if success_counter != len(set(target_names)):
-            info = "A list of spectra files without cutouts is saved in 'skipped_cutout_files.txt' at:\n\n"
-            info += os.path.join(self.savePath,"skipped_cutout_files.txt")
-            info = QMessageBox.information(self, "Status:", info)
-
+            info = QMessageBox.information(self, "Status:", "A list of spectra files"
+                                            "without cutouts is saved in"
+                                            "'skipped_cutout_files.txt' at:\n\n%s"
+                                            %os.path.join(self.save_path ,
+                                                "skipped_cutout_files.txt"))
         self.close()
         return
 
-@menubar_plugin("NIRSpec Cutout Tool")
+@menubar_plugin("Cutout Tool (JWST/NIRSpec MSA)")
 def nIRSpec_cutout_tool(session, data_collection):
-    ex = cutoutTool(session.application)
+    ex = CutoutTool(session.application)
     return
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ex = cutoutTool(app)
+    ex = CutoutTool(app)
     sys.exit(app.exec_())
