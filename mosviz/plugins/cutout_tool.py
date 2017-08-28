@@ -92,8 +92,8 @@ class CutoutTool (QMainWindow):
         Can also revert to default.
         """
         if self.savePathButton.text() == "Change":
-            info = QMessageBox.information(self, "Info", "The Resulting MOSViz Table will be "
-                                            "unique to your computer")
+            info = QMessageBox.information(self, "Info", "Changing the save destination will generate a MOSViz Table"
+                                                 " that is unique to your computer (you will not be able to share it).")
         if self.custom_save_path  == False:
             self.save_path  = compat.getexistingdirectory()
             if self.save_path  == "":
