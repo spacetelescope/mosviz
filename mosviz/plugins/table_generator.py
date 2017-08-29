@@ -97,8 +97,12 @@ class TableGen(QMainWindow):
         """
         Process information in the input boxes.
         Checks if user inputs are functional.
-        Returns:
-            bool: userOk. True for success, False otherwise.
+
+        Return
+        ------
+        userOk : bool
+            True for success, False otherwise.
+
         """
         self.statusBar().showMessage("Reading input")
         self.spec_path = self.inSpectra.text()
@@ -135,20 +139,15 @@ class TableGen(QMainWindow):
             return userOk
 
     def unique_id(self, ID, IDList):
-        if ID not in IDList:
-            IDList.append(ID)
+        keys = IDList.keys()
+        if ID not in keys:
+            IDList[ID] = 0 
             return ID, IDList
 
-        c = 1
-        while c < 10000:
-            temp = ID + "-%s"%(c)
-            if temp not in IDList:
-                ID = temp
-                IDList.append(ID)
-                return ID, IDList
-            c += 1
+        IDList[ID] += 1
+        ID = ID+"-%s"%(IDList[ID])
 
-        return "None", IDList
+        return ID, IDList
 
     def get_cutout(self, fn, ID):
         name = os.path.basename(fn)
@@ -220,7 +219,7 @@ class TableGen(QMainWindow):
 
         #Setup local catalog. 
         catalog = []
-        IDList = []
+        IDList = {} #Counter for objects with the same ID 
 
         #Extract info from spectra files and save to catalog.
         projectName = os.path.basename(fn).split("_")[0]
