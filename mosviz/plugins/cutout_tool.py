@@ -341,7 +341,7 @@ class CutoutTool (QMainWindow):
         #If no files are found, close the app
         if len(fb) == 0:
             self.statusBar().showMessage("NIRSpec files not found")
-            self.genTableButton.setDisabled(False)
+            self.start.setDisabled(False)
             info = QMessageBox.information(self, "Status:", "No NIRSpec files found in this directory\n"
                 "File Name Format:\n\n"
                 "<programName>_<objectName>_<instrument_filter>_ <grating>_<s2d|x1d>.fits")         
