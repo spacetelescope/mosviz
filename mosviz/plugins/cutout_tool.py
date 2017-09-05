@@ -57,7 +57,7 @@ class CutoutTool (QMainWindow):
         self.inSave.setDisabled(True)
 
         self.inSpectra.textChanged.connect(self.update_save)
-        self.start.clicked.connect(self.main)
+        self.start.clicked.connect(self.call_main)
         self.savePathButton.clicked.connect(self.custom_path)
         self.specBrowseButton.clicked.connect(self.get_spec_path)
         self.imageBrowseButton.clicked.connect(self.get_img_path)
@@ -122,8 +122,8 @@ class CutoutTool (QMainWindow):
         Process information in the input boxes.
         Checks if user inputs are functional.
 
-        Return
-        ------
+        Returns
+        -------
         userOk : bool
             True for success, False otherwise.
 
@@ -300,11 +300,22 @@ class CutoutTool (QMainWindow):
 
 
         return success_counter, success_table
-            
+    
+    def call_main(self):
+        """
+        Calls the main function and handles exceptions.
+        """
+        try:
+            self.main()
+        except Exception as e:
+            info = QMessageBox.critical(self, "Error", str(e))
+            self.close()
+
     def main(self):
         """
-        Main function that processes info from user and 
-        files to make cutout.
+        Main function that uses information provided 
+        by the user and in the headers of spectra files 
+        to construct a catalog and make postage stamp cutouts.
         """
         userOK = self.collect_text() #meaning did the user input ok?
         if not userOK:
@@ -327,16 +338,13 @@ class CutoutTool (QMainWindow):
             target_names.append(name)
             fb.append(fn)
             
-
         #If no files are found, close the app
         if len(fb) == 0:
             self.statusBar().showMessage("NIRSpec files not found")
-            self.start.setDisabled(False)
-            info = "No NIRSpec files found in this directory\n"
-            info+= "File Name Format:\n\n"
-            info+= "programName_objectName_instrument_filter_ grating_(s2d|x1d).fits"
-            info = QMessageBox.information(self, "Status:", info)
-            self.close()            
+            self.genTableButton.setDisabled(False)
+            info = QMessageBox.information(self, "Status:", "No NIRSpec files found in this directory\n"
+                "File Name Format:\n\n"
+                "<programName>_<objectName>_<instrument_filter>_ <grating>_<s2d|x1d>.fits")         
             return
 
         #Change working path to save path

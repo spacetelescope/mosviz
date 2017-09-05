@@ -56,7 +56,7 @@ class TableGen(QMainWindow):
         self.inImage.setDisabled(True)
         self.inImage.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
 
-        self.genTableButton.clicked.connect(self.main)
+        self.genTableButton.clicked.connect(self.call_main)
         self.noCutoutsRadioButton.toggled.connect(self.no_cutout)
         self.addCutoutsRadioButton.toggled.connect(self.add_cutout)
         self.specBrowseButton.clicked.connect(self.get_spec_path)
@@ -98,8 +98,8 @@ class TableGen(QMainWindow):
         Process information in the input boxes.
         Checks if user inputs are functional.
 
-        Return
-        ------
+        Returns
+        -------
         userOk : bool
             True for success, False otherwise.
 
@@ -173,6 +173,15 @@ class TableGen(QMainWindow):
         else:
             return "None"
 
+    def call_main(self):
+        """
+        Calls the main function and handles exceptions.
+        """
+        try:
+            self.main()
+        except Exception as e:
+            info = QMessageBox.critical(self, "Error", str(e))
+            self.close()
 
     def main(self):
         """
@@ -208,8 +217,7 @@ class TableGen(QMainWindow):
             self.genTableButton.setDisabled(False)
             info = QMessageBox.information(self, "Status:", "No NIRSpec files found in this directory\n"
                 "File Name Format:\n\n"
-                "<programName>_<objectName>_<instrument_filter>_ <grating>_<s2d|x1d>.fits")
-            self.close()            
+                "<programName>_<objectName>_<instrument_filter>_ <grating>_<s2d|x1d>.fits")         
             return
 
         #Change working path to save path
