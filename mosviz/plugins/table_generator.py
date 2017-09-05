@@ -89,8 +89,7 @@ class TableGen(QMainWindow):
     def check_image_path(self):
         same_path = os.path.samefile(os.path.dirname(self.img_path),
                             os.path.abspath(self.spec_path))
-        if not same_path:
-            self.abs_path = True
+        self.abs_path = not same_path
         return
 
     def collect_text(self):
