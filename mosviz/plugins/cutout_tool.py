@@ -136,11 +136,17 @@ class CutoutTool (QMainWindow):
             self.save_path  = self.spec_path  
 
         if self.xSize.text() != "":
-            self.cutout_x_size = float(self.xSize.text())
+            try:
+                self.cutout_x_size = float(self.xSize.text())
+            except:
+                self.cutout_x_size = -1
         else:
             self.cutout_x_size = 0
         if self.ySize.text() != "":
-            self.cutout_y_size = float(self.ySize.text())
+            try:
+                self.cutout_y_size = float(self.ySize.text())
+            except:
+                self.cutout_y_size = -1
         else:
             self.cutout_y_size = 0
 
