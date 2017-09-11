@@ -881,8 +881,8 @@ class MOSVizViewer(DataViewer):
                     if index is not None:
                         line = comments[key]
                         new_comments[index] = line
-            except:
-                pass
+            except Exception as e:
+                print("MOSViz Comment Load Failed: ", e)
 
         if "MOSViz_flags" in meta.keys():
             try:
@@ -892,8 +892,8 @@ class MOSVizViewer(DataViewer):
                     if index is not None:
                         line = flags[key]
                         new_flags[index] = line
-            except:
-                pass
+            except Exception as e:
+                print("MOSViz Flag Load Failed: ", e)
                              
         #Send to DC
         data.add_component(CategoricalComponent(new_flags, "flag"),"flag")

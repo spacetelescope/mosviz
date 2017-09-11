@@ -67,6 +67,8 @@ class CutoutTool (QMainWindow):
         self.xSize.selectAll()
         self.ySize.selectAll()
 
+        self.table_checkBox.setChecked(True)
+
         self.show()
 
     def get_spec_path(self):
@@ -138,17 +140,17 @@ class CutoutTool (QMainWindow):
         if self.xSize.text() != "":
             try:
                 self.cutout_x_size = float(self.xSize.text())
-            except:
+            except ValueError:
                 self.cutout_x_size = -1
         else:
-            self.cutout_x_size = 0
+            self.cutout_x_size = -1
         if self.ySize.text() != "":
             try:
                 self.cutout_y_size = float(self.ySize.text())
-            except:
+            except ValueError:
                 self.cutout_y_size = -1
         else:
-            self.cutout_y_size = 0
+            self.cutout_y_size = -1
 
 
         userOk = True #meaning did the user input correctly?
@@ -224,9 +226,13 @@ class CutoutTool (QMainWindow):
         self.progressBar.reset()
         counter = 0
         success_counter = 0 
-        success_table = [False for x in table['id']]
-        for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
+        success_table = [False for x in range(len(table['id']))]
+        print(len(table['id']))
+        for position, x_pix, y_pix, pix_scl in zip(c, x, y, pscl):
             self.progressBar.setValue(counter)
+            row = table[counter]
+            print(row)
+            print(position)
             counter += 1
             self.statusBar().showMessage("Making cutouts (%s/%s)"%(counter, len(success_table)))
             QApplication.processEvents()
@@ -431,7 +437,8 @@ class CutoutTool (QMainWindow):
         t.remove_column("cutout_x_size")
         t.remove_column("cutout_y_size")
         t.remove_column("slit_pa")
-        t.write(moscatalogname, format="ascii.ecsv", overwrite=True)
+        if self.table_checkBox.isChecked():
+            t.write(moscatalogname, format="ascii.ecsv", overwrite=True)
 
         #Change back dir.
         self.statusBar().showMessage("DONE!")
@@ -439,13 +446,13 @@ class CutoutTool (QMainWindow):
 
         #Give notice to user on status.
         string = "Cutouts were made for %s out of %s files\n\nSaved at: %s" %(
-            success_counter,len(set(target_names)),
+            success_counter,len(success_table),
             os.path.join(self.save_path ,projectName+"_cutouts/"))
         info = QMessageBox.information(self, "Status:", string)
 
         #If some spectra files do not have a cutout, a list of their names will be saved to
         # 'skipped_cutout_files.txt' in the save dir as the MOSViz Table file. 
-        if success_counter != len(set(target_names)):
+        if success_counter != len(success_table):
             info = QMessageBox.information(self, "Status:", "A list of spectra files"
                                             "without cutouts is saved in"
                                             "'skipped_cutout_files.txt' at:\n\n%s"

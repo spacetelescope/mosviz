@@ -27,45 +27,8 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="6" column="2">
-     <widget class="QLineEdit" name="xSize"/>
-    </item>
-    <item row="2" column="5">
-     <widget class="QPushButton" name="specBrowseButton">
-      <property name="text">
-       <string>Browse</string>
-      </property>
-     </widget>
-    </item>
     <item row="3" column="1" colspan="4">
      <widget class="QLineEdit" name="inImage"/>
-    </item>
-    <item row="4" column="1" colspan="4">
-     <widget class="QLineEdit" name="inSave">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
-      </property>
-     </widget>
-    </item>
-    <item row="7" column="5">
-     <widget class="QPushButton" name="start">
-      <property name="text">
-       <string>Start</string>
-      </property>
-      <property name="default">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="5">
-     <widget class="QPushButton" name="imageBrowseButton">
-      <property name="text">
-       <string>Browse</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="4">
-     <widget class="QLineEdit" name="ySize"/>
     </item>
     <item row="6" column="1">
      <widget class="QLabel" name="label_6">
@@ -78,6 +41,13 @@
      <widget class="QLabel" name="label_5">
       <property name="text">
        <string>Y:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>  Path to Image:</string>
       </property>
      </widget>
     </item>
@@ -95,15 +65,25 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="label_2">
-      <property name="text">
-       <string>  Path to Image:</string>
+    <item row="2" column="1" colspan="4">
+     <widget class="QLineEdit" name="inSpectra"/>
+    </item>
+    <item row="4" column="1" colspan="4">
+     <widget class="QLineEdit" name="inSave">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="1" colspan="4">
-     <widget class="QLineEdit" name="inSpectra"/>
+    <item row="9" column="5">
+     <widget class="QPushButton" name="start">
+      <property name="text">
+       <string>Start</string>
+      </property>
+      <property name="default">
+       <bool>true</bool>
+      </property>
+     </widget>
     </item>
     <item row="0" column="0" colspan="6">
      <widget class="QTextBrowser" name="infoBox">
@@ -150,9 +130,20 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;- Path to 2d spectrum file. &lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;- Path to cutout file, “None” otherwise. &lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;- Slit width and length. &lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;- Pixel scale.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;- Pixel scale.&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
+    </item>
+    <item row="9" column="1" colspan="4">
+     <widget class="QProgressBar" name="progressBar">
+      <property name="value">
+       <number>24</number>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="2">
+     <widget class="QLineEdit" name="xSize"/>
     </item>
     <item row="2" column="0">
      <widget class="QLabel" name="label">
@@ -168,17 +159,34 @@ p, li { white-space: pre-wrap; }
       </property>
      </widget>
     </item>
-    <item row="7" column="1" colspan="4">
-     <widget class="QProgressBar" name="progressBar">
-      <property name="value">
-       <number>24</number>
+    <item row="3" column="5">
+     <widget class="QPushButton" name="imageBrowseButton">
+      <property name="text">
+       <string>Browse</string>
       </property>
      </widget>
     </item>
-    <item row="7" column="0">
+    <item row="9" column="0">
      <widget class="QLabel" name="label_7">
       <property name="text">
        <string>  Progress:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="5">
+     <widget class="QPushButton" name="specBrowseButton">
+      <property name="text">
+       <string>Browse</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="4">
+     <widget class="QLineEdit" name="ySize"/>
+    </item>
+    <item row="7" column="0">
+     <widget class="QCheckBox" name="table_checkBox">
+      <property name="text">
+       <string>Generate MOSViz Table</string>
       </property>
      </widget>
     </item>
