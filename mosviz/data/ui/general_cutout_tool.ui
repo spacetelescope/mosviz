@@ -45,9 +45,9 @@
      </widget>
     </item>
     <item row="2" column="1" colspan="4">
-     <widget class="QLineEdit" name="spectra_user_input">
+     <widget class="QLineEdit" name="target_user_input">
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Path to the directory containing the NIRSpec MSA post-pipeline spectra.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Path to the target catalog file.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>
@@ -70,15 +70,19 @@
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:14pt; font-weight:600; text-decoration: underline;&quot;&gt;Cutout Tool for JWST/NIRSpec MSA Programs&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:14pt; font-weight:600; text-decoration: underline;&quot;&gt;General Cutout Tool&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.SF NS Text,sans-serif'; font-size:12pt;&quot;&gt;The Cutout Tool for JWST/NIRSpec MSA Programs is part of the MOSViz package. This cutout tool generates cutouts of spectral targets using an image and coordinate/orientation information stored in the headers of JWST/NIRSpec MSA files. Details of inputs, outputs and requirements can be found below. Please visit the MOSViz documentation for further information.&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; &lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.SF NS Text,sans-serif'; font-size:12pt;&quot;&gt;The General Cutout Tool is part of the MOSViz package. This cutout tool generates cutouts of targets using an image and coordinate/orientation information stored in a 'target file'. &lt;/span&gt;&lt;span style=&quot; font-family:'Calibri,sans-serif'; font-size:12pt;&quot;&gt;Descriptions&lt;/span&gt;&lt;span style=&quot; font-family:'.SF NS Text,sans-serif'; font-size:12pt;&quot;&gt; of inputs, outputs and requirements can be found below. Please visit the MOSViz documentation for further information.&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; &lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600; text-decoration: underline;&quot;&gt;Inputs&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;(NIRSpec) Spectra Directory: &lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;This is the path to &lt;/span&gt;&lt;span style=&quot; font-family:'Calibri,sans-serif'; font-size:12pt;&quot;&gt;the directory containing &lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;NIRSpec MSA post-pipeline spectra. The spectra files are saved in the level3 subdirectory of the pipeline output. The files should follow the following naming scheme:&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-style:italic;&quot;&gt;&amp;lt;programName&amp;gt;_&amp;lt;objectName&amp;gt;_&amp;lt;instrument_filter&amp;gt;_ &amp;lt;grating&amp;gt;_&amp;lt;s2d|x1d&amp;gt;.fits&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Target C&lt;/span&gt;&lt;span style=&quot; font-family:'.SF NS Text,sans-serif'; font-size:12pt; font-weight:600;&quot;&gt;atalog&lt;/span&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt; File: &lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;A txt file listing targets and containing the following &lt;/span&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;space separated&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; columns:&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;    - Target Object Name (underscore for spaces). &lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;    - Right Ascension (deg). &lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;    - Declination (deg).&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;    - Optional: Cutout PA (deg). For rotation.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Begin comment rows with '#'.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Path to Image:&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; An image to make cutouts from. You can use NIRCam images as well as images from other sources. If a target's coordinates are out of range, that target will not be assigned a cutout. A list of skipped files will be saved in a text file at the save destination.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Path to Image:&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; An image to make cutouts from. If a target's coordinates are out of range, that target will not be assigned a cutout. A list of skipped files will be saved in a text file at the save destination.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a name=&quot;docs-internal-guid-c8f1413b-5cd0-ce16-af7d-b5b1a747d2df&quot;&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'Arial'; font-size:12pt; font-weight:600; color:#000000; background-color:transparent;&quot;&gt;C&lt;/span&gt;&lt;span style=&quot; font-family:'Arial'; font-size:12pt; font-weight:600; color:#000000; background-color:transparent;&quot;&gt;utout Size:&lt;/span&gt;&lt;span style=&quot; font-family:'Arial'; font-size:12pt; color:#000000; background-color:transparent;&quot;&gt; The size of individual cutouts in arcsec&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Arial'; font-size:12pt; color:#000000;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
@@ -94,9 +98,9 @@ p, li { white-space: pre-wrap; }
      </widget>
     </item>
     <item row="2" column="5">
-     <widget class="QPushButton" name="spectra_browse_button">
+     <widget class="QPushButton" name="target_browse_button">
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Browse to add the directory containing the NIRSpec MSA post-pipeline spectra.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Browse to add the target catalog file.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Browse</string>
@@ -194,9 +198,9 @@ p, li { white-space: pre-wrap; }
      </widget>
     </item>
     <item row="2" column="0">
-     <widget class="QLabel" name="spectra_label">
+     <widget class="QLabel" name="target_label">
       <property name="text">
-       <string>  Spectra Directory:</string>
+       <string>  Target Catalog File:</string>
       </property>
       <property name="wordWrap">
        <bool>false</bool>
@@ -218,12 +222,12 @@ p, li { white-space: pre-wrap; }
   </widget>
  </widget>
  <tabstops>
-  <tabstop>spectra_user_input</tabstop>
+  <tabstop>target_user_input</tabstop>
   <tabstop>image_user_input</tabstop>
   <tabstop>x_user_input</tabstop>
   <tabstop>y_user_input</tabstop>
   <tabstop>start_button</tabstop>
-  <tabstop>spectra_browse_button</tabstop>
+  <tabstop>target_browse_button</tabstop>
   <tabstop>infoBox</tabstop>
   <tabstop>image_browse_button</tabstop>
   <tabstop>change_save_button</tabstop>
