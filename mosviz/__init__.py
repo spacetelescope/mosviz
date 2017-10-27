@@ -20,7 +20,7 @@ def setup():
     from glue.config import qt_client
     from .plugins.cutout_tool import nIRSpec_cutout_tool
     from .plugins.cutout_tool import general_cutout_tool
-    from .plugins.table_gen import nIRSpec_table_gen
+    from .plugins.table_generator import nIRSpec_table_gen
     qt_client.add(MOSVizViewer)
 
 

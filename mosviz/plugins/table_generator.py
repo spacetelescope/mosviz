@@ -48,7 +48,7 @@ class NIRSpecTableGen(QMainWindow):
         Set up user interface by loading the .ui file 
         and configuring items in the GUI.
         """
-        path = os.path.join(UI_DIR, 'table_gen.ui')
+        path = os.path.join(UI_DIR, 'table_generator.ui')
         loadUi(path, self)
 
         self.setWindowTitle(self.title)
