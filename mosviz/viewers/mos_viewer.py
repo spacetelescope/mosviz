@@ -1,18 +1,23 @@
 from __future__ import print_function, division, absolute_import
 
 import os
+from collections import OrderedDict
 
 import numpy as np
+from qtpy import compat
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox
+from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton
 from qtpy.uic import loadUi
 
 from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
+from glue.core.data_exporters import astropy_table
+from glue.core.component import Component, CategoricalComponent
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
+from glue.utils.qt import pick_item, get_text
 
 from specutils.core.generic import Spectrum1DRef
 
@@ -51,6 +56,13 @@ class MOSVizViewer(DataViewer):
         self.load_ui()
 
         # Define some data containers
+        self.filepath = None
+        self.savepath = None
+        self.data_idx = None
+        self.comments = False
+        self.textChangedAt = None
+        self.mask = None
+
         self.catalog = None
         self.current_row = None
         self._specviz_instance = None
@@ -267,6 +279,7 @@ class MOSVizViewer(DataViewer):
         self._layer_view.layer_combo.setCurrentIndex(index)
         return True
 
+
     def _update_data(self, message):
         """
         Update data message.
@@ -339,11 +352,13 @@ class MOSVizViewer(DataViewer):
                 return
 
             data = data.data
+        self.mask = mask
 
         # Clear the table
         self.catalog = Table()
         self.catalog.meta = data.meta
 
+        self.comments = False
         col_names = data.components
         for att in col_names:
             cid = data.id[att]
@@ -355,7 +370,10 @@ class MOSVizViewer(DataViewer):
                 if comp_labels.ndim > 1:
                     comp_labels = comp_labels[0]
 
-                if str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
+                if str(att) in ["comments", "flag"]:
+                    self.comments = True
+                elif str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
+                    self.filepath = component._load_log.path
                     path = '/'.join(component._load_log.path.split('/')[:-1])
                     self.catalog[str(att)] = [os.path.join(path, x)
                                               for x in comp_labels]
@@ -370,6 +388,11 @@ class MOSVizViewer(DataViewer):
                 self.catalog[str(att)] = comp_data
 
         if len(self.catalog) > 0:
+            if not self.comments:
+                self.comments = self._load_comments(data.label) #Returns bool
+            else:
+                self._data_collection_index(data.label)
+                self._get_save_path()
             # Update gui elements
             self._update_navigation(select=0)
 
@@ -455,13 +478,17 @@ class MOSVizViewer(DataViewer):
 
         spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
         spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
-        image_data = loader_cutout(row[colname_cutout])
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
-        self._update_data_components(image_data, key='cutout')
-
-        self.render_data(row, spec1d_data, spec2d_data, image_data)
+        
+        basename = os.path.basename(row[colname_cutout])
+        if basename == "None":
+            self.render_data(row, spec1d_data, spec2d_data, None)
+        else:
+            image_data = loader_cutout(row[colname_cutout])
+            self._update_data_components(image_data, key='cutout')
+            self.render_data(row, spec1d_data, spec2d_data, image_data)
 
     def _update_data_components(self, data, key):
         """
@@ -479,8 +506,8 @@ class MOSVizViewer(DataViewer):
         cur_data = self._loaded_data.get(key, None)
 
         if cur_data is None:
-            self.session.data_collection.append(data)
             self._loaded_data[key] = data
+            self.session.data_collection.append(data)
         else:
             cur_data.update_values_from_data(data)
 
@@ -490,6 +517,8 @@ class MOSVizViewer(DataViewer):
         Render the updated data sets in the individual plot widgets within the
         MOSViz viewer.
         """
+        self._check_unsaved_comments()
+
         if spec1d_data is not None:
 
             spectrum1d_x = spec1d_data[spec1d_data.id['Wavelength']]
@@ -545,6 +574,8 @@ class MOSVizViewer(DataViewer):
                                              width=dx, height=dy)
 
             self.image_widget._redraw()
+        else:
+            self.image_widget.setVisible(False)
 
         # Plot the 2D spectrum data last because by then we can make sure that
         # we set up the extent of the image appropriately if the cutout and the
@@ -593,11 +624,50 @@ class MOSVizViewer(DataViewer):
         # Repopulate the form layout
         # NOTE: this process is inefficient
         for col in row.colnames:
-            line_edit = QLineEdit(str(row[col]),
-                                  self.central_widget.meta_form_widget)
-            line_edit.setReadOnly(True)
+            if col.lower() not in ["comments", "flag"]:
+                line_edit = QLineEdit(str(row[col]),
+                                      self.central_widget.meta_form_widget)
+                line_edit.setReadOnly(True)
 
-            self.meta_form_layout.addRow(col, line_edit)
+                self.meta_form_layout.addRow(col, line_edit)
+
+        # Set up comment and flag input/display boxes
+        if self.comments:
+            if self.savepath is not None:
+                if self.savepath == -1:
+                    line_edit = QLineEdit(os.path.basename("Not Saving to File."),
+                                      self.central_widget.meta_form_widget)
+                    line_edit.setReadOnly(True)
+                    self.meta_form_layout.addRow("Save File", line_edit)
+                else:
+                    line_edit = QLineEdit(os.path.basename(self.savepath),
+                                      self.central_widget.meta_form_widget)
+                    line_edit.setReadOnly(True)
+                    self.meta_form_layout.addRow("Save File", line_edit)
+
+            self.input_flag = QLineEdit(self.get_flag(), 
+                self.central_widget.meta_form_widget)
+            self.input_flag.textChanged.connect(self._text_changed)
+            self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
+            self.meta_form_layout.addRow("Flag", self.input_flag)
+        
+            self.input_comments = QPlainTextEdit(self.get_comment(),
+                self.central_widget.meta_form_widget)
+            self.input_comments.textChanged.connect(self._text_changed)
+            self.input_comments.setStyleSheet("background-color: rgba(255, 255, 255);")
+            self.meta_form_layout.addRow("Comments", self.input_comments)
+
+            self.input_save = QPushButton('Save', 
+                self.central_widget.meta_form_widget)
+            self.input_save.clicked.connect(self.update_comments)
+            self.input_save.setDefault(True)
+
+            self.input_refresh = QPushButton('Reload', 
+                self.central_widget.meta_form_widget)
+            self.input_refresh.clicked.connect(self.refresh_comments)
+            
+            self.meta_form_layout.addRow(self.input_save, self.input_refresh)
+
 
     @defer_draw
     def set_locked_axes(self, x=None, y=None):
@@ -616,6 +686,288 @@ class MOSVizViewer(DataViewer):
         self.spectrum2d_widget._redraw()
         self.image_widget._redraw()
 
+    def layer_view(self):
+        return self._layer_view
+
+    def _text_changed(self):
+        if self.textChangedAt is None:
+            i = self.toolbar.source_select.currentIndex()
+            self.textChangedAt = self._index_hash(i)
+
+    def _check_unsaved_comments(self):
+        if self.textChangedAt is None:
+            return #Nothing to be changed
+        i = self.toolbar.source_select.currentIndex()
+        i = self._index_hash(i)
+        if self.textChangedAt == i:
+            self.textChangedAt = None
+            return #This is a refresh 
+        info = "Comments or flags changed but were not saved. Would you like to save them?"
+        reply = QMessageBox.question(self,'', info, QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.update_comments(True)
+        self.textChangedAt = None
+        
+    def _data_collection_index(self, label):
+        idx = -1
+        for i, l in enumerate(self.session.data_collection):
+            if l.label == label:
+                idx = i
+                break 
+        if idx == -1:
+            return -1
+        self.data_idx = idx
+        return idx
+
+    def _index_hash(self, i):
+        """Local selection index -> Table index"""
+        if self.mask is not None:
+            size = self.mask.size
+            temp = np.arange(size)
+            return temp[self.mask][i]
+        else:
+            return i
+
+    def _id_to_index_hash(self, ID, l):
+        """Object Name -> Table index"""
+        for i, name in enumerate(l):
+            if name == ID:
+                return i
+        return None 
+
+    def get_comment(self):
+        idx = self.data_idx
+        i = self.toolbar.source_select.currentIndex()
+        i = self._index_hash(i)
+        comp = self.session.data_collection[idx].get_component("comments")
+        return comp._categorical_data[i]
+
+    def get_flag(self):
+        idx = self.data_idx
+        i = self.toolbar.source_select.currentIndex()
+        i = self._index_hash(i)
+        comp = self.session.data_collection[idx].get_component("flag")
+        return comp._categorical_data[i]
+
+    def send_NumericalDataChangedMessage(self):
+        idx = self.data_idx
+        data = self.session.data_collection[idx]
+        data.hub.broadcast(msg.NumericalDataChangedMessage(data,"comments"))
+
+    def refresh_comments(self):
+        self.input_flag.setText(self.get_flag())
+        self.input_comments.setPlainText(self.get_comment())
+        self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
+        self.textChangedAt = None
+
+    def _get_save_path(self):
+        """
+        Try to get save path from other MOSVizViewer instances
+        """
+        for v in self.session.application.viewers[0]:
+            if isinstance(v, MOSVizViewer):
+                if v.savepath is not None:
+                    if v.data_idx == self.data_idx:
+                        self.savepath = v.savepath
+                        break
+
+    def _setup_save_path(self):
+        """
+        Prompt the user for a file to save comments and flags into.
+        """
+        fail = True
+        success = False
+        info = "Where would you like to save comments and flags?"
+        option = pick_item([0, 1],
+            [os.path.basename(self.filepath), "New MOSViz Table file"],
+            label=info,  title="Comment Setup") 
+        if option == 0:
+            self.savepath = self.filepath
+        elif option == 1:
+            dirname = os.path.dirname(self.filepath)
+            path = compat.getsavefilename(caption="New MOSViz Table File", 
+                basedir=dirname, filters="*.txt")[0]
+            if path == "":
+                return fail
+            self.savepath = path
+        else:
+            return fail
+            
+        for v in self.session.application.viewers[0]:
+            if isinstance(v, MOSVizViewer):
+                if v.data_idx == self.data_idx:
+                    v.savepath = self.savepath
+        self._layer_view.refresh()
+        return success
+
+    def update_comments(self, pastSelection = False):
+        """
+        Process comment and flag changes and save to file.
+
+        Parameters
+        ----------
+        pastSelection : bool
+            True when updating past selections. Used when 
+            user forgets to save.
+        """
+        if self.input_flag.text() == "":
+            self.input_flag.setStyleSheet("background-color: rgba(255, 0, 0);")
+            return
+
+        i = None
+        try:
+            i = int(self.input_flag.text())
+        except ValueError:
+            self.input_flag.setStyleSheet("background-color: rgba(255, 0, 0);")
+            info = QMessageBox.information(self, "Status:", "Flag must be an int!")
+            return
+        self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
+
+        idx = self.data_idx
+        if pastSelection:
+            i = self.textChangedAt
+            self.textChangedAt = None
+        else:
+            i = self.toolbar.source_select.currentIndex()
+            i = self._index_hash(i)
+        data = self.session.data_collection[idx]
+
+        comp = data.get_component("comments")
+        comp._categorical_data.flags.writeable = True
+        comp._categorical_data[i] = self.input_comments.toPlainText()
+
+        comp = data.get_component("flag")
+        comp._categorical_data.flags.writeable = True
+        comp._categorical_data[i] = self.input_flag.text()
+
+        self.send_NumericalDataChangedMessage()
+        self.write_comments() 
+
+        self.textChangedAt = None
+
+    def _load_comments(self, label):
+        """
+        Populate the comments and flag columns. 
+        Attempt to load comments from file.
+
+        Parameters
+        ----------
+        label : str
+            The label of the data in 
+            session.data_collection.
+        """
+
+        #Make sure its the right data 
+        #(beacuse subset data is masked)
+        idx = self._data_collection_index(label)
+        if idx == -1:
+            return False
+        data = self.session.data_collection[idx] 
+
+        #Fill in default comments:
+        length = data.shape[0]
+        new_comments = np.array(["" for i in range(length)], dtype=object)
+        new_flags = np.array(["0" for i in range(length)], dtype=object)
+
+        #Fill in any saved comments:
+        meta = data.meta
+        obj_names = data.get_component("id")._categorical_data
+
+        if "MOSViz_comments" in meta.keys():
+            try:
+                comments = meta["MOSViz_comments"]
+                for key in comments.keys():
+                    index = self._id_to_index_hash(key, obj_names)
+                    if index is not None:
+                        line = comments[key]
+                        new_comments[index] = line
+            except Exception as e:
+                print("MOSViz Comment Load Failed: ", e)
+
+        if "MOSViz_flags" in meta.keys():
+            try:
+                flags = meta["MOSViz_flags"]
+                for key in flags.keys():
+                    index = self._id_to_index_hash(key, obj_names)
+                    if index is not None:
+                        line = flags[key]
+                        new_flags[index] = line
+            except Exception as e:
+                print("MOSViz Flag Load Failed: ", e)
+                             
+        #Send to DC
+        data.add_component(CategoricalComponent(new_flags, "flag"),"flag")
+        data.add_component(CategoricalComponent(new_comments, "comments"),"comments")  
+        return True
+
+    def write_comments(self):
+        """
+        Setup save file. Write comments and flags to file
+        """
+
+        if self.savepath is None:
+            fail = self._setup_save_path()
+            if fail:return
+        if self.savepath == -1:
+            return #Do not save to file option
+
+        idx = self.data_idx
+        data = self.session.data_collection[idx]
+        save_comments = data.get_component("comments")._categorical_data
+        save_flag = data.get_component("flag")._categorical_data
+        obj_names = data.get_component("id")._categorical_data
+
+        fn = self.savepath
+        folder = os.path.dirname(fn)
+        
+        t = astropy_table.data_to_astropy_table(data)
+        
+        #Check if load and save dir paths match
+        temp = os.path.dirname(self.filepath)
+        if not  os.path.samefile(folder,temp):
+            t['spectrum1d'].flags.writeable = True
+            t['spectrum2d'].flags.writeable = True
+            t['cutout'].flags.writeable = True
+            for i in range(len(t)):
+                t['spectrum1d'][i] = os.path.abspath(t['spectrum1d'][i])
+                t['spectrum2d'][i] = os.path.abspath(t['spectrum2d'][i])
+                t['cutout'][i] = os.path.abspath(t['cutout'][i])
+        try:
+            t.remove_column("comments")
+            t.remove_column("flag")
+
+            keys = t.meta.keys()
+
+            if "MOSViz_comments" in keys:
+                t.meta.pop("MOSViz_comments")
+
+            if "MOSViz_flags" in keys:
+                t.meta.pop("MOSViz_flags")
+
+            comments = OrderedDict()
+            flags = OrderedDict()
+
+            for i, line in enumerate(save_comments):
+                if line != "":
+                    line = line.replace("\n", " ")
+                    key = str(obj_names[i])
+                    comments[key] = line
+
+            for i, line in enumerate(save_flag):
+                if line != "0" and line != "":
+                    line = com.replace("\n", " ")
+                    key = str(obj_names[i])
+                    flags[key] = line
+
+            if len(comments) > 0:
+                t.meta["MOSViz_comments"] = comments
+            if len(flags) > 0:
+                t.meta["MOSViz_flags"] = flags
+
+            t.write(fn, format="ascii.ecsv", overwrite=True)
+        except Exception as e:
+            print("Comment write failed:",e)   
+
     def closeEvent(self, event):
         """
         Clean up the extraneous data components created when opening the
@@ -626,5 +978,3 @@ class MOSVizViewer(DataViewer):
         for data in self._loaded_data.values():
             self.session.data_collection.remove(data)
 
-    def layer_view(self):
-        return self._layer_view

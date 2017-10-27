@@ -18,7 +18,8 @@ if not _ASTROPY_SETUP_:
 def setup():
     from .viewers.mos_viewer import MOSVizViewer
     from glue.config import qt_client
-
+    from .plugins.cutout_tool import nIRSpec_cutout_tool
+    from .plugins.table_generator import nIRSpec_table_gen
     qt_client.add(MOSVizViewer)
 
 

@@ -172,12 +172,13 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
             for filename in filenames:
                 file_path = os.path.join(path, filename)
-
-                if not os.path.exists(file_path):
-                    self.validate(False, "File '{0}' listed in column '{1}' "
-                                  "(currently selected for {2}) does not "
-                                  "exist.".format(filename, column_name, column))
-                    return
+                base = os.path.basename(file_path)
+                if base != "None":
+                    if not os.path.exists(file_path):
+                        self.validate(False, "File '{0}' listed in column '{1}' "
+                                      "(currently selected for {2}) does not "
+                                      "exist.".format(filename, column_name, column))
+                        return
 
         # Check whether the loaders are able to read in the spectra/cutouts. We
         # can't check whether all spectra/cutouts can be read since this would
@@ -193,17 +194,22 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             column_name = getattr(self, column)
             filenames = self.data.get_component(column_name).labels
 
-            path = os.sep.join(
-                self.data._load_log.path.split(os.sep)[:-1])
-            file_path = os.path.join(path, filenames[0])
+            test_filename = "None"
+            for filename in filenames:
+                if os.path.basename(filename) != "None":
+                    test_filename = filename
+                    break
+
+            if test_filename == "None":
+                continue
 
             try:
-                loader(file_path)
-            except:
+                loader(test_filename)
+            except Exception as e:
                 self.validate(False, "An error occurred when trying to read in "
                               "'{0}' using the loader '{1}' (see terminal for "
                               "the full error).".format(filenames[0], loader_name))
-                raise
+                print(e)
 
         self.validate(True, "All spectra and cutout files exist and the loaders "
                       "are able to read in the first one of each.")
