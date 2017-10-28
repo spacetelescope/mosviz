@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 import os
-import re
 from glob import glob
 import numpy as np
 

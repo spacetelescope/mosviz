@@ -29,7 +29,8 @@ from astropy.coordinates import Angle
 from .. import UI_DIR
 
 __all__ = ["natural_sort", "unique_id", "CutoutTool",
-    "NIRSpecCutoutTool", "nIRSpec_cutout_tool"]
+    "NIRSpecCutoutTool", "nIRSpec_cutout_tool",
+    "GeneralCutoutTool", "general_cutout_tool"]
 
 def natural_sort(array): 
     """
