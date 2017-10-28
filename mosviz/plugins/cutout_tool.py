@@ -90,7 +90,7 @@ def unique_id(ID, IDList):
 class CutoutTool(QMainWindow):
 
     def __init__ (self, parent=None):
-        super(CutoutTool,self).__init__(parent,Qt.WindowStaysOnTopHint)
+        super(CutoutTool,self).__init__(parent)
         self.progress_bar = None
         self.status_bar = None
         self.kill = False
