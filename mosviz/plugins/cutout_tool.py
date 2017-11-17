@@ -305,7 +305,11 @@ class CutoutTool(QMainWindow):
         self.kill = True
 
     def closeEvent(self, event):
+        parent = super(CutoutTool, self).parent()
+        if parent is not None:
+            parent.raise_()
         super(CutoutTool, self).closeEvent(event)
+
 
 
 
@@ -321,7 +325,7 @@ class NIRSpecCutoutTool(CutoutTool):
         else:
             self.tableGen = True
             self.TableGen = TableGen
-            self.output_dir_format = 'postage_stamps'
+            self.output_dir_format = 'MOSViz_cutouts'
         
         self.title = "NIRSpec Cutout Tool"
         
