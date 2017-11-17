@@ -16,6 +16,11 @@ from qtpy.QtWidgets import QWidget,QMessageBox
 from qtpy.QtCore import Qt
 
 from glue.config import menubar_plugin
+from glue.utils.qt import pick_item
+from glue.viewers.image.qt import StandaloneImageViewer
+from glue.core.data import Data
+from glue.viewers.common.qt.data_viewer import DataViewer
+from glue.core.data_factories import load_data
 
 from astropy.table import QTable
 import astropy.units as u
@@ -89,19 +94,23 @@ def unique_id(ID, IDList):
 
 class CutoutTool(QMainWindow):
 
-    def __init__ (self, parent=None):
-        super(CutoutTool,self).__init__(parent,Qt.WindowStaysOnTopHint)
+    def __init__ (self, session, parent=None):
+        if parent is None:
+            parent = session.application
+        super(CutoutTool,self).__init__(parent=parent)
+        self.session = session
         self.progress_bar = None
         self.status_bar = None
         self.kill = False
-        self.output_dir_format = '{0}_cutouts'
-        self.output_file_format = '{0}_{1}_cutout.fits' 
+        self.output_dir_format = '{0}_cutouts' #format(image_label)
+        self.output_file_format = '{0}_{1}_cutout.fits' #format(ID, image_label)
 
+    
     def make_cutouts(self, table, imagename, image_label, apply_rotation=False,
-                     image_ext=0, clobber=False, verbose=True):
+                     image_ext=0, clobber=False, verbose=True, ispreview=False):
         """
         This function is a modified copy of astroimtools.cutout_tools.make_cutouts. 
-        Make cutouts from a 2D image and write them to FITS files.
+        Make cutouts from a 2D image and write them to FITS files. 
 
         Catalog must have the following columns with unit info, where applicable:
             * ``'id'`` - ID string; no unit necessary.
@@ -129,6 +138,7 @@ class CutoutTool(QMainWindow):
             * ``OBJ_RA`` - RA of the cutout object in degrees.
             * ``OBJ_DEC`` - DEC of the cutout object in degrees.
             * ``OBJ_ROT`` - Rotation of cutout object in degrees.
+        Can add Qt.WindowStaysOnTopHint to supper to keep window ontop.
 
         Parameters
         ----------
@@ -254,7 +264,10 @@ class CutoutTool(QMainWindow):
             hdu.header['OBJ_RA'] = (position.ra.deg, 'Cutout object RA in deg')
             hdu.header['OBJ_DEC'] = (position.dec.deg, 'Cutout object DEC in deg')
 
-            hdu.writeto(fname, overwrite=clobber)
+            if ispreview:
+                return hdu
+            else:
+                hdu.writeto(fname, overwrite=clobber)
 
             success_counter += 1
             success_table[counter-1] = True
@@ -263,14 +276,11 @@ class CutoutTool(QMainWindow):
 
         self.progressBar.setValue(counter)
         QApplication.processEvents()
-        if success_counter != len(success_table):
-            with open("skipped_cutout_files.txt","w") as f:
-                for i, x in enumerate(table['id']):
-                    status = success_table[i]
-                    if status == False:
-                        f.write(table["spectrum2d"][i]+"\n")
-
-        return success_counter, success_table
+        
+        if ispreview:
+            return None
+        else:
+            return success_counter, success_table
     
     def get_spatial_pixel_scale(self, imagename):
         """
@@ -293,12 +303,15 @@ class CutoutTool(QMainWindow):
     def abort(self):
         self.kill = True
 
+    def closeEvent(self, event):
+        super(CutoutTool, self).closeEvent(event)
+
 
 
 class NIRSpecCutoutTool(CutoutTool):
 
-    def __init__ (self, parent=None, spec_path=None, TableGen=None):
-        super(NIRSpecCutoutTool,self).__init__(parent)
+    def __init__ (self, session, parent=None, spec_path=None, TableGen=None):
+        super(NIRSpecCutoutTool,self).__init__(session, parent=parent)
         self.output_file_format = '{0}.fits' 
 
         if TableGen is None:
@@ -351,6 +364,7 @@ class NIRSpecCutoutTool(CutoutTool):
         self.start_button.clicked.connect(self.call_main)
         self.change_save_button.clicked.connect(self.custom_path)
         self.image_browse_button.clicked.connect(self.get_img_path)
+        self.preview_button.clicked.connect(self.call_peview)
 
         self.x_user_input.setText(self.cutout_x_size_default)
         self.y_user_input.setText(self.cutout_y_size_default)
@@ -490,6 +504,105 @@ class NIRSpecCutoutTool(CutoutTool):
 
         return success
 
+    def get_file_base(self):
+        target_names = []
+        fb = [] # File Base
+        searchPath = os.path.join(self.spec_path,"*x1d.fits")
+        for fn in glob(searchPath):
+            name = os.path.basename(fn)
+            name = name.split("_") #Split up file name
+            if len(name) != 5:
+                continue
+            name = name[-4] # Get the target name from file
+            target_names.append(name)
+            fb.append(fn)
+        if len(fb) != 0:
+            fb = natural_sort(fb)
+        else:
+            self.statusBar().showMessage("NIRSpec files not found")
+            info = QMessageBox.information(self, "Status:", "No NIRSpec files found in this directory\n"
+                "File Name Format:\n\n"
+                "<programName>_<objectName>_<instrument_filter>_ <grating>_<s2d|x1d>.fits") 
+        return fb, target_names
+
+    def make_catalog_table(self, fb, target_names, programName):
+        #Setup local catalog. 
+        catalog = []
+        IDList = {} #Counter for objects with the same ID    
+        skipped = []   
+
+        spatial_pixel_scale = self.get_spatial_pixel_scale(self.img_path)
+
+        #Extract info from spectra files and save to catalog.
+        for idx, fn in enumerate(fb): #For file name in file base:
+            QApplication.processEvents()
+            row = []
+            #Catch file error or load WCS:
+            filex1d = fn
+            if os.path.isfile(filex1d):
+                try:
+                    headx1d = fits.open(filex1d)['extract1d'].header
+                    wcs = WCS(headx1d)
+                    w1, w2 = wcs.wcs_pix2world(0., 0., 1)
+                    w1 = w1.tolist()
+                    w2 = w2.tolist()
+                except Exception as e:
+                    print("WCS Read Failed:",e,":",filex1d)
+                    skipped.append(fn)
+                    continue
+            else:
+                continue
+
+            try:
+                head = fits.getheader(fn)
+            except Exception as e:
+                print("Header Read Failed:",e,":",fn)
+                skipped.append(fn)
+                continue
+
+            ID = target_names[idx]
+            ID, IDList = unique_id(ID, IDList)
+
+            row.append(ID) #id
+            row.append(w1) #ra
+            row.append(w2) #dec
+            row.append(0.2) #slit_width for JWST MSA
+            row.append(3.3) #slit_length for JWST MSA
+            row.append(spatial_pixel_scale) #pix_scale (spatial_pixel_scale)
+            row.append(head["PA_APER"]) #slit_pa
+            row.append(self.cutout_x_size) #cutout_x_size
+            row.append(self.cutout_y_size) #cutout_y_size
+            
+            catalog.append(row) #Add row to catalog
+
+        if len(catalog) == 0:
+            return None, skipped
+
+        colNames = ["id","ra","dec","slit_width","slit_length",
+            "spatial_pixel_scale", "slit_pa","cutout_x_size", 
+            "cutout_y_size"]
+
+        t = QTable(rows=catalog, names=colNames)
+        t["ra"].unit = u.deg
+        t["dec"].unit = u.deg
+        t["slit_width"].unit = u.arcsec
+        t["slit_length"].unit = u.arcsec
+        t["spatial_pixel_scale"].unit = (u.arcsec/u.pix)
+        t["slit_pa"].unit = u.deg
+        t["cutout_x_size"].unit = u.arcsec
+        t["cutout_y_size"].unit = u.arcsec
+
+        return t, skipped
+
+    def write_skipped(self, table, success_table, skipped):
+        with open("skipped_cutout_files.txt","w") as f:
+            for i, x in enumerate(skipped):
+                f.write(x+"\n") 
+            for i, x in enumerate(table['id']):
+                status = success_table[i]
+                if status == False:
+                    f.write(table["spectrum2d"][i]+"\n")
+
     def call_main(self):
         """
         Calls the main function and handles exceptions.
@@ -518,100 +631,29 @@ class NIRSpecCutoutTool(CutoutTool):
         if not success:
             self.statusBar().showMessage("Please fill in all fields")
             return
+
+       
         self.start_button.setText("Abort")
         self.start_button.clicked.disconnect()
         self.start_button.clicked.connect(self.abort)
+
         self.statusBar().showMessage("Making a list of files")
         QApplication.processEvents()
 
-        target_names = []
-        fb = [] # File Base
-        searchPath = os.path.join(self.spec_path,"*x1d.fits")
-        for fn in glob(searchPath):
-            name = os.path.basename(fn)
-            name = name.split("_") #Split up file name
-            if len(name) != 5:
-                continue
-            name = name[-4] # Get the target name from file
-            target_names.append(name)
-            fb.append(fn)
-
-        #If no files are found, Return
-        if len(fb) == 0:
-            self.statusBar().showMessage("NIRSpec files not found")
-            info = QMessageBox.information(self, "Status:", "No NIRSpec files found in this directory\n"
-                "File Name Format:\n\n"
-                "<programName>_<objectName>_<instrument_filter>_ <grating>_<s2d|x1d>.fits")         
-            return
-
-        fb = natural_sort(fb)
-
-        spatial_pixel_scale = self.get_spatial_pixel_scale(self.img_path)
+        fb, target_names = self.get_file_base()
+        if len(fb) == 0:        
+            return                
 
         #Change working path to save path
         cwd = os.getcwd()
         os.chdir(self.save_path)
         self.statusBar().showMessage("Making catalog")
 
-        #Setup local catalog. 
-        catalog = []
-        IDList = {} #Counter for objects with the same ID       
-
-        #Extract info from spectra files and save to catalog.
         programName = os.path.basename(fb[0]).split("_")[0]
-        for idx, fn in enumerate(fb): #For file name in file base:
-            QApplication.processEvents()
-            row = []
-            #Catch file error or load WCS:
-            filex1d = fn
-            if os.path.isfile(filex1d):
-                try:
-                    headx1d = fits.open(filex1d)['extract1d'].header
-                    wcs = WCS(headx1d)
-                    w1, w2 = wcs.wcs_pix2world(0., 0., 1)
-                    w1 = w1.tolist()
-                    w2 = w2.tolist()
-                except Exception as e:
-                    print("WCS Read Failed:",e,":",filex1d)
-                    continue
-            else:
-                continue
+        t, skipped = self.make_catalog_table(fb, target_names, programName)
+        if t is None:
+            raise Exception("All input spectra files have bad WCS and/or headers.")
 
-            try:
-                head = fits.getheader(fn)
-            except Exception as e:
-                print("Header Read Failed:",e,":",fn)
-                continue
-
-            ID = target_names[idx]
-            ID, IDList = unique_id(ID, IDList)
-
-            row.append(ID) #id
-            row.append(w1) #ra
-            row.append(w2) #dec
-            row.append(0.2) #slit_width
-            row.append(3.3) #slit_length
-            row.append(spatial_pixel_scale) #pix_scale (spatial_pixel_scale)
-            row.append(head["PA_APER"]) #slit_pa
-            row.append(self.cutout_x_size) #cutout_x_size
-            row.append(self.cutout_y_size) #cutout_y_size
-            
-            catalog.append(row) #Add row to catalog
-
-        colNames = ["id","ra","dec","slit_width","slit_length",
-            "spatial_pixel_scale", "slit_pa","cutout_x_size", 
-            "cutout_y_size"]
-
-        t = QTable(rows=catalog, names=colNames)
-        t["ra"].unit = u.deg
-        t["dec"].unit = u.deg
-        t["slit_width"].unit = u.arcsec
-        t["slit_length"].unit = u.arcsec
-        t["spatial_pixel_scale"].unit = (u.arcsec/u.pix)
-        t["slit_pa"].unit = u.deg
-        t["cutout_x_size"].unit = u.arcsec
-        t["cutout_y_size"].unit = u.arcsec
-        
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
         success_counter, success_table = self.make_cutouts(
@@ -623,40 +665,119 @@ class NIRSpecCutoutTool(CutoutTool):
             self.progress_bar.reset()
             self.statusBar().showMessage("Waiting for user input")
             return
-        #Change back dir.
+
         self.statusBar().showMessage("DONE!")
-        os.chdir(cwd)
+
+        #If some spectra files do not have a cutout, a list of their names will be saved to
+        # 'skipped_cutout_files.txt' in the save dir as the MOSViz Table file. 
         directory = self.output_dir_format.format(programName)
         output_path = os.path.abspath(
             os.path.join(self.save_path, directory))
 
         #Give notice to user on status.
         string = "Cutouts were made for %s out of %s files\n\nSaved at: %s" %(
-            success_counter,len(success_table), output_path)
+            success_counter,len(fb), output_path)
+        
+
+        if success_counter != len(fb):
+            self.write_skipped(t, success_table, skipped)
+            string += "\n\nA list of spectra files"
+            string += "without cutouts is saved in"
+            string += "'skipped_cutout_files.txt'"
+            string += "\n\nSaved at: %s" %os.path.join(
+                self.save_path, 
+                "skipped_cutout_files.txt")
+
         info = QMessageBox.information(self, "Status:", string)
 
-        #If some spectra files do not have a cutout, a list of their names will be saved to
-        # 'skipped_cutout_files.txt' in the save dir as the MOSViz Table file. 
-        if success_counter != len(success_table):
-            info = QMessageBox.information(self, "Status:", "A list of spectra files"
-                "without cutouts is saved in"
-                "'skipped_cutout_files.txt' at:\n\n%s"
-                %os.path.join(self.save_path ,
-                "skipped_cutout_files.txt"))
+        #Change back dir.
+        os.chdir(cwd)        
+
+        usr_ans = QMessageBox.question(self,'', 
+            "Would you like to load all generated cutouts into glue?", 
+            QMessageBox.Yes | QMessageBox.No)
+        
+        if usr_ans == QMessageBox.Yes:
+            os.chdir(self.save_path)
+            data = []
+            for i, flag in enumerate(success_table):
+                if flag:
+                    path = self.output_dir_format.format(programName)
+                    this_id = t["id"][i]
+                    fname = os.path.join(
+                        path, self.output_file_format.format(this_id, programName))
+                    data.append(load_data(fname))
+            self.session.data_collection.merge(*data, label="%s_Cutouts"%programName)
+            os.chdir(cwd)
 
         if self.tableGen and self.TableGen is not None:
             self.TableGen.cutout_response(output_path, 
                 self.custom_save_path)
-        
+
         self.close()
         return
+
+    def call_peview(self):
+        """
+        Calls the peview function and handles exceptions.
+        """
+        cwd = os.getcwd()
+        try:
+            self.preview()
+            os.chdir(cwd)
+        except Exception as e:
+            info = QMessageBox.critical(self, "Error", str(e))
+            os.chdir(cwd)
+
+    def preview(self):
+        success = self.verify_input()
+        if not success:
+            self.statusBar().showMessage("Please fill in all fields")
+            return
+
+        fb, target_names = self.get_file_base()
+        if len(fb) == 0:
+            return
+
+        fn = pick_item(fb,[os.path.basename(i) for i in fb],title='Preview', label='Pick a target:')
+
+        if fb is None:
+            return
+
+        programName = os.path.basename(fn).split("_")[0]
+        t, skipped = self.make_catalog_table([fn], target_names, programName)
+        if t is None:
+            raise Exception("Input spectra file has bad WCS and/or header.")
         
-    
+        #Make cutouts using info in catalog.
+        self.statusBar().showMessage("Making cutouts")
+        hdu = self.make_cutouts(
+            t, self.img_path, programName, clobber=True,
+            apply_rotation=True, ispreview=True)
+
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(1)
+        self.progress_bar.reset()
+        QApplication.processEvents()
+
+        if hdu is None:
+            raise Exception("Could not make cutout. "
+                "Object may be out of the image's range.")
+
+        if self.session is not None:
+            iv = StandaloneImageViewer(hdu.data, parent=self.session.application)
+            iv.show()
+        else:
+            import matplotlib.pyplot as plt 
+            plt.imshow(hdu.data)
+            plt.show()
+
+
 
 class GeneralCutoutTool(CutoutTool):
 
-    def __init__ (self, parent=None):
-        super(GeneralCutoutTool,self).__init__(parent)
+    def __init__ (self, session, parent=None):
+        super(GeneralCutoutTool, self).__init__(session, parent=parent)
         self.output_file_format = '{0}.fits'
 
         self.title = "General Cutout Tool"
@@ -689,6 +810,7 @@ class GeneralCutoutTool(CutoutTool):
         self.change_save_button.clicked.connect(self.custom_path)
         self.image_browse_button.clicked.connect(self.get_img_path)
         self.target_user_input.textChanged.connect(self.update_save)
+        self.preview_button.clicked.connect(self.call_peview)
 
         self.x_user_input.setText(self.cutout_x_size_default)
         self.y_user_input.setText(self.cutout_y_size_default)
@@ -823,44 +945,13 @@ class GeneralCutoutTool(CutoutTool):
                 success = False
         return success
 
-    def call_main(self):
-        """
-        Calls the main function and handles exceptions.
-        """
-        cwd = os.getcwd()
-        try:
-            self.main()
-            os.chdir(cwd)
-            self.start_button.setText("Start")
-            self.start_button.clicked.disconnect()
-            self.start_button.clicked.connect(self.call_main)
-        except Exception as e:
-            info = QMessageBox.critical(self, "Error", str(e))
-            self.close()
-            os.chdir(cwd)
-            raise
-
-    def main(self):
-        """
-        Construct a catalog and make cutouts.
-        """
-
-        success = self.verify_input()
-        if not success:
-            self.statusBar().showMessage("Please fill in all fields")
-            return
-        self.start_button.setText("Abort")
-        self.start_button.clicked.disconnect()
-        self.start_button.clicked.connect(self.abort)
-        self.statusBar().showMessage("Making a list of files")
-        QApplication.processEvents()
-
+    def make_catalog_table(self):
         spatial_pixel_scale = self.get_spatial_pixel_scale(self.img_path)
 
         catalog = []
         with open(self.target_file_path) as f:
             for line in f:
-                if line[0] == '#':
+                if '#' in line:
                     continue
                 line = line.replace("\n","")
                 row = line.split(" ")
@@ -892,23 +983,64 @@ class GeneralCutoutTool(CutoutTool):
         
         if len(row[0]) == 7:
             t["slit_pa"].unit = u.deg
+
+        return t
+
+    def write_skipped(self, table, success_table):
+        with open("skipped_cutout_files.txt","w") as f:
+            for i, x in enumerate(table['id']):
+                status = success_table[i]
+                if status == False:
+                    f.write(table["spectrum2d"][i]+"\n")
+
+    def call_main(self):
+        """
+        Calls the main function and handles exceptions.
+        """
+        cwd = os.getcwd()
+        try:
+            self.main()
+            os.chdir(cwd)
+            self.start_button.setText("Start")
+            self.start_button.clicked.disconnect()
+            self.start_button.clicked.connect(self.call_main)
+        except Exception as e:
+            info = QMessageBox.critical(self, "Error", str(e))
+            self.close()
+            os.chdir(cwd)
+            raise
+
+    def main(self):
+        """
+        Construct a catalog and make cutouts.
+        """
+
+        success = self.verify_input()
+        if not success:
+            self.statusBar().showMessage("Please fill in all fields")
+            return
+
+        self.start_button.setText("Abort")
+        self.start_button.clicked.disconnect()
+        self.start_button.clicked.connect(self.abort)
+        self.statusBar().showMessage("Making a list of files")
+        QApplication.processEvents()
+
+        t = self.make_catalog_table()
         
         #Change working path to save path
         cwd = os.getcwd()
         os.chdir(self.save_path)
-        print(self.save_path)
         self.statusBar().showMessage("Making catalog")
 
         programName, file_extension = os.path.splitext(self.img_path)
         programName = os.path.basename(programName)
+        
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
         success_counter, success_table = self.make_cutouts(
             t, self.img_path, programName, clobber=True,
             apply_rotation=True)
-
-        #Change back dir.
-        os.chdir(cwd)
 
         if self.kill:
             self.kill = False
@@ -923,29 +1055,107 @@ class GeneralCutoutTool(CutoutTool):
 
         #Give notice to user on status.
         string = "Cutouts were made for %s out of %s files\n\nSaved at: %s" %(
-            success_counter,len(success_table), output_path)
-        info = QMessageBox.information(self, "Status:", string)
-
+            success_counter, len(t), output_path)
+        
         #If some spectra files do not have a cutout, a list of their names will be saved to
         # 'skipped_cutout_files.txt' in the save dir as the MOSViz Table file. 
-        if success_counter != len(success_table):
-            info = QMessageBox.information(self, "Status:", "A list of spectra files"
-                "without cutouts is saved in"
-                "'skipped_cutout_files.txt' at:\n\n%s"
-                %os.path.join(self.save_path ,
-                "skipped_cutout_files.txt"))
+        if success_counter != len(t):
+            self.write_skipped(t)
+            string += "\n\nA list of spectra files"
+            string += "without cutouts is saved in"
+            string += "'skipped_cutout_files.txt'"
+            string += "\n\nSaved at: %s" %os.path.join(
+                self.save_path, 
+                "skipped_cutout_files.txt")
+
+        info = QMessageBox.information(self, "Status:", string)
+
+        #Change back dir.
+        os.chdir(cwd)   
+
+        usr_ans = QMessageBox.question(self,'', 
+            "Would you like to load all generated cutouts into glue?", 
+            QMessageBox.Yes | QMessageBox.No)
+        
+        if usr_ans == QMessageBox.Yes:
+            os.chdir(self.save_path)
+            data = []
+            for i, flag in enumerate(success_table):
+                if flag:
+                    path = self.output_dir_format.format(programName)
+                    this_id = t["id"][i]
+                    fname = os.path.join(
+                        path, self.output_file_format.format(this_id, programName))
+                    data.append(load_data(fname))
+            self.session.data_collection.merge(*data, label="%s_Cutouts"%programName)
+            os.chdir(cwd)
 
         self.close()
+        return
+
+    def call_peview(self):
+        """
+        Calls the peview function and handles exceptions.
+        """
+        cwd = os.getcwd()
+        try:
+            self.preview()
+            os.chdir(cwd)
+        except Exception as e:
+            info = QMessageBox.critical(self, "Error", str(e))
+            os.chdir(cwd)
+
+    def preview(self):
+        success = self.verify_input()
+        if not success:
+            self.statusBar().showMessage("Please fill in all fields")
+            return
+        
+        t = self.make_catalog_table()
+
+        index = pick_item(range(len(t)) , t["id"].tolist(), 
+            title='Preview', label='Pick a target:')
+
+        if index is None:
+            return
+
+        t = QTable(t[index])
+
+        programName, file_extension = os.path.splitext(self.img_path)
+        programName = os.path.basename(programName)
+        
+        #Make cutouts using info in catalog.
+        self.statusBar().showMessage("Making cutouts")
+        hdu = self.make_cutouts(
+            t, self.img_path, programName, clobber=True,
+            apply_rotation=True, ispreview=True)
+
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(1)
+        self.progress_bar.reset()
+        QApplication.processEvents()
+
+        if hdu is None:
+            raise Exception("Could not make cutout. "
+                "Object may be out of the image's range.")
+
+        if self.session is not None:
+            iv = StandaloneImageViewer(hdu.data, parent=self.session.application)
+            iv.show()
+        else:
+            import matplotlib.pyplot as plt 
+            plt.imshow(hdu.data)
+            plt.show()
 
 
 @menubar_plugin("Cutout Tool (JWST/NIRSpec MSA)")
 def nIRSpec_cutout_tool(session, data_collection):
-    ex = NIRSpecCutoutTool(session.application)
+    ex = NIRSpecCutoutTool(session)
     return
 
 @menubar_plugin("General Purpose Cutout Tool")
 def general_cutout_tool(session, data_collection):
-    ex = GeneralCutoutTool(session.application)
+    ex = GeneralCutoutTool(session)
     return
 
 if __name__ == "__main__":

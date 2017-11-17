@@ -26,12 +26,12 @@ __all__ = ["NIRSpecTableGen","nIRSpec_table_gen"]
 class NIRSpecTableGen(QMainWindow):
     
     def __init__ (self, parent=None):
-        super(NIRSpecTableGen,self).__init__(parent,Qt.WindowStaysOnTopHint)
+        super(NIRSpecTableGen,self).__init__(parent)
         self.parent = parent
 
         self.title = "MOSViz Table Generator for NIRSpec"
         self.spec_path = ""
-        self.postage_path = ""
+        self.cutout_path = ""
         self.save_file_name = ""
         self.save_file_dir = ""
         self.custom_save_path = False
@@ -53,21 +53,22 @@ class NIRSpecTableGen(QMainWindow):
         self.setWindowTitle(self.title)
         self.statusBar().showMessage("Waiting for user input")
 
-        #Set up no postage option
-        self.no_postage_radio.setChecked(True)
-        self._no_postage_radio_toggled()
+        #Set up no cutout option
+        self.no_cutout_radio.setChecked(True)
+        self._no_cutout_radio_toggled()
 
         #Set up radio buttons 
-        self.no_postage_radio.toggled.connect(self._no_postage_radio_toggled)
-        self.add_postage_radio.toggled.connect(self._add_postage_radio_toggled)
+        self.no_cutout_radio.toggled.connect(self._no_cutout_radio_toggled)
+        self.add_cutout_radio.toggled.connect(self._add_cutout_radio_toggled)
 
         #Set up click buttons
         self.spectra_browse_button.clicked.connect(self.get_spec_path)
-        self.add_postage_button.clicked.connect(self.get_postage_path)
+        self.add_cutout_button.clicked.connect(self.get_cutout_path)
         self.make_cutouts_button.clicked.connect(self.call_cutout)
         self.default_filename_button.clicked.connect(self.default_filename)
         self.generate_table_button.clicked.connect(self.call_main)
         self.change_save_path_button.clicked.connect(self.change_save_path)
+        self.remove_cutout_button.clicked.connect(self.remove_cutout)
 
         #Set up defaults 
         self.default_filename()
@@ -75,21 +76,21 @@ class NIRSpecTableGen(QMainWindow):
 
         self.show()
 
-    def _no_postage_radio_toggled(self):
+    def _no_cutout_radio_toggled(self):
         self.make_cutouts_button.setDisabled(True)
-        self.add_postage_button.setDisabled(True)
-        self.postage_path_display.setDisabled(True)
-        self.pstage_dir_label.setDisabled(True)
-        self.postage_path_display.setStyleSheet(
+        self.add_cutout_button.setDisabled(True)
+        self.cutout_path_display.setDisabled(True)
+        self.cutout_dir_label.setDisabled(True)
+        self.cutout_path_display.setStyleSheet(
             "background-color: rgba(255, 255, 255, 0);")
 
-    def _add_postage_radio_toggled(self):
+    def _add_cutout_radio_toggled(self):
         self.make_cutouts_button.setDisabled(False)
-        self.add_postage_button.setDisabled(False)
-        self.postage_path_display.setDisabled(False)
-        self.pstage_dir_label.setDisabled(False)
-        self.postage_path_display.setDisabled(False)
-        self.postage_path_display.setStyleSheet(
+        self.add_cutout_button.setDisabled(False)
+        self.cutout_path_display.setDisabled(False)
+        self.cutout_dir_label.setDisabled(False)
+        self.cutout_path_display.setDisabled(False)
+        self.cutout_path_display.setStyleSheet(
             "background-color: rgba(255, 255, 255, 0);")
 
     def default_filename(self):
@@ -112,15 +113,25 @@ class NIRSpecTableGen(QMainWindow):
         self.spectra_user_input.setStyleSheet("")
         return
 
-    def get_postage_path(self):
-        """Browse postage stamp directory"""
+    def get_cutout_path(self):
+        """Browse cutout directory"""
         browse_input = compat.getexistingdirectory()
         self.raise_()
         if browse_input == "":
             return
-        self.postage_path = browse_input 
-        self.postage_path_display.setText(self.postage_path)
-        self.postage_path_display.setStyleSheet(
+
+        self.cutout_path = browse_input 
+        self.cutout_path_display.setText(self.cutout_path)
+        self.cutout_path_display.setStyleSheet(
+            "background-color: rgba(255, 255, 255, 0);")
+        return
+
+    def remove_cutout(self):
+        """Remove cutout selection"""
+        self.cutout_path = ""
+        self.abs_path = False
+        self.cutout_path_display.setText(self.cutout_path)
+        self.cutout_path_display.setStyleSheet(
             "background-color: rgba(255, 255, 255, 0);")
         return
 
@@ -158,12 +169,12 @@ class NIRSpecTableGen(QMainWindow):
                 f.write(line)
 
         info = QMessageBox.information(self, "Info", "Some spectra files were not included in the generated MOSViz Table."
-                                       " A list of the these files and the reason they were skipped has been saved to "
+                                       " A list of the these files and the reason they were skipped has been saved to\n\n "
                                        "‘%s’."%file_name)
         
-    def get_postage_stamp(self, fn, ID):
+    def get_cutout(self, fn, ID):
         """
-        Searches and attempts to match postage stamps with target names. 
+        Searches and attempts to match cutout with target names. 
         It will check for images with the names containing the unique ID provided. 
         If none are found it will search for images with original IDs in their names. 
         If no images are found “None” is returned as a place holder. 
@@ -178,10 +189,10 @@ class NIRSpecTableGen(QMainWindow):
         returns
         -------
         String
-            A file name of postage stamp if image is found. "None" else.
+            A file name of cutout if image is found. "None" else.
         """
         img_fn = ID+".fits"
-        img_fn = os.path.join(self.postage_path, img_fn)
+        img_fn = os.path.join(self.cutout_path, img_fn)
 
         if os.path.isfile(img_fn):
             if self.abs_path or self.custom_save_path:
@@ -193,7 +204,7 @@ class NIRSpecTableGen(QMainWindow):
         name = name.split("_")
 
         img_fn = name[1]+".fits"
-        img_fn = os.path.join(self.postage_path, img_fn)
+        img_fn = os.path.join(self.cutout_path, img_fn)
 
         if os.path.isfile(img_fn):
             if self.abs_path or self.custom_save_path:
@@ -232,13 +243,13 @@ class NIRSpecTableGen(QMainWindow):
         else:
             self.filename_user_input.setStyleSheet("")
 
-        if self.add_postage_radio.isChecked():
-            self.postage_path = self.postage_path_display.text()
-            if self.postage_path == "":
-                self.postage_path_display.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
+        if self.add_cutout_radio.isChecked():
+            self.cutout_path = self.cutout_path_display.text()
+            if self.cutout_path == "":
+                self.cutout_path_display.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
                 success = False
             else:
-                self.postage_path_display.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+                self.cutout_path_display.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         
         if success:
             if not os.path.isdir(self.spec_path):
@@ -249,11 +260,26 @@ class NIRSpecTableGen(QMainWindow):
                 if not self.custom_save_path:
                     self.save_file_dir = self.spec_path
 
-            if self.add_postage_radio.isChecked():
-                if not os.path.isdir(self.postage_path): 
-                    info = QMessageBox.information(self, "Error", "Broken path:\n\n"+self.postage_path)
-                    self.postage_path_display.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
+            if self.add_cutout_radio.isChecked():
+                if not os.path.isdir(self.cutout_path): 
+                    info = QMessageBox.information(self, "Error", "Broken path:\n\n"+self.cutout_path)
+                    self.cutout_path_display.setStyleSheet("background-color: rgba(255, 0, 0, 128);")
                     success = False
+
+                if (not os.path.samefile(self.spec_path,
+                    os.path.dirname(self.cutout_path)) and 
+                    not self.abs_path and not self.cutout_path):
+                    usr_ans = QMessageBox.question(self, "Path Warning", 
+                        "The cutout directory is not in the spectra directory, "
+                        "this will generate a MOSViz Table "
+                        "that is unique to your computer "
+                        "(you will not be able to share it). Continue?",
+                        QMessageBox.Yes | QMessageBox.No)
+
+                    if usr_ans == QMessageBox.Yes:
+                        self.abs_path = True
+                    else:
+                        success = False
         return success
 
     def call_cutout(self):
@@ -277,17 +303,19 @@ class NIRSpecTableGen(QMainWindow):
             else:
                 self.CutoutTool = None
         try:
-            self.CutoutTool = NIRSpecCutoutTool(parent=self.parent,spec_path=self.spec_path, TableGen=self)
+            self.CutoutTool = NIRSpecCutoutTool(self.parent.session,
+                parent=self, spec_path=self.spec_path, TableGen=self)
         except:
             info = QMessageBox.critical(self, "Error", "Cutout tool failed: "+str(e))
 
-    def cutout_response(self, postage_path, abs_path):
-        self.postage_path = postage_path
-        self.postage_path_display.setText(self.postage_path)
-        self.postage_path_display.setStyleSheet(
+    def cutout_response(self, cutout_path, abs_path):
+        self.cutout_path = cutout_path
+        self.cutout_path_display.setText(self.cutout_path)
+        self.cutout_path_display.setStyleSheet(
             "background-color: rgba(255, 255, 255, 0);")
         self.abs_path = abs_path
         self.CutoutTool = None
+        self.raise_()
 
     def call_main(self):
         """
@@ -316,7 +344,7 @@ class NIRSpecTableGen(QMainWindow):
         Main metod that will take input from the user, make a 
         MOSViz Table and save it to a file. It will use the information
         in the headers of the spectra files to fill in rows of the table.
-        If the user has postage_stamps, it will look for an image file with the 
+        If the user has cutout, it will look for an image file with the 
         corresponding object name and add it to the Table. 
         """
         success = self.verify_input()
@@ -341,7 +369,7 @@ class NIRSpecTableGen(QMainWindow):
             target_names.append(name)
             fb.append(fn)
 
-        #If no files are found, close the app
+        #If no files are found, return
         if len(fb) == 0:
             self.statusBar().showMessage("NIRSpec files not found")
             self.generate_table_button.setDisabled(False)
@@ -396,10 +424,10 @@ class NIRSpecTableGen(QMainWindow):
             ID = target_names[idx]
             ID, IDList = unique_id(ID, IDList)
 
-            if self.add_postage_radio.isChecked():
-                postage_stamp = self.get_postage_stamp(fn, ID)
+            if self.add_cutout_radio.isChecked():
+                cutout = self.get_cutout(fn, ID)
             else:
-                postage_stamp = "None"
+                cutout = "None"
 
             if self.abs_path or self.custom_save_path:
                 spectrum1d = os.path.abspath(fn.replace("s2d.fits", "x1d.fits"))
@@ -413,7 +441,7 @@ class NIRSpecTableGen(QMainWindow):
             row.append(w2) #dec
             row.append(spectrum1d) #spectrum1d
             row.append(spectrum2d) #spectrum2d
-            row.append(postage_stamp) #postage_stamp
+            row.append(cutout) #cutout
             row.append(0.2) #slit_width
             row.append(3.3) #slit_length
             row.append(head["CDELT2"]) #pix_scale (spatial_pixel_scale)
@@ -447,7 +475,7 @@ class NIRSpecTableGen(QMainWindow):
         #Make and write MOSViz table 
         self.statusBar().showMessage("Making MOSViz catalog")
 
-        colNames = ["id","ra","dec","spectrum1d","spectrum2d","postage_stamp",
+        colNames = ["id","ra","dec","spectrum1d","spectrum2d","cutout",
                     "slit_width","slit_length","spatial_pixel_scale","slit_pa"]
         t = QTable(rows=catalog, names=colNames)
         t["ra"].unit = u.deg
