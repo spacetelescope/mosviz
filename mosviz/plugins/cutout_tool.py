@@ -94,11 +94,16 @@ def unique_id(ID, IDList):
 
 class CutoutTool(QMainWindow):
 
+<<<<<<< HEAD
     def __init__ (self, session, parent=None):
         if parent is None:
             parent = session.application
         super(CutoutTool,self).__init__(parent=parent)
         self.session = session
+=======
+    def __init__ (self, parent=None):
+        super(CutoutTool,self).__init__(parent)
+>>>>>>> 17707922c90acc0e4dd78d0e67b047f66816342c
         self.progress_bar = None
         self.status_bar = None
         self.kill = False
