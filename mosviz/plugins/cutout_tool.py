@@ -64,7 +64,7 @@ def unique_id(ID, IDList):
     """
     Assigns a unique ID to each spectral target. 
     A spectral target may appear in multiple files so 
-    unique_id assigns IDs by appending “_<New number>” to 
+    unique_id assigns IDs by appending _<New number> to 
     the spectral target ID. 
 
     Parameters
