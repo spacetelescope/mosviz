@@ -98,6 +98,7 @@ class CutoutTool(QMainWindow):
         if parent is None:
             parent = session.application
         super(CutoutTool,self).__init__(parent=parent)
+        self.setWindowFlags(self.windowFlags() | Qt.Tool)
         self.session = session
 
         self.progress_bar = None
@@ -306,7 +307,8 @@ class CutoutTool(QMainWindow):
 
     def closeEvent(self, event):
         parent = super(CutoutTool, self).parent()
-        if parent is not None:
+        if (parent is not None and 
+            parent is not self.session.application):
             parent.raise_()
         super(CutoutTool, self).closeEvent(event)
 
@@ -771,6 +773,7 @@ class NIRSpecCutoutTool(CutoutTool):
 
         if self.session is not None:
             iv = StandaloneImageViewer(hdu.data, parent=self.session.application)
+            iv.setWindowFlags(iv.windowFlags() | Qt.Tool)
             iv.show()
         else:
             import matplotlib.pyplot as plt 
@@ -1145,7 +1148,8 @@ class GeneralCutoutTool(CutoutTool):
                 "Object may be out of the image's range.")
 
         if self.session is not None:
-            iv = StandaloneImageViewer(hdu.data, parent=self.session.application)
+            iv = StandaloneImageViewer(hdu.data)
+            iv.setWindowFlags(iv.windowFlags() | Qt.Tool)
             iv.show()
         else:
             import matplotlib.pyplot as plt 

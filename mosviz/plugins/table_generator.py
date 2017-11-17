@@ -27,6 +27,7 @@ class NIRSpecTableGen(QMainWindow):
     
     def __init__ (self, parent=None):
         super(NIRSpecTableGen,self).__init__(parent)
+        self.setWindowFlags(self.windowFlags() | Qt.Tool)
         self.parent = parent
 
         self.title = "MOSViz Table Generator for NIRSpec"
