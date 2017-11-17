@@ -171,14 +171,14 @@ class NIRSpecTableGen(QMainWindow):
 
         info = QMessageBox.information(self, "Info", "Some spectra files were not included in the generated MOSViz Table."
                                        " A list of the these files and the reason they were skipped has been saved to\n\n "
-                                       "‘%s’."%file_name)
+                                       " %s. "%file_name)
         
     def get_cutout(self, fn, ID):
         """
         Searches and attempts to match cutout with target names. 
         It will check for images with the names containing the unique ID provided. 
         If none are found it will search for images with original IDs in their names. 
-        If no images are found “None” is returned as a place holder. 
+        If no images are found 'None' is returned as a place holder. 
 
         Parameters
         ----------
