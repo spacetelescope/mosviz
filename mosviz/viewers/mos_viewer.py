@@ -312,6 +312,7 @@ class MOSVizViewer(DataViewer):
             Update message object.
         """
         self._layer_view.refresh()
+        self._unpack_selection(message.subset)
 
     def _remove_subset(self, message):
         """
@@ -323,6 +324,7 @@ class MOSVizViewer(DataViewer):
             Subset message object.
         """
         self._layer_view.refresh()
+        self._unpack_selection(message.subset.data)
 
     def _selection_changed(self):
         self._unpack_selection(self._layer_view.layer_combo.currentData())
