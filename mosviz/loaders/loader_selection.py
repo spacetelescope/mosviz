@@ -1,19 +1,16 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from itertools import repeat
 
 from qtpy import QtWidgets
-from glue.external.echo import HasCallbackProperties, CallbackProperty
+from glue.external.echo import HasCallbackProperties, SelectionCallbackProperty
 from glue.external.echo.qt import autoconnect_callbacks_to_qt
-from glue.utils.qt import load_ui, update_combobox
+from glue.utils.qt import load_ui
 
-# TODO: uncomment first line and remove second once we support glueviz >= 0.11
-# from glue.core.qt.data_combo_helper import ComponentIDComboHelper
-from ..compat import ComponentIDComboHelper
+from glue.core.data_combo_helper import ComponentIDComboHelper
 
 from ..loaders.utils import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
-                                   CUTOUT_LOADERS)
+                             CUTOUT_LOADERS)
 from .. import UI_DIR
 
 
@@ -38,20 +35,20 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                {'property': 'slit_length', 'default': 'slit_length',
                 'categorical': False, 'numeric': True}]
 
-    loader_spectrum1d = CallbackProperty()
-    loader_spectrum2d = CallbackProperty()
-    loader_cutout = CallbackProperty()
+    loader_spectrum1d = SelectionCallbackProperty()
+    loader_spectrum2d = SelectionCallbackProperty()
+    loader_cutout = SelectionCallbackProperty()
 
-    spectrum1d = CallbackProperty()
-    spectrum2d = CallbackProperty()
-    cutout = CallbackProperty()
+    spectrum1d = SelectionCallbackProperty()
+    spectrum2d = SelectionCallbackProperty()
+    cutout = SelectionCallbackProperty()
 
-    slit_ra = CallbackProperty()
-    slit_dec = CallbackProperty()
-    slit_width = CallbackProperty()
-    slit_length = CallbackProperty()
+    slit_ra = SelectionCallbackProperty()
+    slit_dec = SelectionCallbackProperty()
+    slit_width = SelectionCallbackProperty()
+    slit_length = SelectionCallbackProperty()
 
-    slit_north_aligned = CallbackProperty()
+    slit_north_aligned = SelectionCallbackProperty()
 
     def __init__(self, parent=None, data=None):
 
@@ -61,9 +58,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
 
-        update_combobox(self.ui.combotext_loader_spectrum1d, zip(SPECTRUM1D_LOADERS, repeat(None)))
-        update_combobox(self.ui.combotext_loader_spectrum2d, zip(SPECTRUM2D_LOADERS, repeat(None)))
-        update_combobox(self.ui.combotext_loader_cutout, zip(CUTOUT_LOADERS, repeat(None)))
+        LoaderSelectionDialog.loader_spectrum1d.set_choices(self, sorted(SPECTRUM1D_LOADERS))
+        LoaderSelectionDialog.loader_spectrum2d.set_choices(self, sorted(SPECTRUM2D_LOADERS))
+        LoaderSelectionDialog.loader_cutout.set_choices(self, sorted(CUTOUT_LOADERS))
 
         if 'loaders' in data.meta:
 
@@ -90,17 +87,14 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         for column in self.columns:
 
-            combo = getattr(self, 'combotext_' + column['property'])
-
-            helper = ComponentIDComboHelper(combo,
-                                            data=data,
+            helper = ComponentIDComboHelper(self, column['property'], data=data,
                                             numeric=column['numeric'],
                                             categorical=column['categorical'])
 
             self._helpers[column['property']] = helper
 
             # Store components that appear in the combo inside the column object
-            column['components'] = [combo.itemText(i) for i in range(combo.count())]
+            column['components'] = [x.label for x in getattr(LoaderSelectionDialog, column['property']).get_choices(self)]
 
         # We check whether any of the properties are already defined in the
         # Data.meta dictionary. This could happen for example if the user has
@@ -154,7 +148,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             self.data.meta['special_columns'] = {}
 
         for column in self.columns:
-            self.data.meta['special_columns'][column['property']] = getattr(self, column['property'])
+            self.data.meta['special_columns'][column['property']] = getattr(self, column['property']).label
 
         self.data.meta['loaders_confirmed'] = True
 

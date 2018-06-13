@@ -16,11 +16,9 @@ try:
 except ImportError:
     from glue.viewers.image.qt.viewer_widget import StandaloneImageWidget as StandaloneImageViewer
 
-from glue.viewers.common.viz_client import init_mpl
-try:
-    from glue.viewers.common.qt.mpl_toolbar import MatplotlibViewerToolbar
-except ImportError:
-    from glue.viewers.matplotlib.qt.toolbar import MatplotlibViewerToolbar
+from glue.viewers.matplotlib.mpl_axes import init_mpl
+
+from matplotlib.backends.backend_qt5 import NavigationToolbar2QT
 
 
 __all__ = ['Line1DWidget', 'DrawableImageWidget', 'MOSImageWidget']
@@ -44,7 +42,7 @@ class Line1DWidget(QMainWindow):
         self.central_widget.canvas = canvas
 
         # Navigation widget, it takes the Canvas widget and a parent
-        self.toolbar = MatplotlibViewerToolbar(self)
+        self.toolbar = NavigationToolbar2QT(canvas, self)
 
         self.addToolBar(self.toolbar)
         self.setCentralWidget(self.central_widget)
