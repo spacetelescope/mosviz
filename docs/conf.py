@@ -172,7 +172,7 @@ if eval(setup_cfg.get('edit_on_github')):
     edit_on_github_doc_root = "docs"
 
 
-intersphinx_mapping['glue'] = ('https://glueviz.readthedocs.org/en/latest', None)
+intersphinx_mapping['glue'] = ('https://glueviz.readthedocs.org/en/stable', None)
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
@@ -218,4 +218,3 @@ nitpick_ignore = [('py:class', 'object'), ('py:class', 'str'),
               ]
 # -- Resolving issue number to links in changelog -----------------------------
 github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
-
