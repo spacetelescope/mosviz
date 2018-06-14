@@ -47,7 +47,7 @@
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QComboBox" name="combotext_cutout"/>
+      <widget class="QComboBox" name="combosel_cutout"/>
      </item>
      <item row="2" column="1">
       <widget class="QLabel" name="label_5">
@@ -66,7 +66,7 @@
       </widget>
      </item>
      <item row="12" column="1">
-      <widget class="QComboBox" name="combotext_slit_length"/>
+      <widget class="QComboBox" name="combosel_slit_length"/>
      </item>
      <item row="2" column="2">
       <widget class="QLabel" name="label_6">
@@ -111,7 +111,7 @@
       </widget>
      </item>
      <item row="11" column="1">
-      <widget class="QComboBox" name="combotext_slit_width"/>
+      <widget class="QComboBox" name="combosel_slit_width"/>
      </item>
      <item row="0" column="0" colspan="3">
       <widget class="QLabel" name="label">
@@ -139,7 +139,7 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QComboBox" name="combotext_spectrum2d"/>
+      <widget class="QComboBox" name="combosel_spectrum2d"/>
      </item>
      <item row="7" column="0" colspan="3">
       <widget class="Line" name="line_3">
@@ -149,19 +149,19 @@
       </widget>
      </item>
      <item row="9" column="1">
-      <widget class="QComboBox" name="combotext_slit_ra"/>
+      <widget class="QComboBox" name="combosel_slit_ra"/>
      </item>
      <item row="10" column="1">
-      <widget class="QComboBox" name="combotext_slit_dec"/>
+      <widget class="QComboBox" name="combosel_slit_dec"/>
      </item>
      <item row="3" column="1">
-      <widget class="QComboBox" name="combotext_spectrum1d"/>
+      <widget class="QComboBox" name="combosel_spectrum1d"/>
      </item>
      <item row="5" column="2">
-      <widget class="QComboBox" name="combotext_loader_cutout"/>
+      <widget class="QComboBox" name="combosel_loader_cutout"/>
      </item>
      <item row="3" column="2">
-      <widget class="QComboBox" name="combotext_loader_spectrum1d"/>
+      <widget class="QComboBox" name="combosel_loader_spectrum1d"/>
      </item>
      <item row="11" column="0">
       <widget class="QLabel" name="label_10">
@@ -194,7 +194,7 @@
       </widget>
      </item>
      <item row="4" column="2">
-      <widget class="QComboBox" name="combotext_loader_spectrum2d"/>
+      <widget class="QComboBox" name="combosel_loader_spectrum2d"/>
      </item>
      <item row="1" column="0" colspan="3">
       <widget class="Line" name="line">

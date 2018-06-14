@@ -13,11 +13,11 @@ from glue.core import message as msg
 from glue.core import Subset
 from glue.core.exceptions import IncompatibleAttribute
 from glue.core.data_exporters import astropy_table
-from glue.core.component import Component, CategoricalComponent
+from glue.core.component import CategoricalComponent
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
-from glue.utils.qt import pick_item, get_text
+from glue.utils.qt import pick_item
 
 from specutils.core.generic import Spectrum1DRef
 
@@ -70,6 +70,7 @@ class MOSVizViewer(DataViewer):
         self._primary_data = None
         self._layer_view = SimpleLayerWidget(parent=self)
         self._layer_view.layer_combo.currentIndexChanged.connect(self._selection_changed)
+        self.resize(800, 600)
 
     def load_ui(self):
         """
@@ -122,6 +123,11 @@ class MOSVizViewer(DataViewer):
 
         # Define the options widget
         self._options_widget = OptionsWidget()
+
+    def show(self, *args, **kwargs):
+        super(MOSVizViewer, self).show(*args, **kwargs)
+        # Trigger a sync between the splitters
+        self._left_splitter_moved()
 
     @avoid_circular
     def _right_splitter_moved(self, *args, **kwargs):
@@ -483,7 +489,7 @@ class MOSVizViewer(DataViewer):
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
-        
+
         basename = os.path.basename(row[colname_cutout])
         if basename == "None":
             self.render_data(row, spec1d_data, spec2d_data, None)
@@ -647,27 +653,27 @@ class MOSVizViewer(DataViewer):
                     line_edit.setReadOnly(True)
                     self.meta_form_layout.addRow("Save File", line_edit)
 
-            self.input_flag = QLineEdit(self.get_flag(), 
+            self.input_flag = QLineEdit(self.get_flag(),
                 self.central_widget.meta_form_widget)
             self.input_flag.textChanged.connect(self._text_changed)
             self.input_flag.setStyleSheet("background-color: rgba(255, 255, 255);")
             self.meta_form_layout.addRow("Flag", self.input_flag)
-        
+
             self.input_comments = QPlainTextEdit(self.get_comment(),
                 self.central_widget.meta_form_widget)
             self.input_comments.textChanged.connect(self._text_changed)
             self.input_comments.setStyleSheet("background-color: rgba(255, 255, 255);")
             self.meta_form_layout.addRow("Comments", self.input_comments)
 
-            self.input_save = QPushButton('Save', 
+            self.input_save = QPushButton('Save',
                 self.central_widget.meta_form_widget)
             self.input_save.clicked.connect(self.update_comments)
             self.input_save.setDefault(True)
 
-            self.input_refresh = QPushButton('Reload', 
+            self.input_refresh = QPushButton('Reload',
                 self.central_widget.meta_form_widget)
             self.input_refresh.clicked.connect(self.refresh_comments)
-            
+
             self.meta_form_layout.addRow(self.input_save, self.input_refresh)
 
 
@@ -703,19 +709,19 @@ class MOSVizViewer(DataViewer):
         i = self._index_hash(i)
         if self.textChangedAt == i:
             self.textChangedAt = None
-            return #This is a refresh 
+            return #This is a refresh
         info = "Comments or flags changed but were not saved. Would you like to save them?"
-        reply = QMessageBox.question(self,'', info, QMessageBox.Yes | QMessageBox.No)
+        reply = QMessageBox.question(self, '', info, QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.update_comments(True)
         self.textChangedAt = None
-        
+
     def _data_collection_index(self, label):
         idx = -1
         for i, l in enumerate(self.session.data_collection):
             if l.label == label:
                 idx = i
-                break 
+                break
         if idx == -1:
             return -1
         self.data_idx = idx
@@ -735,7 +741,7 @@ class MOSVizViewer(DataViewer):
         for i, name in enumerate(l):
             if name == ID:
                 return i
-        return None 
+        return None
 
     def get_comment(self):
         idx = self.data_idx
@@ -754,7 +760,7 @@ class MOSVizViewer(DataViewer):
     def send_NumericalDataChangedMessage(self):
         idx = self.data_idx
         data = self.session.data_collection[idx]
-        data.hub.broadcast(msg.NumericalDataChangedMessage(data,"comments"))
+        data.hub.broadcast(msg.NumericalDataChangedMessage(data, "comments"))
 
     def refresh_comments(self):
         self.input_flag.setText(self.get_flag())
@@ -782,19 +788,19 @@ class MOSVizViewer(DataViewer):
         info = "Where would you like to save comments and flags?"
         option = pick_item([0, 1],
             [os.path.basename(self.filepath), "New MOSViz Table file"],
-            label=info,  title="Comment Setup") 
+            label=info,  title="Comment Setup")
         if option == 0:
             self.savepath = self.filepath
         elif option == 1:
             dirname = os.path.dirname(self.filepath)
-            path = compat.getsavefilename(caption="New MOSViz Table File", 
+            path = compat.getsavefilename(caption="New MOSViz Table File",
                 basedir=dirname, filters="*.txt")[0]
             if path == "":
                 return fail
             self.savepath = path
         else:
             return fail
-            
+
         for v in self.session.application.viewers[0]:
             if isinstance(v, MOSVizViewer):
                 if v.data_idx == self.data_idx:
@@ -809,7 +815,7 @@ class MOSVizViewer(DataViewer):
         Parameters
         ----------
         pastSelection : bool
-            True when updating past selections. Used when 
+            True when updating past selections. Used when
             user forgets to save.
         """
         if self.input_flag.text() == "":
@@ -843,28 +849,28 @@ class MOSVizViewer(DataViewer):
         comp._categorical_data[i] = self.input_flag.text()
 
         self.send_NumericalDataChangedMessage()
-        self.write_comments() 
+        self.write_comments()
 
         self.textChangedAt = None
 
     def _load_comments(self, label):
         """
-        Populate the comments and flag columns. 
+        Populate the comments and flag columns.
         Attempt to load comments from file.
 
         Parameters
         ----------
         label : str
-            The label of the data in 
+            The label of the data in
             session.data_collection.
         """
 
-        #Make sure its the right data 
+        #Make sure its the right data
         #(beacuse subset data is masked)
         idx = self._data_collection_index(label)
         if idx == -1:
             return False
-        data = self.session.data_collection[idx] 
+        data = self.session.data_collection[idx]
 
         #Fill in default comments:
         length = data.shape[0]
@@ -896,10 +902,10 @@ class MOSVizViewer(DataViewer):
                         new_flags[index] = line
             except Exception as e:
                 print("MOSViz Flag Load Failed: ", e)
-                             
+
         #Send to DC
-        data.add_component(CategoricalComponent(new_flags, "flag"),"flag")
-        data.add_component(CategoricalComponent(new_comments, "comments"),"comments")  
+        data.add_component(CategoricalComponent(new_flags, "flag"), "flag")
+        data.add_component(CategoricalComponent(new_comments, "comments"), "comments")
         return True
 
     def write_comments(self):
@@ -909,7 +915,7 @@ class MOSVizViewer(DataViewer):
 
         if self.savepath is None:
             fail = self._setup_save_path()
-            if fail:return
+            if fail: return
         if self.savepath == -1:
             return #Do not save to file option
 
@@ -921,12 +927,12 @@ class MOSVizViewer(DataViewer):
 
         fn = self.savepath
         folder = os.path.dirname(fn)
-        
+
         t = astropy_table.data_to_astropy_table(data)
-        
+
         #Check if load and save dir paths match
         temp = os.path.dirname(self.filepath)
-        if not  os.path.samefile(folder,temp):
+        if not  os.path.samefile(folder, temp):
             t['spectrum1d'].flags.writeable = True
             t['spectrum2d'].flags.writeable = True
             t['cutout'].flags.writeable = True
@@ -968,7 +974,7 @@ class MOSVizViewer(DataViewer):
 
             t.write(fn, format="ascii.ecsv", overwrite=True)
         except Exception as e:
-            print("Comment write failed:",e)   
+            print("Comment write failed:", e)
 
     def closeEvent(self, event):
         """
@@ -979,4 +985,3 @@ class MOSVizViewer(DataViewer):
 
         for data in self._loaded_data.values():
             self.session.data_collection.remove(data)
-

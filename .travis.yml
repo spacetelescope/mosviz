@@ -95,8 +95,6 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.9
-        - os: linux
           env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11
 
         # Try numpy pre-release
@@ -105,12 +103,6 @@ matrix:
                EVENT_TYPE='pull_request push cron'
 
         # Do a PEP8 test with pycodestyle
-        - os: linux
-          env: MAIN_CMD='pycodestyle mosviz --count' SETUP_CMD=''
-
-    allow_failures:
-        # Do a PEP8 test with pycodestyle
-        # (allow to fail unless your code completely compliant)
         - os: linux
           env: MAIN_CMD='pycodestyle mosviz --count' SETUP_CMD=''
 

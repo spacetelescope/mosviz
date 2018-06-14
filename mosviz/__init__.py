@@ -30,4 +30,3 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 UI_DIR = os.path.join(ROOT_DIR, "data", "ui")
 ICON_DIR = os.path.join(ROOT_DIR, "data", "ui", "icons")
-
