@@ -1,14 +1,12 @@
 name: mosviz
 
 channels:
-  - astropy
+  - glueviz
   - http://ssb.stsci.edu/astroconda
 
 dependencies:
-  - astropy
   - numpy
-  - glueviz>=0.9.0
-  - matplotlib>=1.5.3
-  - pyqt
-#   - pip:
-#       - dependency_from_pip
+  - astropy
+  - specutils=0.2.2
+  - glue-core>=0.13.0
+  - qtpy
