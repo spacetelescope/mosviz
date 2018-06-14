@@ -7,7 +7,12 @@ from matplotlib.patches import Rectangle
 
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from glue.viewers.matplotlib.qt.widget import MplWidget
-from glue.viewers.matplotlib.mpl_axes import init_mpl
+
+try:
+    from glue.viewers.matplotlib.mpl_axes import init_mpl
+except ImportError:  # glue < 0.14
+    from glue.viewers.common.viz_client import init_mpl
+
 from glue.viewers.image.qt.standalone_image_viewer import StandaloneImageViewer
 
 __all__ = ['Line1DWidget', 'DrawableImageWidget', 'MOSImageWidget']
