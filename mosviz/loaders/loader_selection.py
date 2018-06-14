@@ -94,7 +94,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             self._helpers[column['property']] = helper
 
             # Store components that appear in the combo inside the column object
-            column['components'] = [x.label for x in getattr(LoaderSelectionDialog, column['property']).get_choices(self)]
+            column['components'] = dict((x.label, x) for x in getattr(LoaderSelectionDialog, column['property']).get_choices(self))
 
         # We check whether any of the properties are already defined in the
         # Data.meta dictionary. This could happen for example if the user has
@@ -107,7 +107,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 if column['property'] in special_columns:
                     column_name = special_columns[column['property']]
                     if column_name in column['components']:
-                        setattr(self, column['property'], column_name)
+                        setattr(self, column['property'], column['components'][column_name])
 
         # We now check whether each property is None, and if so we set it either
         # to the default, if present, or to the first component otherwise. In
@@ -121,7 +121,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 if column['default'] in column['components']:
                     setattr(self, column['property'], column['default'])
                 else:
-                    setattr(self, column['property'], column['components'][0])
+                    setattr(self, column['property'], sorted(column['components'])[0])
 
         # The following is a call to a function that deals with setting up the
         # linking between the callback properties here and the Qt widgets.
