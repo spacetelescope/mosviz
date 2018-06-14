@@ -1,6 +1,6 @@
 import os
 
-from ..jwst_loaders import (pre_nirspec_spectrum1d_reader, 
+from ..jwst_loaders import (pre_nirspec_spectrum1d_reader,
                             pre_nirspec_spectrum2d_reader,
                             pre_nircam_image_reader)
 from ..deimos_loaders import (deimos_spectrum1D_reader,

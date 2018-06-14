@@ -1,5 +1,3 @@
-import os
-
 from qtpy import QtWidgets
 from glue.utils.qt import update_combobox, load_ui
 

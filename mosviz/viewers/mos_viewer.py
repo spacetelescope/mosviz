@@ -705,7 +705,7 @@ class MOSVizViewer(DataViewer):
             self.textChangedAt = None
             return #This is a refresh
         info = "Comments or flags changed but were not saved. Would you like to save them?"
-        reply = QMessageBox.question(self,'', info, QMessageBox.Yes | QMessageBox.No)
+        reply = QMessageBox.question(self, '', info, QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.update_comments(True)
         self.textChangedAt = None
@@ -754,7 +754,7 @@ class MOSVizViewer(DataViewer):
     def send_NumericalDataChangedMessage(self):
         idx = self.data_idx
         data = self.session.data_collection[idx]
-        data.hub.broadcast(msg.NumericalDataChangedMessage(data,"comments"))
+        data.hub.broadcast(msg.NumericalDataChangedMessage(data, "comments"))
 
     def refresh_comments(self):
         self.input_flag.setText(self.get_flag())
@@ -898,8 +898,8 @@ class MOSVizViewer(DataViewer):
                 print("MOSViz Flag Load Failed: ", e)
 
         #Send to DC
-        data.add_component(CategoricalComponent(new_flags, "flag"),"flag")
-        data.add_component(CategoricalComponent(new_comments, "comments"),"comments")
+        data.add_component(CategoricalComponent(new_flags, "flag"), "flag")
+        data.add_component(CategoricalComponent(new_comments, "comments"), "comments")
         return True
 
     def write_comments(self):
@@ -909,7 +909,7 @@ class MOSVizViewer(DataViewer):
 
         if self.savepath is None:
             fail = self._setup_save_path()
-            if fail:return
+            if fail: return
         if self.savepath == -1:
             return #Do not save to file option
 
@@ -926,7 +926,7 @@ class MOSVizViewer(DataViewer):
 
         #Check if load and save dir paths match
         temp = os.path.dirname(self.filepath)
-        if not  os.path.samefile(folder,temp):
+        if not  os.path.samefile(folder, temp):
             t['spectrum1d'].flags.writeable = True
             t['spectrum2d'].flags.writeable = True
             t['cutout'].flags.writeable = True
@@ -968,7 +968,7 @@ class MOSVizViewer(DataViewer):
 
             t.write(fn, format="ascii.ecsv", overwrite=True)
         except Exception as e:
-            print("Comment write failed:",e)
+            print("Comment write failed:", e)
 
     def closeEvent(self, event):
         """
