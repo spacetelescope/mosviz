@@ -10,3 +10,4 @@ dependencies:
   - specutils=0.2.2
   - glue-core>=0.13.0
   - qtpy
+  - nomkl
