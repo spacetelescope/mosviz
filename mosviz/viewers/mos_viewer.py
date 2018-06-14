@@ -70,6 +70,7 @@ class MOSVizViewer(DataViewer):
         self._primary_data = None
         self._layer_view = SimpleLayerWidget(parent=self)
         self._layer_view.layer_combo.currentIndexChanged.connect(self._selection_changed)
+        self.resize(800, 600)
 
     def load_ui(self):
         """
@@ -122,6 +123,11 @@ class MOSVizViewer(DataViewer):
 
         # Define the options widget
         self._options_widget = OptionsWidget()
+
+    def show(self, *args, **kwargs):
+        super(MOSVizViewer, self).show(*args, **kwargs)
+        # Trigger a sync between the splitters
+        self._left_splitter_moved()
 
     @avoid_circular
     def _right_splitter_moved(self, *args, **kwargs):
