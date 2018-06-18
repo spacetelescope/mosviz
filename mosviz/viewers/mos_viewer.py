@@ -29,9 +29,12 @@ from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
-    from specviz.external.glue.data_viewer import SpecVizViewer
+    from specviz.third_party.glue.data_viewer import SpecVizViewer
 except ImportError:
-    SpecVizViewer = None
+    try:
+        from specviz.external.glue.data_viewer import SpecVizViewer
+    except ImportError:
+        SpecVizViewer = None
 
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
