@@ -21,6 +21,7 @@ def setup():
     from .plugins.cutout_tool import nIRSpec_cutout_tool
     from .plugins.cutout_tool import general_cutout_tool
     from .plugins.table_generator import nIRSpec_table_gen
+    from .startup import mosviz_setup
     qt_client.add(MOSVizViewer)
 
 

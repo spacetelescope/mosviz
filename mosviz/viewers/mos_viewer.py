@@ -135,11 +135,15 @@ class MOSVizViewer(DataViewer):
     @avoid_circular
     def _right_splitter_moved(self, *args, **kwargs):
         sizes = self.central_widget.right_vertical_splitter.sizes()
+        if sizes == [0, 0]:
+            sizes = [230, 230]
         self.central_widget.left_vertical_splitter.setSizes(sizes)
 
     @avoid_circular
     def _left_splitter_moved(self, *args, **kwargs):
         sizes = self.central_widget.left_vertical_splitter.sizes()
+        if sizes == [0, 0]:
+            sizes = [230, 230]
         self.central_widget.right_vertical_splitter.setSizes(sizes)
 
     def setup_connections(self):
