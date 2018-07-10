@@ -424,8 +424,8 @@ class MOSVizViewer(DataViewer):
 
         self.toolbar.source_select.clear()
 
-        if len(self.catalog) > 0 and 'id' in self.catalog.colnames:
-            self.toolbar.source_select.addItems(self.catalog['id'][:])
+        if len(self.catalog) > 0 and self.catalog.meta["special_columns"]["source_id"] in self.catalog.colnames:
+            self.toolbar.source_select.addItems(self.catalog[self.catalog.meta["special_columns"]["source_id"]][:])
 
         self.toolbar.source_select.setCurrentIndex(select)
 
@@ -886,7 +886,7 @@ class MOSVizViewer(DataViewer):
 
         #Fill in any saved comments:
         meta = data.meta
-        obj_names = data.get_component("id").labels
+        obj_names = data.get_component(self.catalog.meta["special_columns"]["source_id"]).labels
 
         if "MOSViz_comments" in meta.keys():
             try:
@@ -930,7 +930,7 @@ class MOSVizViewer(DataViewer):
         data = self.session.data_collection[idx]
         save_comments = data.get_component("comments").labels
         save_flag = data.get_component("flag").labels
-        obj_names = data.get_component("id").labels
+        obj_names = data.get_component(self.catalog.meta["special_columns"]["source_id"]).labels
 
         fn = self.savepath
         folder = os.path.dirname(fn)
