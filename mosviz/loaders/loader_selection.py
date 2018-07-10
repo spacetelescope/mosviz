@@ -26,6 +26,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 'categorical': True, 'numeric': False},
                {'property': 'cutout', 'default': 'cutout',
                 'categorical': True, 'numeric': False},
+               {'property': 'source_id', 'default': 'id',
+                'categorical': True, 'numeric': False},
                {'property': 'slit_ra', 'default': 'ra',
                 'categorical': False, 'numeric': True},
                {'property': 'slit_dec', 'default': 'dec',
@@ -42,6 +44,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
     spectrum1d = SelectionCallbackProperty()
     spectrum2d = SelectionCallbackProperty()
     cutout = SelectionCallbackProperty()
+
+    source_id = SelectionCallbackProperty()
 
     slit_ra = SelectionCallbackProperty()
     slit_dec = SelectionCallbackProperty()

@@ -424,8 +424,8 @@ class MOSVizViewer(DataViewer):
 
         self.toolbar.source_select.clear()
 
-        if len(self.catalog) > 0 and 'id' in self.catalog.colnames:
-            self.toolbar.source_select.addItems(self.catalog['id'][:])
+        if len(self.catalog) > 0 and self.catalog.meta["special_columns"]["source_id"] in self.catalog.colnames:
+            self.toolbar.source_select.addItems(self.catalog[self.catalog.meta["special_columns"]["source_id"]][:])
 
         self.toolbar.source_select.setCurrentIndex(select)
 
@@ -755,14 +755,14 @@ class MOSVizViewer(DataViewer):
         i = self.toolbar.source_select.currentIndex()
         i = self._index_hash(i)
         comp = self.session.data_collection[idx].get_component("comments")
-        return comp._categorical_data[i]
+        return comp.labels[i]
 
     def get_flag(self):
         idx = self.data_idx
         i = self.toolbar.source_select.currentIndex()
         i = self._index_hash(i)
         comp = self.session.data_collection[idx].get_component("flag")
-        return comp._categorical_data[i]
+        return comp.labels[i]
 
     def send_NumericalDataChangedMessage(self):
         idx = self.data_idx
@@ -848,12 +848,12 @@ class MOSVizViewer(DataViewer):
         data = self.session.data_collection[idx]
 
         comp = data.get_component("comments")
-        comp._categorical_data.flags.writeable = True
-        comp._categorical_data[i] = self.input_comments.toPlainText()
+        comp.labels.flags.writeable = True
+        comp.labels[i] = self.input_comments.toPlainText()
 
         comp = data.get_component("flag")
-        comp._categorical_data.flags.writeable = True
-        comp._categorical_data[i] = self.input_flag.text()
+        comp.labels.flags.writeable = True
+        comp.labels[i] = self.input_flag.text()
 
         self.send_NumericalDataChangedMessage()
         self.write_comments()
@@ -886,7 +886,7 @@ class MOSVizViewer(DataViewer):
 
         #Fill in any saved comments:
         meta = data.meta
-        obj_names = data.get_component("id")._categorical_data
+        obj_names = data.get_component(self.catalog.meta["special_columns"]["source_id"]).labels
 
         if "MOSViz_comments" in meta.keys():
             try:
@@ -928,9 +928,9 @@ class MOSVizViewer(DataViewer):
 
         idx = self.data_idx
         data = self.session.data_collection[idx]
-        save_comments = data.get_component("comments")._categorical_data
-        save_flag = data.get_component("flag")._categorical_data
-        obj_names = data.get_component("id")._categorical_data
+        save_comments = data.get_component("comments").labels
+        save_flag = data.get_component("flag").labels
+        obj_names = data.get_component(self.catalog.meta["special_columns"]["source_id"]).labels
 
         fn = self.savepath
         folder = os.path.dirname(fn)
