@@ -1,5 +1,6 @@
 import os
 
+from mosviz.viewers import MOSVizViewer
 from ..jwst_loaders import (pre_nirspec_spectrum1d_reader,
                             pre_nirspec_spectrum2d_reader,
                             pre_nircam_image_reader)
@@ -16,6 +17,20 @@ JWSTCUTOUT = os.path.join(DATA, 'jwst', 'nrc_oct16_969.fits.gz')
 DEIMOS1D = os.path.join(DATA, 'deimos', 'spec1d.1153.151.12004808.fits.gz')
 DEIMOS2D = os.path.join(DATA, 'deimos', 'slit.1153.151R.fits.gz')
 DEIMOSCUTOUT = os.path.join(DATA, 'deimos', '12004808.acs.v_6ac_.fits.gz')
+
+PLAYTABLE = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "playdata", "jw95065-MOStable.txt")
+
+
+def test_mosviz_gui(qtbot, mosviz_gui):
+    print(mosviz_gui)
+    mosviz = mosviz_gui.new_data_viewer(MOSVizViewer)
+    # from glue.core import data_factories
+    # d = data_factories.load_data(PLAYTABLE)
+    # mosviz_gui.add_data_for_testing(d)
+    print("Got here ###################################################")
+    # qtbot.addWidget(mosviz)
+    mosviz.add_data_for_testing(mosviz_gui.data_collection[0])
+    assert mosviz_gui.toolbar.source_select.currentText() == 's00001'
 
 
 def test_pre_nirspec_spectrum1d_reader():
