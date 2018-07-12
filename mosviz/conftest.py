@@ -34,13 +34,73 @@ from astropy.tests.pytest_plugins import *
 #
 ## This is to figure out the affiliated package version, rather than
 ## using Astropy's
-# try:
-#     from .version import version
-# except ImportError:
-#     version = 'dev'
+import pytest
+
+try:
+    from .version import version
+except ImportError:
+    version = 'dev'
+
+try:
+    packagename = os.path.basename(os.path.dirname(__file__))
+    TESTED_VERSIONS[packagename] = version
+except NameError:   # Needed to support Astropy <= 1.0.0
+    pass
+
+@pytest.fixture(scope='session')
+def glue_gui():
+    from glue.core import DataCollection
+    from glue.app.qt.application import GlueApplication
+    #
+    from .viewers.mos_viewer import MOSVizViewer
 #
-# try:
-#     packagename = os.path.basename(os.path.dirname(__file__))
-#     TESTED_VERSIONS[packagename] = version
-# except NameError:   # Needed to support Astropy <= 1.0.0
-#     pass
+#     import sys
+    import os
+
+    PLAYTABLE = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "playdata", "jw95065-MOStable.txt")
+
+##############################
+
+    from glue.core import data_factories
+
+    d = data_factories.load_data(PLAYTABLE)
+    dc = DataCollection([])
+    #
+    # # dc.append(d)
+    #
+    # ga = GlueApplication(dc)
+    # ga.show()
+    #
+    # mosviz = ga.new_data_viewer(MOSVizViewer)
+    # mosviz.add_data_for_testing(d)
+    #
+    # print("Viewers: ", ga.viewers)
+    # print("Viewers[0][0]: ", ga.viewers[0][0])
+    #
+    # return mosviz
+################################
+
+
+    dc.append(d)
+    app = GlueApplication(dc)
+    # app.run_startup_action('mosviz')
+    # app.load_data(d)
+    app.setVisible(True)
+
+    return app
+##############################
+
+#
+#     m.add_data(d)
+#
+#     # mosviz = ga.new_data_viewer(MOSVizViewer)
+#     sys.exit(ga.exec_())
+#
+#     # mosviz = MOSVizViewer(ga.session)
+#     # app = create_glue_app()
+#     # layout = app.tab(0)
+#
+#     # Cheap workaround for Windows test environment
+#     # if sys.platform.startswith('win'):
+#     #     layout._cubeviz_toolbar._toggle_sidebar()
+#
