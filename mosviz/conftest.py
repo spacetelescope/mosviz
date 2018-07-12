@@ -57,13 +57,14 @@ def glue_gui():
 #     import sys
     import os
 
-    PLAYTABLE = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "playdata", "jw95065-MOStable.txt")
+    #PLAYTABLE = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "playdata", "jw95065-MOStable.txt")
+    TESTDATA = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "workshop_examples", "deimos", "deimos_mosviz.tbl")
 
 ##############################
 
     from glue.core import data_factories
 
-    d = data_factories.load_data(PLAYTABLE)
+    d = data_factories.load_data(TESTDATA)
     dc = DataCollection([])
     #
     # # dc.append(d)

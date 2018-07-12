@@ -326,8 +326,8 @@ class MOSVizViewer(DataViewer):
         if 'loaders' not in data.meta:
             data.meta['loaders'] = {}
 
-        data.meta['loaders']['spectrum1d'] = "Pre NIRSpec 1D Spectrum"
-        data.meta['loaders']['spectrum2d'] = "Pre NIRSpec 2D Spectrum"
+        data.meta['loaders']['spectrum1d'] = "DEIMOS 1D Spectrum"
+        data.meta['loaders']['spectrum2d'] = "DEIMOS 2D Spectrum"
         data.meta['loaders']['cutout'] = "ACS Cutout Image"
 
         if 'special_columns' not in data.meta:
