@@ -49,59 +49,30 @@ except NameError:   # Needed to support Astropy <= 1.0.0
 
 @pytest.fixture(scope='session')
 def glue_gui():
-    from glue.core import DataCollection
-    from glue.app.qt.application import GlueApplication
-    #
-    from .viewers.mos_viewer import MOSVizViewer
-#
-#     import sys
     import os
 
-    #PLAYTABLE = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "playdata", "jw95065-MOStable.txt")
-    TESTDATA = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "workshop_examples", "deimos", "deimos_mosviz.tbl")
-
-##############################
-
+    from glue.core import DataCollection
+    from glue.app.qt.application import GlueApplication
     from glue.core import data_factories
 
-    d = data_factories.load_data(TESTDATA)
+    from .viewers.mos_viewer import MOSVizViewer
+
+    # This is a deimos_mosviz.tbl file that is locally hosted
+    testdata = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "workshop_examples", "deimos", "deimos_mosviz.tbl")
+
+    d = data_factories.load_data(testdata)
     dc = DataCollection([])
-    #
-    # # dc.append(d)
-    #
-    # ga = GlueApplication(dc)
-    # ga.show()
-    #
-    # mosviz = ga.new_data_viewer(MOSVizViewer)
-    # mosviz.add_data_for_testing(d)
-    #
-    # print("Viewers: ", ga.viewers)
-    # print("Viewers[0][0]: ", ga.viewers[0][0])
-    #
-    # return mosviz
-################################
 
-
+    # Creates glue instance
     dc.append(d)
     app = GlueApplication(dc)
-    # app.run_startup_action('mosviz')
-    # app.load_data(d)
     app.setVisible(True)
 
-    return app
-##############################
+    # Adds data to the MosVizViewer
+    app.new_data_viewer(MOSVizViewer)
+    app.viewers[0][0].add_data_for_testing(app.data_collection[0])
 
-#
-#     m.add_data(d)
-#
-#     # mosviz = ga.new_data_viewer(MOSVizViewer)
-#     sys.exit(ga.exec_())
-#
-#     # mosviz = MOSVizViewer(ga.session)
-#     # app = create_glue_app()
-#     # layout = app.tab(0)
-#
-#     # Cheap workaround for Windows test environment
-#     # if sys.platform.startswith('win'):
-#     #     layout._cubeviz_toolbar._toggle_sidebar()
-#
+    return app
+
+
+

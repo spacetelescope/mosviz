@@ -291,7 +291,6 @@ class MOSVizViewer(DataViewer):
         # Check whether the data is suitable for the MOSViz viewer - basically
         # we expect a table of 1D columns with at least three string and four
         # floating-point columns.
-        print("data.ndim in mos_viewer.py", data.ndim)
         if data.ndim != 1:
             QMessageBox.critical(self, "Error", "MOSViz viewer can only be used "
                                  "for data with 1-dimensional components",
@@ -299,17 +298,13 @@ class MOSVizViewer(DataViewer):
             return False
 
         components = [data.get_component(cid) for cid in data.visible_components]
-        print("component in mos_viewer.py", data.visible_components)
-        print("components", components)
         categorical = [c for c in components if c.categorical]
-        print("got here", categorical)
         if len(categorical) < 3:
             QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
                                  "three string components/columns, representing "
                                  "the filenames of the 1D and 2D spectra and "
                                  "cutouts", buttons=QMessageBox.Ok)
             return False
-        print("categorical in mos_viewer.py", categorical)
 
         # We can relax the following requirement if we make the slit parameters
         # optional
@@ -320,12 +315,13 @@ class MOSVizViewer(DataViewer):
                                  "the slit position, length, and position angle",
                                  buttons=QMessageBox.Ok)
             return False
-        print("numerical in mos_viewer.py", numerical)
 
+        # Block of code to bypass the loader_selection gui
         #########################################################
         if 'loaders' not in data.meta:
             data.meta['loaders'] = {}
 
+        # Deimos data
         data.meta['loaders']['spectrum1d'] = "DEIMOS 1D Spectrum"
         data.meta['loaders']['spectrum2d'] = "DEIMOS 2D Spectrum"
         data.meta['loaders']['cutout'] = "ACS Cutout Image"
@@ -343,14 +339,11 @@ class MOSVizViewer(DataViewer):
         data.meta['special_columns']['slit_length'] = 'slit_length'
 
         data.meta['loaders_confirmed'] = True
-
-        print("Data: ", data)
-        print("Data.meta", data.meta)
         #########################################################
 
         self._primary_data = data
         self._layer_view.data = data
-        # self._unpack_selection(data)
+        self._unpack_selection(data)
         return True
 
     def add_subset(self, subset):
