@@ -55,15 +55,11 @@ from glue.core import data_factories
 
 from .viewers.mos_viewer import MOSVizViewer
 
-# DATA = os.path.join(os.path.dirname(__file__), 'data')
-# DEIMOSTABLE = os.path.join(DATA, 'deimos', 'deimos_mosviz.tbl')
-DEIMOSTABLE = os.path.join('tests', 'data', 'deimos_mosviz.tbl')
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'tests', 'data')
+DEIMOSTABLE = os.path.join(TEST_DATA_DIR, 'deimos_mosviz.tbl')
 
 @pytest.fixture(scope='session')
 def glue_gui():
-
-    # This is a deimos_mosviz.tbl file that is locally hosted
-    # testdata = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "workshop_examples", "deimos", "deimos_mosviz.tbl")
 
     d = data_factories.load_data(DEIMOSTABLE)
     dc = DataCollection([])
