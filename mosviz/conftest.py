@@ -74,6 +74,3 @@ def glue_gui():
     app.viewers[0][0].add_data_for_testing(app.data_collection[0])
 
     return app
-
-
-
