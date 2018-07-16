@@ -1,0 +1,57 @@
+# %ECSV 0.9
+# ---
+# meta:
+#   loaders:
+#       image: Cutout Image
+#       spec1d: DEIMOS 1D Spectrum
+#       spec2d: DEIMOS 2D Spectrum
+# datatype:
+# - {name: id, datatype: string}
+# - {name: ra, unit: deg, datatype: float64}
+# - {name: dec, unit: deg, datatype: float64}
+# - {name: spectrum1d, datatype: string}
+# - {name: spectrum2d, datatype: string}
+# - {name: cutout, datatype: string}
+# - {name: slit_width, unit: arcsec, datatype: float64}
+# - {name: slit_length, unit: arcsec, datatype: float64}
+# - {name: pix_scale, datatype: float64}
+id ra dec spectrum1d spectrum2d cutout slit_width slit_length pix_scale
+deimos_12004808 214.21968 52.410386 spec1D/spec1d.1153.151.12004808.fits spec2D/slit.1153.151R.fits.gz cutouts/12004808.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12008179 214.33785 52.454369 spec1D/spec1d.1203.063.12008179.fits spec2D/slit.1203.063R.fits.gz cutouts/12008179.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12012573 214.34313 52.53112 spec1D/spec1d.1205.091.12012573.fits spec2D/slit.1205.091R.fits.gz cutouts/12012573.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12016058 214.52242 52.580972 spec1D/spec1d.1208.055.12016058.fits spec2D/slit.1208.055R.fits.gz cutouts/12016058.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12020734 214.49056 52.632246 spec1D/spec1d.1209.080.12020734.fits spec2D/slit.1209.080R.fits.gz cutouts/12020734.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12020387 214.57266 52.642585 spec1D/spec1d.1210.072.12020387.fits spec2D/slit.1210.072R.fits.gz cutouts/12020387.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12020049 214.62085 52.646039 spec1D/spec1d.1211.061.12020049.fits spec2D/slit.1211.061R.fits.gz cutouts/12020049.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12019995 214.69602 52.631649 spec1D/spec1d.1212.038.12019995.fits spec2D/slit.1212.038R.fits.gz cutouts/12019995.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12019653 214.77361 52.662353 spec1D/spec1d.1214.026.12019653.fits spec2D/slit.1214.026R.fits.gz cutouts/12019653.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12008349 214.249 52.460424 spec1D/spec1d.1243.030.12008349.fits spec2D/slit.1243.030R.fits.gz cutouts/12008349.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12012586 214.37004 52.52134 spec1D/spec1d.1243.079.12012586.fits spec2D/slit.1243.079R.fits.gz cutouts/12012586.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12004455 214.27608 52.408039 spec1D/spec1d.1244.010.12004455.fits spec2D/slit.1244.010R.fits.gz cutouts/12004455.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_11051203 214.33513 52.381078 spec1D/spec1d.1246.011.11051203.fits spec2D/slit.1246.011R.fits.gz cutouts/11051203.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12011504 214.61256 52.551567 spec1D/spec1d.1246.152.12011504.fits spec2D/slit.1246.152R.fits.gz cutouts/12011504.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12024856 214.5929 52.718354 spec1D/spec1d.1252.066.12024856.fits spec2D/slit.1252.066R.fits.gz cutouts/12024856.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13004306 214.77715 52.814133 spec1D/spec1d.1253.152.13004306.fits spec2D/slit.1253.152R.fits.gz cutouts/13004306.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12024118 214.73955 52.697049 spec1D/spec1d.1254.094.12024118.fits spec2D/slit.1254.094R.fits.gz cutouts/12024118.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12020067 214.64333 52.632145 spec1D/spec1d.1255.041.12020067.fits spec2D/slit.1255.041R.fits.gz cutouts/12020067.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13019968 214.77751 52.910775 spec1D/spec1d.1302.115.13019968.fits spec2D/slit.1302.115R.fits.gz cutouts/13019968.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13026888 215.01438 52.949334 spec1D/spec1d.1306.072.13026888.fits spec2D/slit.1306.072R.fits.gz cutouts/13026888.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13026873 215.0064 52.95921 spec1D/spec1d.1306.077.13026873.fits spec2D/slit.1306.077R.fits.gz cutouts/13026873.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13026857 214.95442 52.969926 spec1D/spec1d.1306.094.13026857.fits spec2D/slit.1306.094R.fits.gz cutouts/13026857.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13026107 215.10585 53.003483 spec1D/spec1d.1308.070.13026107.fits spec2D/slit.1308.070R.fits.gz cutouts/13026107.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13025290 215.19495 52.963721 spec1D/spec1d.1309.034.13025290.fits spec2D/slit.1309.034R.fits.gz cutouts/13025290.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13043017 215.10605 53.116245 spec1D/spec1d.1311.114.13043017.fits spec2D/slit.1311.114R.fits.gz cutouts/13043017.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13051276 215.10065 53.128093 spec1D/spec1d.1311.121.13051276.fits spec2D/slit.1311.121R.fits.gz cutouts/13051276.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13041627 215.31852 53.104803 spec1D/spec1d.1313.048.13041627.fits spec2D/slit.1313.048R.fits.gz cutouts/13041627.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13050572 215.17647 53.154515 spec1D/spec1d.1313.104.13050572.fits spec2D/slit.1313.104R.fits.gz cutouts/13050572.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13050507 215.14259 53.169163 spec1D/spec1d.1313.120.13050507.fits spec2D/slit.1313.120R.fits.gz cutouts/13050507.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13058235 215.23847 53.184374 spec1D/spec1d.1314.098.13058235.fits spec2D/slit.1314.098R.fits.gz cutouts/13058235.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13049212 215.38783 53.136419 spec1D/spec1d.1315.047.13049212.fits spec2D/slit.1315.047R.fits.gz cutouts/13049212.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13049133 215.3953 53.156244 spec1D/spec1d.1315.052.13049133.fits spec2D/slit.1315.052R.fits.gz cutouts/13049133.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13058203 215.27553 53.210001 spec1D/spec1d.1315.105.13058203.fits spec2D/slit.1315.105R.fits.gz cutouts/13058203.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13018671 214.95738 52.921481 spec1D/spec1d.1343.084.13018671.fits spec2D/slit.1343.084R.fits.gz cutouts/13018671.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13026879 215.00536 52.95371 spec1D/spec1d.1343.108.13026879.fits spec2D/slit.1343.108R.fits.gz cutouts/13026879.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13034580 215.08674 53.055397 spec1D/spec1d.1352.022.13034580.fits spec2D/slit.1352.022R.fits.gz cutouts/13034580.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13058164 215.26445 53.18501 spec1D/spec1d.1352.117.13058164.fits spec2D/slit.1352.117R.fits.gz cutouts/13058164.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13040952 215.32582 53.068148 spec1D/spec1d.1355.091.13040952.fits spec2D/slit.1355.091R.fits.gz cutouts/13040952.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_13040873 215.40401 53.11767 spec1D/spec1d.1355.134.13040873.fits spec2D/slit.1355.134R.fits.gz cutouts/13040873.acs.v_6ac_.fits 0.2 3.3 0.66
