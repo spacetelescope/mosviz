@@ -56,8 +56,8 @@ def test_make_it_look_like_more_tests(glue_gui):
     """
     mosviz_gui = get_mosviz_gui(glue_gui)
     source_combo = mosviz_gui.toolbar.source_select
-    assert mosviz_gui.toolbar.cycle_previous_action.isEnabled() == True
+    assert mosviz_gui.toolbar.cycle_next_action.isEnabled() == True
 
     mosviz_gui.toolbar.cycle_next_action.trigger()
     assert source_combo.currentText() == source_combo.itemText(source_combo.count() - 1)
-    assert mosviz_gui.toolbar.cycle_previous_action.isEnabled() == True
+    assert mosviz_gui.toolbar.cycle_next_action.isEnabled() == False

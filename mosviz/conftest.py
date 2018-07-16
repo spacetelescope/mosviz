@@ -47,24 +47,29 @@ try:
 except NameError:   # Needed to support Astropy <= 1.0.0
     pass
 
+import os
+
+from glue.core import DataCollection
+from glue.app.qt.application import GlueApplication
+from glue.core import data_factories
+
+from .viewers.mos_viewer import MOSVizViewer
+
+# DATA = os.path.join(os.path.dirname(__file__), 'data')
+# DEIMOSTABLE = os.path.join(DATA, 'deimos', 'deimos_mosviz.tbl')
+DEIMOSTABLE = os.path.join('tests', 'data', 'deimos_mosviz.tbl')
+
 @pytest.fixture(scope='session')
 def glue_gui():
-    import os
-
-    from glue.core import DataCollection
-    from glue.app.qt.application import GlueApplication
-    from glue.core import data_factories
-
-    from .viewers.mos_viewer import MOSVizViewer
 
     # This is a deimos_mosviz.tbl file that is locally hosted
-    testdata = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "workshop_examples", "deimos", "deimos_mosviz.tbl")
+    # testdata = os.path.join("/Users/javerbukh/Documents/", "data_for_mosviz", "workshop_examples", "deimos", "deimos_mosviz.tbl")
 
-    d = data_factories.load_data(testdata)
+    d = data_factories.load_data(DEIMOSTABLE)
     dc = DataCollection([])
+    dc.append(d)
 
     # Creates glue instance
-    dc.append(d)
     app = GlueApplication(dc)
     app.setVisible(True)
 
