@@ -10,7 +10,7 @@ from glue.utils.qt import load_ui
 from glue.core.data_combo_helper import ComponentIDComboHelper
 
 from ..loaders.utils import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
-                             CUTOUT_LOADERS)
+                             CUTOUT_LOADERS, LEVEL2_LOADERS)
 from .. import UI_DIR
 
 
@@ -26,6 +26,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 'categorical': True, 'numeric': False},
                {'property': 'cutout', 'default': 'cutout',
                 'categorical': True, 'numeric': False},
+               {'property': 'level2', 'default': 'level2',
+                'categorical': True, 'numeric': False},
                {'property': 'source_id', 'default': 'id',
                 'categorical': True, 'numeric': False},
                {'property': 'slit_ra', 'default': 'ra',
@@ -40,10 +42,12 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
     loader_spectrum1d = SelectionCallbackProperty()
     loader_spectrum2d = SelectionCallbackProperty()
     loader_cutout = SelectionCallbackProperty()
+    loader_level2 = SelectionCallbackProperty()
 
     spectrum1d = SelectionCallbackProperty()
     spectrum2d = SelectionCallbackProperty()
     cutout = SelectionCallbackProperty()
+    level2 = SelectionCallbackProperty()
 
     source_id = SelectionCallbackProperty()
 
@@ -65,6 +69,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         LoaderSelectionDialog.loader_spectrum1d.set_choices(self, sorted(SPECTRUM1D_LOADERS))
         LoaderSelectionDialog.loader_spectrum2d.set_choices(self, sorted(SPECTRUM2D_LOADERS))
         LoaderSelectionDialog.loader_cutout.set_choices(self, sorted(CUTOUT_LOADERS))
+        LoaderSelectionDialog.loader_level2.set_choices(self, sorted(LEVEL2_LOADERS))
 
         if 'loaders' in data.meta:
 
@@ -76,6 +81,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 self.loader_spectrum2d = loaders['spectrum2d']
             if "cutout" in loaders and loaders['cutout'] in CUTOUT_LOADERS:
                 self.loader_cutout = loaders['cutout']
+            if "level2" in loaders and loaders['level2'] in LEVEL2_LOADERS:
+                self.loader_level2 = loaders['level2']
 
         if self.loader_spectrum1d is None:
             self.loader_spectrum1d = 'NIRSpec 1D Spectrum'
@@ -83,6 +90,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             self.loader_spectrum2d = 'NIRSpec 2D Spectrum'
         if self.loader_cutout is None:
             self.loader_cutout = 'NIRCam Image'
+        if self.loader_level2 is None:
+            self.loader_level2 = 'NIRCam Level 2'
 
         # We set up ComponentIDComboHelper which takes care of populating the
         # combo box with the components.
@@ -147,6 +156,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         self.data.meta['loaders']['spectrum1d'] = self.loader_spectrum1d
         self.data.meta['loaders']['spectrum2d'] = self.loader_spectrum2d
         self.data.meta['loaders']['cutout'] = self.loader_cutout
+        self.data.meta['loaders']['level2'] = self.loader_level2
 
         if 'special_columns' not in self.data.meta:
             self.data.meta['special_columns'] = {}
@@ -162,8 +172,11 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         # Check whether the files indicated by the filename columns do in fact
         # exist
-        for column in ['spectrum1d', 'spectrum2d', 'cutout']:
+        for column in ['spectrum1d', 'spectrum2d', 'cutout', 'level2']:
             column_name = getattr(self, column)
+
+            print("@@@@@@  file loader_selection.py; line 178 - ",  column, column_name)
+
             filenames = self.data.get_component(column_name).labels
             path = os.sep.join(
                 self.data._load_log.path.split(os.sep)[:-1])
@@ -183,9 +196,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         # be too computationally intensive, but we can at least check the first
         # one.
 
-        loaders = [SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS]
+        loaders = [SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS, LEVEL2_LOADERS]
 
-        for column, loaders in zip(['spectrum1d', 'spectrum2d', 'cutout'], loaders):
+        for column, loaders in zip(['spectrum1d', 'spectrum2d', 'cutout', 'level2'], loaders):
 
             loader_name = getattr(self, 'loader_' + column)
             loader = loaders[loader_name]
@@ -240,6 +253,7 @@ if __name__ == "__main__":
     d['spectrum1d'] = ['a', 'b', 'c']
     d['spectrum2d'] = ['d', 'e', 'f']
     d['cutout'] = ['a', 'a', 'a']
+    d['level2'] = ['a', 'a', 'a']
     d['ra'] = [1, 2, 2]
     d['dec'] = [1, 2, 2]
     d['slit_width'] = [1, 2, 2]
