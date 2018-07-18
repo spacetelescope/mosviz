@@ -62,8 +62,12 @@ def deimos_spectrum2D_reader(file_name):
 @mosviz_level2_loader('DEIMOS Level 2 Spectrum')
 def deimos_level2_reader(file_name):
     """
-    """
+    THIS IS A TEST!
 
+    Keck/DEIMOS does NOT provide such product. We use it as a proxy for
+    developing and testing the handling of JWST NIRSPEC level 2 spectra.
+
+    """
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
     hdulist[1].header['CTYPE2'] = 'Spatial Y'
