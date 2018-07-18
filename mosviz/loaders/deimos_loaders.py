@@ -68,6 +68,9 @@ def deimos_level2_reader(file_name):
     developing and testing the handling of JWST NIRSPEC level 2 spectra.
 
     """
+
+    #TODO The level 2 file has multiple exposures.
+
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
     hdulist[1].header['CTYPE2'] = 'Spatial Y'
