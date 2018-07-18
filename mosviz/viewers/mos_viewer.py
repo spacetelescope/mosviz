@@ -39,7 +39,7 @@ except ImportError:
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
 from ..loaders.loader_selection import confirm_loaders_and_column_names
-from ..loaders.utils import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS, LEVEL2_LOADERS
+from ..loaders.utils import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
 from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
@@ -485,21 +485,17 @@ class MOSVizViewer(DataViewer):
         loader_spectrum1d = SPECTRUM1D_LOADERS[self.catalog.meta["loaders"]["spectrum1d"]]
         loader_spectrum2d = SPECTRUM2D_LOADERS[self.catalog.meta["loaders"]["spectrum2d"]]
         loader_cutout = CUTOUT_LOADERS[self.catalog.meta["loaders"]["cutout"]]
-        loader_level2 = LEVEL2_LOADERS[self.catalog.meta["loaders"]["level2"]]
 
         # Get column names
         colname_spectrum1d = self.catalog.meta["special_columns"]["spectrum1d"]
         colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
-        colname_level2 = self.catalog.meta["special_columns"]["level2"]
 
         spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
         spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
-        level2_data = loader_level2(row[colname_level2])
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
-        self._update_data_components(level2_data, key='level2')
 
         basename = os.path.basename(row[colname_cutout])
         if basename == "None":
