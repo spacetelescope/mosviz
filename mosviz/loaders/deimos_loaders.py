@@ -21,7 +21,6 @@ def deimos_spectrum1D_reader(file_name):
     along with their Wavelength and Inverse Variance
     arrays.
     """
-    print("In deimos spec1d reader############################### ", file_name)
     hdulist = fits.open(file_name)
     data = Data(label='1D Spectrum')
     data.header = hdulist[1].header

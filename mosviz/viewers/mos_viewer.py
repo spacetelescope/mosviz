@@ -555,14 +555,11 @@ class MOSVizViewer(DataViewer):
         loader_spectrum2d = SPECTRUM2D_LOADERS[self.catalog.meta["loaders"]["spectrum2d"]]
         loader_cutout = CUTOUT_LOADERS[self.catalog.meta["loaders"]["cutout"]]
 
-        # print("row", row)
-        print("loader spectrum 1d", loader_spectrum1d)
         # Get column names
         colname_spectrum1d = self.catalog.meta["special_columns"]["spectrum1d"]
         colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
 
-        print("catalog meta", row[colname_spectrum1d])
         spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
         spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
 
