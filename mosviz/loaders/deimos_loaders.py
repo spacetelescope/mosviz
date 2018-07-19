@@ -21,8 +21,13 @@ def deimos_spectrum1D_reader(file_name):
     along with their Wavelength and Inverse Variance
     arrays.
     """
+    print("In deimos spec1d reader############################### ", file_name)
+    try:
+        hdulist = fits.open(file_name)
+    except Exception as e:
+        return
+        print(e)
 
-    hdulist = fits.open(file_name)
     data = Data(label='1D Spectrum')
     data.header = hdulist[1].header
 
@@ -46,6 +51,7 @@ def deimos_spectrum2D_reader(file_name):
     Wavelength information comes from the WCS.
     """
 
+    print('FILENAME:', file_name)
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
     hdulist[1].header['CTYPE2'] = 'Spatial Y'
