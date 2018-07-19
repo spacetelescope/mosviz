@@ -51,6 +51,7 @@ def deimos_spectrum2D_reader(file_name):
     Wavelength information comes from the WCS.
     """
 
+    print('FILENAME:', file_name)
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
     hdulist[1].header['CTYPE2'] = 'Spatial Y'

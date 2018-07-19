@@ -457,7 +457,7 @@ class MOSVizViewer(DataViewer):
                     self.comments = True
                 elif str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
                     self.filepath = component._load_log.path
-                    path = '/'.join(component._load_log.path.split('/')[:-1])
+                    path = os.path.sep.join(component._load_log.path.split(os.path.sep)[:-1])
                     self.catalog[str(att)] = [os.path.join(path, x)
                                               for x in comp_labels]
                 else:
@@ -562,8 +562,8 @@ class MOSVizViewer(DataViewer):
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
 
         print("catalog meta", row[colname_spectrum1d])
-        spec1d_data = loader_spectrum1d(os.path.abspath(row[colname_spectrum1d]))
-        spec2d_data = loader_spectrum2d(os.path.abspath(row[colname_spectrum2d]))
+        spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
+        spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
