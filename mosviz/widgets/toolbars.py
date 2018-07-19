@@ -1,5 +1,3 @@
-from __future__ import print_function, division, absolute_import
-
 import os
 
 from glue.viewers.common.qt.toolbar import BasicToolbar

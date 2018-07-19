@@ -1,5 +1,3 @@
-from __future__ import print_function, division, absolute_import
-
 from qtpy.QtWidgets import QWidget
 
 __all__ = ["OptionsWidget"]

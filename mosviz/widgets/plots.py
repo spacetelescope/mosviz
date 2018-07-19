@@ -1,5 +1,3 @@
-from __future__ import print_function, division, absolute_import
-
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QMainWindow
 
