@@ -5,11 +5,11 @@ from astropy.table import Table
 from glue.core import Data
 from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
 
-from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_cutout_loader
+from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_cutout_loader, mosviz_level2_loader
 
 
 __all__ = ['pre_nirspec_spectrum1d_reader', 'pre_nirspec_spectrum2d_reader',
-           'pre_nircam_image_reader']
+           'pre_nircam_image_reader', 'pre_nirspec_level2_reader']
 
 
 @mosviz_spectrum1d_loader("NIRSpec 1D Spectrum")
@@ -151,3 +151,26 @@ def pre_nircam_image_reader(file_name):
     hdulist.close()
 
     return data
+
+
+@mosviz_level2_loader('Pre NIRSpec 2D Level 2 Spectra')
+def pre_nirspec_level2_reader(file_name):
+    """
+    THIS IS A TEST!
+
+    """
+
+    #TODO The level 2 file has multiple exposures.
+
+    hdulist = fits.open(file_name)
+    data = Data(label='2D Spectrum')
+    hdulist[1].header['CTYPE2'] = 'Spatial Y'
+    wcs = WCS(hdulist[1].header)
+    # original WCS has both axes named "LAMBDA", glue requires unique component names
+
+    data.coords = coordinates_from_wcs(wcs)
+    data.header = hdulist[1].header
+    data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
+    data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
+    return data
+

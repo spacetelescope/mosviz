@@ -7,7 +7,7 @@ from glue.core.coordinates import coordinates_from_wcs
 from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_level2_loader
 
 
-__all__ = ['deimos_spectrum1D_reader', 'deimos_spectrum2D_reader', 'deimos_level2_reader']
+__all__ = ['deimos_spectrum1D_reader', 'deimos_spectrum2D_reader']
 
 
 @mosviz_spectrum1d_loader('DEIMOS 1D Spectrum')
@@ -58,27 +58,3 @@ def deimos_spectrum2D_reader(file_name):
     data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
     return data
 
-
-@mosviz_level2_loader('DEIMOS Level 2 Spectrum')
-def deimos_level2_reader(file_name):
-    """
-    THIS IS A TEST!
-
-    Keck/DEIMOS does NOT provide such product. We use it as a proxy for
-    developing and testing the handling of JWST NIRSPEC level 2 spectra.
-
-    """
-
-    #TODO The level 2 file has multiple exposures.
-
-    hdulist = fits.open(file_name)
-    data = Data(label='2D Spectrum')
-    hdulist[1].header['CTYPE2'] = 'Spatial Y'
-    wcs = WCS(hdulist[1].header)
-    # original WCS has both axes named "LAMBDA", glue requires unique component names
-
-    data.coords = coordinates_from_wcs(wcs)
-    data.header = hdulist[1].header
-    data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
-    data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
-    return data

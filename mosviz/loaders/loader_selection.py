@@ -175,8 +175,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         for column in ['spectrum1d', 'spectrum2d', 'cutout', 'level2']:
             column_name = getattr(self, column)
 
-            print("@@@@@@  file loader_selection.py; line 178 - ",  column, column_name)
-
             filenames = self.data.get_component(column_name).labels
             path = os.sep.join(
                 self.data._load_log.path.split(os.sep)[:-1])
