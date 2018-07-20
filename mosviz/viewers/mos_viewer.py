@@ -4,6 +4,7 @@ import os
 from collections import OrderedDict
 
 import numpy as np
+from pathlib import Path
 from qtpy import compat
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton
@@ -457,8 +458,8 @@ class MOSVizViewer(DataViewer):
                     self.comments = True
                 elif str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
                     self.filepath = component._load_log.path
-                    # TODO: use pathlib for platform-agnositm path manipulation
-                    path = os.path.sep.join(component._load_log.path.split(os.path.sep)[:-1])
+                    p = Path(self.filepath)
+                    path = os.path.sep.join(p.parts[:-1])
                     self.catalog[str(att)] = [os.path.join(path, x)
                                               for x in comp_labels]
                 else:
