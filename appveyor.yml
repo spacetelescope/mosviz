@@ -24,9 +24,6 @@ environment:
 
   matrix:
 
-      - PYTHON_VERSION: "2.7"
-        ASTROPY_VERSION: "stable"
-
       - PYTHON_VERSION: "3.5"
         ASTROPY_VERSION: "stable"
 
