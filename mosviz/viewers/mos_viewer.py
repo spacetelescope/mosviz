@@ -502,12 +502,13 @@ class MOSVizViewer(DataViewer):
         self._update_data_components(level2_data, key='level2')
 
         basename = os.path.basename(row[colname_cutout])
+
         if basename == "None":
-            self.render_data(row, spec1d_data, spec2d_data, None)
+            self.render_data(row, spec1d_data, spec2d_data, None, level2_data)
         else:
             image_data = loader_cutout(row[colname_cutout])
             self._update_data_components(image_data, key='cutout')
-            self.render_data(row, spec1d_data, spec2d_data, image_data)
+            self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
 
     def _update_data_components(self, data, key):
         """
@@ -531,7 +532,7 @@ class MOSVizViewer(DataViewer):
             cur_data.update_values_from_data(data)
 
     def render_data(self, row, spec1d_data=None, spec2d_data=None,
-                    image_data=None):
+                    image_data=None, level2_data=None):
         """
         Render the updated data sets in the individual plot widgets within the
         MOSViz viewer.
@@ -601,33 +602,11 @@ class MOSVizViewer(DataViewer):
         # 1D spectrum are present so that the axes can be locked.
 
         if spec2d_data is not None:
-            wcs = spec2d_data.coords.wcs
 
-            xp2d = np.arange(spec2d_data.shape[1])
-            yp2d = np.repeat(0, spec2d_data.shape[1])
-            spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
-            x_min = spectrum2d_disp.min()
-            x_max = spectrum2d_disp.max()
+            #TODO: we are repurposing the spectrum 2d widget to display the level 2 spectra.
 
-            if image_data is None:
-                y_min = -0.5
-                y_max = spec2d_data.shape[0] - 0.5
-            else:
-                y_min = yp - dy / 2.
-                y_max = yp + dy / 2.
-
-            extent = [x_min, x_max, y_min, y_max]
-
-            self.spectrum2d_widget.set_image(
-                image=spec2d_data.get_component(
-                    spec2d_data.id['Flux']).data,
-                interpolation='none', aspect='auto',
-                extent=extent, origin='lower')
-
-            self.spectrum2d_widget.axes.set_xlabel("Wavelength")
-            self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
-
-            self.spectrum2d_widget._redraw()
+            # self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data)
+            self._load_spectrum2d_widget(dy, yp, image_data, level2_data)
 
         # Clear the meta information widget
         # NOTE: this process is inefficient
@@ -687,6 +666,37 @@ class MOSVizViewer(DataViewer):
 
             self.meta_form_layout.addRow(self.input_save, self.input_refresh)
 
+    def _load_spectrum2d_widget(self, dy, yp, image_data, spec2d_data):
+        #
+        # For now, we are re-purposing the spectrum2d widget to display
+        # the level 2 spectra.
+        #
+        xp2d = np.arange(spec2d_data.shape[1])
+        yp2d = np.repeat(0, spec2d_data.shape[1])
+
+        spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
+
+        x_min = spectrum2d_disp.min()
+        x_max = spectrum2d_disp.max()
+
+        if image_data is None:
+            y_min = -0.5
+            y_max = spec2d_data.shape[0] - 0.5
+        else:
+            y_min = yp - dy / 2.
+            y_max = yp + dy / 2.
+
+        extent = [x_min, x_max, y_min, y_max]
+
+        self.spectrum2d_widget.set_image(
+            image=spec2d_data.get_component(
+                spec2d_data.id['Flux']).data,
+            interpolation='none', aspect='auto',
+            extent=extent, origin='lower')
+
+        self.spectrum2d_widget.axes.set_xlabel("Wavelength")
+        self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
+        self.spectrum2d_widget._redraw()
 
     @defer_draw
     def set_locked_axes(self, x=None, y=None):
