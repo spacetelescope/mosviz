@@ -165,12 +165,13 @@ def pre_nirspec_level2_reader(file_name):
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectrum')
     hdulist[1].header['CTYPE2'] = 'Spatial Y'
-    wcs = WCS(hdulist[1].header)
+    # wcs = WCS(hdulist[1].header)
     # original WCS has both axes named "LAMBDA", glue requires unique component names
 
-    data.coords = coordinates_from_wcs(wcs)
+    # data.coords = coordinates_from_wcs(wcs)
     data.header = hdulist[1].header
-    data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
-    data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
+    # data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
+    data.add_component(hdulist[1].data, 'Flux')
+    # data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
     return data
 
