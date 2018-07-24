@@ -1,5 +1,3 @@
-from __future__ import print_function, division
-
 from glue.config import startup_action
 
 from mosviz.viewers.mos_viewer import MOSVizViewer
