@@ -688,9 +688,14 @@ class MOSVizViewer(DataViewer):
 
         extent = [x_min, x_max, y_min, y_max]
 
+        # self.spectrum2d_widget.set_image(
+        #     image=spec2d_data.get_component(
+        #         spec2d_data.id['Flux']).data,
+        #     interpolation='none', aspect='auto',
+        #     extent=extent, origin='lower')
         self.spectrum2d_widget.set_image(
             image=spec2d_data.get_component(
-                spec2d_data.id['Flux']).data,
+                spec2d_data.id['Flux_004']).data,
             interpolation='none', aspect='auto',
             extent=extent, origin='lower')
 
