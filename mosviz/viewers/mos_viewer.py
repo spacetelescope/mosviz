@@ -493,22 +493,28 @@ class MOSVizViewer(DataViewer):
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
         colname_level2 = self.catalog.meta["special_columns"]["level2"]
 
+        # Get mandatory data
         spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
         spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
-        level2_data = loader_level2(row[colname_level2])
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
-        self._update_data_components(level2_data, key='level2')
 
-        basename = os.path.basename(row[colname_cutout])
-
-        if basename == "None":
-            self.render_data(row, spec1d_data, spec2d_data, None, level2_data)
-        else:
+        # See if optional data exists; if so, ingest them.
+        basename_cutout = os.path.basename(row[colname_cutout])
+        basename_level2 = os.path.basename(row[colname_level2])
+        if basename_cutout:
             image_data = loader_cutout(row[colname_cutout])
             self._update_data_components(image_data, key='cutout')
-            self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
+        else:
+            image_data = None
+        if basename_level2:
+            level2_data = loader_level2(row[colname_level2])
+            self._update_data_components(level2_data, key='level2')
+        else:
+            level2_data = None
+
+        self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
 
     def _update_data_components(self, data, key):
         """
@@ -606,7 +612,8 @@ class MOSVizViewer(DataViewer):
             #TODO: we are repurposing the spectrum 2d widget to display the level 2 spectra.
 
             # self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data)
-            self._load_spectrum2d_widget(dy, yp, image_data, level2_data)
+            # self._load_spectrum2d_widget(dy, yp, image_data, level2_data)
+            self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data, level2_data)
 
         # Clear the meta information widget
         # NOTE: this process is inefficient
@@ -666,11 +673,7 @@ class MOSVizViewer(DataViewer):
 
             self.meta_form_layout.addRow(self.input_save, self.input_refresh)
 
-    def _load_spectrum2d_widget(self, dy, yp, image_data, spec2d_data):
-        #
-        # For now, we are re-purposing the spectrum2d widget to display
-        # the level 2 spectra.
-        #
+    def _load_spectrum2d_widget(self, dy, yp, image_data, spec2d_data, level2_data):
         xp2d = np.arange(spec2d_data.shape[1])
         yp2d = np.repeat(0, spec2d_data.shape[1])
 
@@ -688,20 +691,24 @@ class MOSVizViewer(DataViewer):
 
         extent = [x_min, x_max, y_min, y_max]
 
-        # self.spectrum2d_widget.set_image(
-        #     image=spec2d_data.get_component(
-        #         spec2d_data.id['Flux']).data,
-        #     interpolation='none', aspect='auto',
-        #     extent=extent, origin='lower')
         self.spectrum2d_widget.set_image(
             image=spec2d_data.get_component(
-                spec2d_data.id['Flux_004']).data,
+                spec2d_data.id['Flux']).data,
             interpolation='none', aspect='auto',
             extent=extent, origin='lower')
+        # self.spectrum2d_widget.set_image(
+        #     image=spec2d_data.get_component(
+        #         spec2d_data.id['Flux_004']).data,
+        #     interpolation='none', aspect='auto',
+        #     extent=extent, origin='lower')
 
         self.spectrum2d_widget.axes.set_xlabel("Wavelength")
         self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
         self.spectrum2d_widget._redraw()
+
+        # Populates the level 2 exposures combo box
+        if level2_data:
+            self.toolbar.exposure_select.addItems([component.label for component in level2_data.visible_components])
 
     @defer_draw
     def set_locked_axes(self, x=None, y=None):
