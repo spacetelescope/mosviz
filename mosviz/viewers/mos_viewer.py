@@ -157,6 +157,10 @@ class MOSVizViewer(DataViewer):
         self.toolbar.source_select.currentIndexChanged[int].connect(
             lambda ind: self._set_navigation(ind))
 
+        # Connect the exposure selection event
+        self.toolbar.exposure_select.currentIndexChanged[int].connect(
+            lambda ind: self.load_exposure(ind))
+
         # Connect the specviz button
         if SpecVizViewer is not None:
             self.toolbar.open_specviz.triggered.connect(
@@ -516,6 +520,19 @@ class MOSVizViewer(DataViewer):
 
         self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
 
+
+
+    def load_exposure(self, index):
+        '''
+        Loads the level 2 exposure into the 2D spectrum plot widget.
+        '''
+        print ('@@@@@@     line: 524  - ', self.toolbar.exposure_select.currentText())
+
+
+
+
+
+
     def _update_data_components(self, data, key):
         """
         Update the data components that act as containers for the displayed
@@ -708,6 +725,7 @@ class MOSVizViewer(DataViewer):
 
         # Populates the level 2 exposures combo box
         if level2_data:
+            self.toolbar.exposure_select.addItems(['Level 3'])
             self.toolbar.exposure_select.addItems([component.label for component in level2_data.visible_components])
 
     @defer_draw
