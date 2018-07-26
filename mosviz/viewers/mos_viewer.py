@@ -518,6 +518,11 @@ class MOSVizViewer(DataViewer):
         else:
             level2_data = None
 
+        # Keep data that will be used to refresh the 2D spectrum widget.
+        self.spec2d_data = spec2d_data
+        self.level2_data = level2_data
+
+        # Plot
         self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
 
 
@@ -525,13 +530,24 @@ class MOSVizViewer(DataViewer):
     def load_exposure(self, index):
         '''
         Loads the level 2 exposure into the 2D spectrum plot widget.
+
+        It can also load back the level 3 spectrum.
         '''
-        print ('@@@@@@     line: 524  - ', self.toolbar.exposure_select.currentText())
-
-
-
-
-
+        name = self.toolbar.exposure_select.currentText()
+        if 'Level 3' in name:
+            self.spectrum2d_widget.set_image(
+                image = self.spec2d_data.get_component(self.spec2d_data.id['Flux']).data,
+                interpolation = 'none',
+                aspect = 'auto',
+                extent = self.extent,
+                origin='lower')
+        else:
+            if name in [component.label for component in self.level2_data.components]:
+                self.spectrum2d_widget.set_image(
+                    image = self.level2_data.get_component(self.level2_data.id[name]).data,
+                    interpolation = 'none',
+                    aspect = 'auto',
+                    extent = self.extent, origin='lower')
 
     def _update_data_components(self, data, key):
         """
@@ -624,12 +640,9 @@ class MOSVizViewer(DataViewer):
         # we set up the extent of the image appropriately if the cutout and the
         # 1D spectrum are present so that the axes can be locked.
 
-        if spec2d_data is not None:
-
-            #TODO: we are repurposing the spectrum 2d widget to display the level 2 spectra.
-
-            # self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data)
-            # self._load_spectrum2d_widget(dy, yp, image_data, level2_data)
+        # We are repurposing the spectrum 2d widget to display both
+        # the level 3 spectrum and the level 2 spectra.
+        if spec2d_data is not None or level2d_data is not None:
             self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data, level2_data)
 
         # Clear the meta information widget
@@ -706,18 +719,16 @@ class MOSVizViewer(DataViewer):
             y_min = yp - dy / 2.
             y_max = yp + dy / 2.
 
-        extent = [x_min, x_max, y_min, y_max]
+        self.extent = [x_min, x_max, y_min, y_max]
 
+        # By default, displays the level 3 spectrum. The level 2
+        # data is plotted elsewhere, driven by the exposure_select
+        # combo box signals.
         self.spectrum2d_widget.set_image(
-            image=spec2d_data.get_component(
-                spec2d_data.id['Flux']).data,
-            interpolation='none', aspect='auto',
-            extent=extent, origin='lower')
-        # self.spectrum2d_widget.set_image(
-        #     image=spec2d_data.get_component(
-        #         spec2d_data.id['Flux_004']).data,
-        #     interpolation='none', aspect='auto',
-        #     extent=extent, origin='lower')
+            image = spec2d_data.get_component(spec2d_data.id['Flux']).data,
+            interpolation = 'none',
+            aspect = 'auto',
+            extent = self.extent, origin='lower')
 
         self.spectrum2d_widget.axes.set_xlabel("Wavelength")
         self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
@@ -725,6 +736,7 @@ class MOSVizViewer(DataViewer):
 
         # Populates the level 2 exposures combo box
         if level2_data:
+            self.toolbar.exposure_select.clear()
             self.toolbar.exposure_select.addItems(['Level 3'])
             self.toolbar.exposure_select.addItems([component.label for component in level2_data.visible_components])
 
