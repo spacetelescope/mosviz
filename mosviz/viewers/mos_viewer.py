@@ -1,9 +1,8 @@
-from __future__ import print_function, division, absolute_import
-
 import os
 from collections import OrderedDict
 
 import numpy as np
+from pathlib import Path
 from qtpy import compat
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton
@@ -278,6 +277,74 @@ class MOSVizViewer(DataViewer):
         self._unpack_selection(data)
         return True
 
+    def add_data_for_testing(self, data):
+        """
+        Processes data message from the central communication hub.
+
+        Parameters
+        ----------
+        data : :class:`glue.core.data.Data`
+            Data object.
+        """
+
+        # Check whether the data is suitable for the MOSViz viewer - basically
+        # we expect a table of 1D columns with at least three string and four
+        # floating-point columns.
+        if data.ndim != 1:
+            QMessageBox.critical(self, "Error", "MOSViz viewer can only be used "
+                                 "for data with 1-dimensional components",
+                                 buttons=QMessageBox.Ok)
+            return False
+
+        components = [data.get_component(cid) for cid in data.visible_components]
+        categorical = [c for c in components if c.categorical]
+        if len(categorical) < 3:
+            QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
+                                 "three string components/columns, representing "
+                                 "the filenames of the 1D and 2D spectra and "
+                                 "cutouts", buttons=QMessageBox.Ok)
+            return False
+
+        # We can relax the following requirement if we make the slit parameters
+        # optional
+        numerical = [c for c in components if c.numeric]
+        if len(numerical) < 4:
+            QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
+                                 "four numerical components/columns, representing "
+                                 "the slit position, length, and position angle",
+                                 buttons=QMessageBox.Ok)
+            return False
+
+        # Block of code to bypass the loader_selection gui
+        #########################################################
+        if 'loaders' not in data.meta:
+            data.meta['loaders'] = {}
+
+        # Deimos data
+        data.meta['loaders']['spectrum1d'] = "DEIMOS 1D Spectrum"
+        data.meta['loaders']['spectrum2d'] = "DEIMOS 2D Spectrum"
+        data.meta['loaders']['cutout'] = "ACS Cutout Image"
+
+        if 'special_columns' not in data.meta:
+            data.meta['special_columns'] = {}
+
+        data.meta['special_columns']['spectrum1d'] = 'spectrum1d'
+        data.meta['special_columns']['spectrum2d'] = 'spectrum2d'
+        data.meta['special_columns']['source_id'] = 'id'
+        data.meta['special_columns']['cutout'] = 'cutout'
+        data.meta['special_columns']['slit_ra'] = 'ra'
+        data.meta['special_columns']['slit_dec'] = 'dec'
+        data.meta['special_columns']['slit_width'] = 'slit_width'
+        data.meta['special_columns']['slit_length'] = 'slit_length'
+
+        data.meta['loaders_confirmed'] = True
+        #########################################################
+
+        self._primary_data = data
+        self._layer_view.data = data
+        self._unpack_selection(data)
+        return True
+
     def add_subset(self, subset):
         """
         Processes subset messages from the central communication hub.
@@ -389,7 +456,8 @@ class MOSVizViewer(DataViewer):
                     self.comments = True
                 elif str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
                     self.filepath = component._load_log.path
-                    path = '/'.join(component._load_log.path.split('/')[:-1])
+                    p = Path(self.filepath)
+                    path = os.path.sep.join(p.parts[:-1])
                     self.catalog[str(att)] = [os.path.join(path, x)
                                               for x in comp_labels]
                 else:
@@ -970,7 +1038,7 @@ class MOSVizViewer(DataViewer):
 
             for i, line in enumerate(save_flag):
                 if line != "0" and line != "":
-                    line = com.replace("\n", " ")
+                    line = comments.replace("\n", " ")
                     key = str(obj_names[i])
                     flags[key] = line
 
