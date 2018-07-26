@@ -1,0 +1,23 @@
+# %ECSV 0.9
+# ---
+# meta:
+#   loaders:
+#       image: Cutout Image
+#       spec1d: DEIMOS 1D Spectrum
+#       spec2d: DEIMOS 2D Spectrum
+# datatype:
+# - {name: id, datatype: string}
+# - {name: ra, unit: deg, datatype: float64}
+# - {name: dec, unit: deg, datatype: float64}
+# - {name: spectrum1d, datatype: string}
+# - {name: spectrum2d, datatype: string}
+# - {name: cutout, datatype: string}
+# - {name: slit_width, unit: arcsec, datatype: float64}
+# - {name: slit_length, unit: arcsec, datatype: float64}
+# - {name: pix_scale, datatype: float64}
+id ra dec spectrum1d spectrum2d cutout slit_width slit_length pix_scale
+deimos_12004808 214.21968 52.410386 spec1D/spec1d.1153.151.12004808.fits spec2D/slit.1153.151R.fits.gz cutouts/12004808.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12008179 214.33785 52.454369 spec1D/spec1d.1203.063.12008179.fits spec2D/slit.1203.063R.fits.gz cutouts/12008179.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12012573 214.34313 52.53112 spec1D/spec1d.1205.091.12012573.fits spec2D/slit.1205.091R.fits.gz cutouts/12012573.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12016058 214.52242 52.580972 spec1D/spec1d.1208.055.12016058.fits spec2D/slit.1208.055R.fits.gz cutouts/12016058.acs.v_6ac_.fits 0.2 3.3 0.66
+deimos_12020734 214.49056 52.632246 spec1D/spec1d.1209.080.12020734.fits spec2D/slit.1209.080R.fits.gz cutouts/12020734.acs.v_6ac_.fits 0.2 3.3 0.66
