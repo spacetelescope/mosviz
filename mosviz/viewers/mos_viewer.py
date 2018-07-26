@@ -640,8 +640,8 @@ class MOSVizViewer(DataViewer):
         # we set up the extent of the image appropriately if the cutout and the
         # 1D spectrum are present so that the axes can be locked.
 
-        # We are repurposing the spectrum 2d widget to display both
-        # the level 3 spectrum and the level 2 spectra.
+        # We are repurposing the spectrum 2d widget to handle the display of both
+        # the level 3 and level 2 spectra.
         if spec2d_data is not None or level2d_data is not None:
             self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data, level2_data)
 
@@ -704,6 +704,10 @@ class MOSVizViewer(DataViewer):
             self.meta_form_layout.addRow(self.input_save, self.input_refresh)
 
     def _load_spectrum2d_widget(self, dy, yp, image_data, spec2d_data, level2_data):
+
+        if not spec2d_data:
+            return
+
         xp2d = np.arange(spec2d_data.shape[1])
         yp2d = np.repeat(0, spec2d_data.shape[1])
 
