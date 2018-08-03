@@ -92,9 +92,17 @@ class MOSImageWidget(StandaloneImageViewer):
 
 class DrawableImageWidget(MOSImageWidget):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, slit_controller=None, **kwargs):
         super(DrawableImageWidget, self).__init__(*args, **kwargs)
         self._slit_patch = None
+        self.slit_controller = slit_controller
+
+    # def draw_rectangle(self, x=None, y=None, width=None, height=None):
+    #     if self._slit_patch is not None:
+    #         self._slit_patch.remove()
+    #
+    #     self.slit_controller.draw_rectangle(x, y, width, height)
+    #     self._axes.add_patch(self.slit_controller.patch)
 
     def draw_rectangle(self, x=None, y=None, width=None, height=None):
         if self._slit_patch is not None:
@@ -103,3 +111,8 @@ class DrawableImageWidget(MOSImageWidget):
                                      width=width, height=height,
                                      edgecolor='red', facecolor='none')
         self._axes.add_patch(self._slit_patch)
+
+    def draw_slit(self):
+        patch = self.slit_controller.patch
+        self.slit_controller._pix_slit.plot(self.axes)
+        self._axes.add_patch(patch)

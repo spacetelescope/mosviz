@@ -43,6 +43,7 @@ from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
 from ..widgets.layer_widget import SimpleLayerWidget
+from ..controls.slit_controller import SlitController
 
 __all__ = ['MOSVizViewer']
 
@@ -55,6 +56,9 @@ class MOSVizViewer(DataViewer):
 
     def __init__(self, session, parent=None):
         super(MOSVizViewer, self).__init__(session, parent=parent)
+
+        self.slit_controller = SlitController(self)
+
         self.load_ui()
 
         # Define some data containers
@@ -83,7 +87,7 @@ class MOSVizViewer(DataViewer):
         path = os.path.join(UI_DIR, 'mos_widget.ui')
         loadUi(path, self.central_widget)
 
-        self.image_widget = DrawableImageWidget()
+        self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
         self.spectrum2d_widget = MOSImageWidget()
         self.spectrum1d_widget = Line1DWidget()
 
@@ -639,25 +643,43 @@ class MOSVizViewer(DataViewer):
             self.image_widget.axes.set_ylabel("Spatial Y")
 
             # Add the slit patch to the plot
+            if "slit_width" in self.catalog.meta["special_columns"] and \
+                    "slit_length" in self.catalog.meta["special_columns"] and \
+                    wcs is not None:
+                print("Draw_Slit")
+                ra = row[self.catalog.meta["special_columns"]["slit_ra"]]
+                dec = row[self.catalog.meta["special_columns"]["slit_dec"]]
 
-            ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
-            dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
-            slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
-            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
+                slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
+                slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
 
-            skycoord = SkyCoord(ra, dec, frame='fk5')
-            xp, yp = skycoord.to_pixel(wcs)
+                self.slit_controller.construct(wcs, ra, dec, slit_length, slit_width)
 
-            scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
+                self.image_widget.draw_slit()
+                self.image_widget._redraw()
 
-            dx = slit_width / scale
-            dy = slit_length / scale
+                ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
+                dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
+                slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
+                slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
 
-            self.image_widget.draw_rectangle(x=xp, y=yp,
-                                             width=dx, height=dy)
+                skycoord = SkyCoord(ra, dec, frame='fk5')
+                xp, yp = skycoord.to_pixel(wcs)
+
+                scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
+
+                dx = slit_width / scale
+                dy = slit_length / scale
+                self.image_widget.draw_rectangle(x=xp, y=yp,
+                                                 width=dx, height=dy)
+
+                self.image_widget._redraw()
+            else:
+                self.slit_controller.destruct()
 
             self.image_widget._redraw()
         else:
+            print("Destruct_Slit")
             self.image_widget.setVisible(False)
 
         # Plot the 2D spectrum data last because by then we can make sure that
@@ -673,12 +695,14 @@ class MOSVizViewer(DataViewer):
             x_min = spectrum2d_disp.min()
             x_max = spectrum2d_disp.max()
 
-            if image_data is None:
-                y_min = -0.5
-                y_max = spec2d_data.shape[0] - 0.5
-            else:
+            if self.slit_controller.is_active:
+                yp = self.slit_controller.y
+                dy = self.slit_controller.dy
                 y_min = yp - dy / 2.
                 y_max = yp + dy / 2.
+            else:
+                y_min = -0.5
+                y_max = spec2d_data.shape[0] - 0.5
 
             extent = [x_min, x_max, y_min, y_max]
 
