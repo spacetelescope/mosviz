@@ -18,6 +18,7 @@ class SlitController(HubListener):
     Controller that constructs and stores
     a rectangular slit.
     """
+
     def __init__(self, mosviz_viewer=None):
         super(SlitController, self).__init__()
         self.mosviz_viewer = mosviz_viewer
@@ -38,13 +39,13 @@ class SlitController(HubListener):
     def x(self):
         """Center x position of slit"""
         if self.is_active:
-            return self.patch.get_x() + self.patch.get_width()/2.
+            return self.patch.get_x() + self.patch.get_width() / 2.
 
     @property
     def y(self):
         """Center y position of slit"""
         if self.is_active:
-            return self.patch.get_y() + self.patch.get_height()/2.
+            return self.patch.get_y() + self.patch.get_height() / 2.
 
     @property
     def width(self):
@@ -151,7 +152,7 @@ class SlitController(HubListener):
         self._pix_slit = None
 
         if self._patch is not None:
-              self._patch.remove()
+            self._patch.remove()
         self._patch = None
 
     def launch_slit_ui(self):
