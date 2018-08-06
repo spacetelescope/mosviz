@@ -19,26 +19,26 @@ deimos_longmirr:
   width: 0.7
 
 deimos_long07:
-  name: "DEIMOS Long0.7"
+  name: "DEIMOS Long 0.7"
   length: 82
   width: 0.7
 
 deimos_long08:
-  name: "DEIMOS Long0.8"
+  name: "DEIMOS Long 0.8"
   length: 82
   width: 0.8
 
 deimos_long10b:
-  name: "DEIMOS Long1.0B"
+  name: "DEIMOS Long 1.0B"
   length: 82
   width: 1.0
 
 deimos_long12:
-  name: "DEIMOS Long1.2"
+  name: "DEIMOS Long 1.2"
   length: 82
   width: 1.2
 
 deimos_long15:
-  name: "DEIMOS Long1.5"
+  name: "DEIMOS Long 1.5"
   length: 82
   width: 1.5

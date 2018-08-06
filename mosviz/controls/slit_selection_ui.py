@@ -130,7 +130,7 @@ class SlitSelectionUI(QDialog):
 
         for input_widget in [self.slit_width_input, self.slit_length_input]:
             input_widget.setStyleSheet("")
-            
+
         if isinstance(width, list):
             self.slit_width_input.hide()
             self.slit_width_combo.show()
