@@ -68,6 +68,7 @@ class MOSVizViewer(DataViewer):
         self.comments = False
         self.textChangedAt = None
         self.mask = None
+        self.cutout_wcs = None
 
         self.catalog = None
         self.current_row = None
@@ -598,6 +599,24 @@ class MOSVizViewer(DataViewer):
         else:
             cur_data.update_values_from_data(data)
 
+    def add_slit(self, row=None, width=None, length=None):
+        if row is None:
+            row = self.current_row
+
+        wcs = self.cutout_wcs
+        if wcs is None:
+            raise Exception("Image viewer has no WCS information")
+
+        ra = row[self.catalog.meta["special_columns"]["slit_ra"]]
+        dec = row[self.catalog.meta["special_columns"]["slit_dec"]]
+
+        if width is None:
+            width = row[self.catalog.meta["special_columns"]["slit_width"]]
+        if length is None:
+            length = row[self.catalog.meta["special_columns"]["slit_length"]]
+
+        self.slit_controller.construct_sky_region(wcs, ra, dec, width, length)
+
     def render_data(self, row, spec1d_data=None, spec2d_data=None,
                     image_data=None):
         """
@@ -635,51 +654,40 @@ class MOSVizViewer(DataViewer):
 
         if image_data is not None:
             wcs = image_data.coords.wcs
+            self.cutout_wcs = wcs
 
-            self.image_widget.set_image(image_data.get_component(image_data.id['Flux']).data,
-                                        wcs=wcs, interpolation='none', origin='lower')
-
-            self.image_widget.axes.set_xlabel("Spatial X")
-            self.image_widget.axes.set_ylabel("Spatial Y")
+            array = image_data.get_component(image_data.id['Flux']).data
 
             # Add the slit patch to the plot
             if "slit_width" in self.catalog.meta["special_columns"] and \
                     "slit_length" in self.catalog.meta["special_columns"] and \
                     wcs is not None:
-                print("Draw_Slit")
-                ra = row[self.catalog.meta["special_columns"]["slit_ra"]]
-                dec = row[self.catalog.meta["special_columns"]["slit_dec"]]
-
-                slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
-                slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
-
-                self.slit_controller.construct(wcs, ra, dec, slit_length, slit_width)
-
+                self.add_slit(row)
                 self.image_widget.draw_slit()
-                self.image_widget._redraw()
 
-                ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
-                dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
-                slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
-                slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
+                xp = self.slit_controller.x
+                dx = array.shape[0]
+                x_min = xp - dx / 2.
+                x_max = xp + dx / 2.
 
-                skycoord = SkyCoord(ra, dec, frame='fk5')
-                xp, yp = skycoord.to_pixel(wcs)
+                yp = self.slit_controller.y
+                dy = self.slit_controller.dy
+                y_min = yp - dy / 2.
+                y_max = yp + dy / 2.
 
-                scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
-
-                dx = slit_width / scale
-                dy = slit_length / scale
-                self.image_widget.draw_rectangle(x=xp, y=yp,
-                                                 width=dx, height=dy)
-
-                self.image_widget._redraw()
             else:
                 self.slit_controller.destruct()
 
+            self.image_widget.set_image(array, wcs=wcs, interpolation='none', origin='lower')
+
+            self.image_widget.axes.set_xlabel("Spatial X")
+            self.image_widget.axes.set_ylabel("Spatial Y")
+            if self.slit_controller.is_active:
+                self.image_widget.set_limits(x_max, x_min, y_min, y_max)
+
             self.image_widget._redraw()
         else:
-            print("Destruct_Slit")
+            self.cutout_wcs = None
             self.image_widget.setVisible(False)
 
         # Plot the 2D spectrum data last because by then we can make sure that
@@ -687,20 +695,15 @@ class MOSVizViewer(DataViewer):
         # 1D spectrum are present so that the axes can be locked.
 
         if spec2d_data is not None:
-            wcs = spec2d_data.coords.wcs
-
             xp2d = np.arange(spec2d_data.shape[1])
             yp2d = np.repeat(0, spec2d_data.shape[1])
             spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
             x_min = spectrum2d_disp.min()
             x_max = spectrum2d_disp.max()
 
-            if self.slit_controller.is_active:
-                yp = self.slit_controller.y
-                dy = self.slit_controller.dy
-                y_min = yp - dy / 2.
-                y_max = yp + dy / 2.
-            else:
+            if not self.slit_controller.is_active:
+                # Note: if slit_controller.is_active, y_min and y_max
+                # are already computed in the image_data section
                 y_min = -0.5
                 y_max = spec2d_data.shape[0] - 0.5
 
@@ -840,6 +843,14 @@ class MOSVizViewer(DataViewer):
         for i, name in enumerate(l):
             if name == ID:
                 return i
+        return None
+
+    def get_slit_dimensions_from_file(self):
+        if "slit_width" in self.catalog.meta["special_columns"] and \
+                "slit_length" in self.catalog.meta["special_columns"]:
+            width = self.current_row[self.catalog.meta["special_columns"]["slit_width"]]
+            length = self.current_row[self.catalog.meta["special_columns"]["slit_length"]]
+            return [length, width]
         return None
 
     def get_comment(self):

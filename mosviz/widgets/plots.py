@@ -1,3 +1,5 @@
+import os
+
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QMainWindow
 
@@ -5,6 +7,8 @@ from matplotlib.patches import Rectangle
 
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from glue.viewers.matplotlib.qt.widget import MplWidget
+from glue.viewers.common.qt.tool import Tool
+from glue.config import viewer_tool
 
 try:
     from glue.viewers.matplotlib.mpl_axes import init_mpl
@@ -14,6 +18,35 @@ except ImportError:  # glue < 0.14
 from glue.viewers.image.qt.standalone_image_viewer import StandaloneImageViewer
 
 __all__ = ['Line1DWidget', 'DrawableImageWidget', 'MOSImageWidget']
+
+ICON_PATH = os.path.abspath(
+    os.path.join(
+        os.path.abspath(__file__),
+        "..",
+        "..",
+        "data",
+        "resources",
+        "slit_icon.png"
+    )
+)
+@viewer_tool
+class SlitButton(Tool):
+    """
+    Image viewer tool to launch slit editor.
+    """
+    icon = ICON_PATH
+    tool_id = 'mosviz:slit'
+    action_text = ''
+    tool_tip = 'Slit options'
+    status_tip = ''
+    shortcut = None
+
+    def __init__(self, viewer):
+        super(SlitButton, self).__init__(viewer)
+        self.function = viewer.launch_slit_ui
+
+    def activate(self):
+        self.function()
 
 
 class Line1DWidget(QMainWindow):
@@ -80,9 +113,6 @@ class Line1DWidget(QMainWindow):
 
 class MOSImageWidget(StandaloneImageViewer):
 
-    tools = ['mpl:home', 'mpl:save', 'mpl:pan', 'mpl:zoom',
-             'image:contrast', 'image:colormap']
-
     def __init__(self, *args, **kwargs):
         super(MOSImageWidget, self).__init__(*args, **kwargs)
 
@@ -91,18 +121,15 @@ class MOSImageWidget(StandaloneImageViewer):
 
 
 class DrawableImageWidget(MOSImageWidget):
+    tools = ['mpl:home', 'mpl:save', 'mpl:pan', 'mpl:zoom',
+             'image:contrast', 'image:colormap', 'mosviz:slit']
+
+    slit_controller = None
 
     def __init__(self, *args, slit_controller=None, **kwargs):
         super(DrawableImageWidget, self).__init__(*args, **kwargs)
         self._slit_patch = None
         self.slit_controller = slit_controller
-
-    # def draw_rectangle(self, x=None, y=None, width=None, height=None):
-    #     if self._slit_patch is not None:
-    #         self._slit_patch.remove()
-    #
-    #     self.slit_controller.draw_rectangle(x, y, width, height)
-    #     self._axes.add_patch(self.slit_controller.patch)
 
     def draw_rectangle(self, x=None, y=None, width=None, height=None):
         if self._slit_patch is not None:
@@ -113,6 +140,31 @@ class DrawableImageWidget(MOSImageWidget):
         self._axes.add_patch(self._slit_patch)
 
     def draw_slit(self):
-        patch = self.slit_controller.patch
-        self.slit_controller._pix_slit.plot(self.axes)
-        self._axes.add_patch(patch)
+        """
+        Draw the slit patch stored in the slit controller.
+        """
+        # self.slit_controller._pix_slit.plot(self.axes)  # Keep, may be used in the future
+        if self.slit_controller.is_active:
+            self._slit_patch = self.slit_controller.patch
+            self._axes.add_patch(self._slit_patch)
+
+    def set_limits(self, x_min=None, x_max=None, y_min=None, y_max=None):
+        """Manually set the limits of the axes."""
+        self._axes.set_xbound(x_min, x_max)
+        self._axes.set_ybound(y_min, y_max)
+
+    def set_slit_limits(self):
+        """Set y limits of plot according to slit length"""
+        if self.slit_controller.is_active:
+            yp = self.slit_controller.y  # Center of slit
+            dy = self.slit_controller.dy  # Slit length
+            y_min = yp - dy / 2.
+            y_max = yp + dy / 2.
+            self.set_limits(y_min, y_max, y_min, y_max)
+
+    def reset_limits(self):
+        """Auto set the limits of the axes."""
+        self._axes.relim()
+
+    def launch_slit_ui(self):
+        self.slit_controller.launch_slit_ui()
