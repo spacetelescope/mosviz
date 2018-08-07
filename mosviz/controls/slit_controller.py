@@ -168,9 +168,9 @@ class SlitController(HubListener):
         """
         self._slit = None
         self._pix_slit = None
-
         if self._patch is not None:
-            self._patch.remove()
+            if self._patch._remove_method is not None:
+                self._patch.remove()
         self._patch = None
 
     def launch_slit_ui(self):
