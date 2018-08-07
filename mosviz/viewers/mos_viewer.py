@@ -653,6 +653,8 @@ class MOSVizViewer(DataViewer):
             self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
 
         if image_data is not None:
+            if not self.image_widget.isVisible():
+                self.image_widget.setVisible(True)
             wcs = image_data.coords.wcs
             self.cutout_wcs = wcs
 
