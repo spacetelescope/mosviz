@@ -67,6 +67,24 @@ class SlitController(HubListener):
         """Length of slit"""
         return self.length
 
+    @property
+    def x_bounds(self):
+        """x axis max and min pixel values"""
+        xp = self.x
+        dx = self.dx
+        x_min = xp - dx / 2.
+        x_max = xp + dx / 2.
+        return [x_min, x_max]
+
+    @property
+    def y_bounds(self):
+        """y axis max and min pixel values"""
+        yp = self.y
+        dy = self.dy
+        y_min = yp - dy / 2.
+        y_max = yp + dy / 2.
+        return [y_min, y_max]
+
     def construct_simple_rectangle(self, x=None, y=None, width=None, length=None):
         """
         Simple matplotlib rectangle patch.

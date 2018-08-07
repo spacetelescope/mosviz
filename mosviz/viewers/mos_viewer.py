@@ -666,17 +666,6 @@ class MOSVizViewer(DataViewer):
                     wcs is not None:
                 self.add_slit(row)
                 self.image_widget.draw_slit()
-
-                xp = self.slit_controller.x
-                dx = array.shape[0]
-                x_min = xp - dx / 2.
-                x_max = xp + dx / 2.
-
-                yp = self.slit_controller.y
-                dy = self.slit_controller.dy
-                y_min = yp - dy / 2.
-                y_max = yp + dy / 2.
-
             else:
                 self.slit_controller.destruct()
 
@@ -685,7 +674,7 @@ class MOSVizViewer(DataViewer):
             self.image_widget.axes.set_xlabel("Spatial X")
             self.image_widget.axes.set_ylabel("Spatial Y")
             if self.slit_controller.is_active:
-                self.image_widget.set_limits(x_max, x_min, y_min, y_max)
+                self.image_widget.set_slit_limits()
 
             self.image_widget._redraw()
         else:
@@ -703,7 +692,9 @@ class MOSVizViewer(DataViewer):
             x_min = spectrum2d_disp.min()
             x_max = spectrum2d_disp.max()
 
-            if not self.slit_controller.is_active:
+            if self.slit_controller.is_active:
+                y_min, y_max = self.slit_controller.y_bounds
+            else:
                 # Note: if slit_controller.is_active, y_min and y_max
                 # are already computed in the image_data section
                 y_min = -0.5
