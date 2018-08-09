@@ -162,6 +162,7 @@ def pre_nirspec_level2_reader(file_name):
 
     #TODO The level 2 file has multiple exposures.
     #TODO the level 2 test file has SCI extensions with different shapes.
+    #TODO
 
     hdulist = fits.open(file_name)
     data = Data(label='2D Spectra')
