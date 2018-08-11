@@ -838,6 +838,8 @@ class MOSVizViewer(DataViewer):
         return None
 
     def get_slit_dimensions_from_file(self):
+        if self.catalog is None:
+            return None
         if "slit_width" in self.catalog.meta["special_columns"] and \
                 "slit_length" in self.catalog.meta["special_columns"]:
             width = self.current_row[self.catalog.meta["special_columns"]["slit_width"]]
