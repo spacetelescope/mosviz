@@ -198,10 +198,8 @@ def test_launch_editor(glue_gui):
 
 def test_current_slit(glue_gui):
     """Test the UI currently available for testing."""
-    mosviz_gui = MOSVizViewer(glue_gui.session)
+    mosviz_gui = glue_gui.viewers[0][0]
     slit_controller = mosviz_gui.slit_controller
-
-    mosviz_gui.add_data(glue_gui.session.data_collection[0])
 
     if "slit_width" in mosviz_gui.catalog.meta["special_columns"] and \
             "slit_length" in mosviz_gui.catalog.meta["special_columns"] and \

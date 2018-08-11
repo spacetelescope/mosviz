@@ -160,7 +160,7 @@ class DrawableImageWidget(MOSImageWidget):
                 y = self.slit_controller.y
                 dx = self.slit_controller.dx
                 x_min, x_max = self.slit_controller.x_bounds
-                y_min, y_max = (y - dx / 2., y + dx / 2.)
+                y_min, y_max = (y - dx/2., y + dx/2.)
             else:
                 x = self.slit_controller.x
                 dy = self.slit_controller.dy
