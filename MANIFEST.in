@@ -6,7 +6,7 @@ include ah_bootstrap.py
 include setup.cfg
 include mosviz/tests/coveragerc
 
-recursive-include mosviz *.pyx *.c *.pxd *.yaml
+recursive-include mosviz *.pyx *.c *.pxd
 recursive-include docs *
 recursive-include licenses *
 recursive-include cextern *

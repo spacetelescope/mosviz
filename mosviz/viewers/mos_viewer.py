@@ -666,6 +666,7 @@ class MOSVizViewer(DataViewer):
                 self.image_widget.draw_slit()
             else:
                 self.slit_controller.destruct()
+                self.image_widget.reset_limits()
 
             self.image_widget.set_image(array, wcs=wcs, interpolation='none', origin='lower')
 

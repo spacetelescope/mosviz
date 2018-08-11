@@ -150,14 +150,24 @@ class DrawableImageWidget(MOSImageWidget):
 
     def set_limits(self, x_min=None, x_max=None, y_min=None, y_max=None):
         """Manually set the limits of the axes."""
-        self._axes.set_xbound(x_min, x_max)
-        self._axes.set_ybound(y_min, y_max)
+        self._axes.set_xlim(x_min, x_max)
+        self._axes.set_ylim(y_min, y_max)
 
     def set_slit_limits(self):
         """Set y limits of plot according to slit length"""
         if self.slit_controller.is_active:
-            y_min, y_max = self.slit_controller.y_bounds
-            self.set_limits(y_min, y_max, y_min, y_max)
+            if self.slit_controller.dx > self.slit_controller.dy:
+                y = self.slit_controller.y
+                dx = self.slit_controller.dx
+                x_min, x_max = self.slit_controller.x_bounds
+                y_min, y_max = (y - dx / 2., y + dx / 2.)
+            else:
+                x = self.slit_controller.x
+                dy = self.slit_controller.dy
+                x_min, x_max = (x - dy/2., x + dy/2.)
+                y_min, y_max = self.slit_controller.y_bounds
+
+            self.set_limits(x_min, x_max, y_min, y_max)
 
     def reset_limits(self):
         """Auto set the limits of the axes."""
