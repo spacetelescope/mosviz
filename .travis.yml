@@ -42,8 +42,7 @@ env:
 
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx_automodapi specutils==0.2.2 qtpy
-        git+https://github.com/astropy/regions.git'
+        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx_automodapi specutils==0.2.2 qtpy git+https://github.com/astropy/regions.git'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
