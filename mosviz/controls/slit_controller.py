@@ -117,9 +117,6 @@ class SlitController(HubListener):
 
         pixcoord = PixCoord(x, y)
 
-        length = Angle(length, u.arcsec)
-        width = Angle(width, u.arcsec)
-
         self._slit = None
         self._pix_slit = RectanglePixelRegion(center=pixcoord, width=width, height=length)
         self._patch = self._pix_slit.as_patch(edgecolor='red', facecolor='none')
@@ -156,10 +153,13 @@ class SlitController(HubListener):
     def move(self, x, y):
         """
         Move the bottom right corner of the patch
-        :param x: x position in pix
-        :param y: y position in pix
+        :param x: center x position in pix
+        :param y: center y position in pix
+        :return: bool, true if success
         """
-        self._patch.set_xy((x, y))
+        if self.is_active:
+            x_corner, y_corner = (x - self.width / 2, y - self.length / 2)
+            self._patch.set_xy((x_corner, y_corner))
 
     def destruct(self):
         """
@@ -178,4 +178,4 @@ class SlitController(HubListener):
         Launches UI for slit selection
         :return:
         """
-        ex = SlitSelectionUI(self.mosviz_viewer, self.mosviz_viewer)
+        return SlitSelectionUI(self.mosviz_viewer, self.mosviz_viewer)

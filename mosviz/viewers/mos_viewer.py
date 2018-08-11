@@ -24,8 +24,6 @@ from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy import units as u
 from astropy.wcs import WCS
-from astropy.coordinates import SkyCoord
-from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
     from specviz.third_party.glue.data_viewer import SpecVizViewer
