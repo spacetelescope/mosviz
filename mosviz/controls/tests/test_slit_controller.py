@@ -12,14 +12,14 @@ from mosviz.viewers.mos_viewer import MOSVizViewer
 
 def construct_test_wcs(ra=0., dec=0., x=0.0, y=0.0, area=1.0):
     """
-    Constructs an ~`astropy.wcs.WCS` object according to params.
+    Constructs an `~astropy.wcs.WCS` object according to params.
     WCS object will always have ['RA---TAN', 'DEC--TAN'] transform.
     :param ra: Center RA in deg
     :param dec: Center DEC in deg
     :param x: Center x pixel
     :param y: Center Y pixel
     :param area: ﻿Projected plane pixel area (deg**2/pix)
-    :return: ~`astropy.wcs.WCS`
+    :return: `~astropy.wcs.WCS`
     """
     axis_scale = np.sqrt(area)
     w = WCS()
