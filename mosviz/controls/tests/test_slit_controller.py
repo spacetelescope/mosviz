@@ -10,7 +10,7 @@ from astropy.wcs.utils import proj_plane_pixel_area
 from mosviz.viewers.mos_viewer import MOSVizViewer
 
 
-def construct_test_wcs(ra=0., dec=0., x=0.0, y=0.0, area=1.0):
+def construct_test_wcs(ra=0., dec=0., x=0., y=0., area=1.0):
     """
     Constructs an `~astropy.wcs.WCS` object according to params.
     WCS object will always have ['RA---TAN', 'DEC--TAN'] transform.
@@ -26,7 +26,7 @@ def construct_test_wcs(ra=0., dec=0., x=0.0, y=0.0, area=1.0):
     w.wcs.crval = [ra, dec]
     w.wcs.crpix = [x, y]
     w.wcs.ctype = ['RA---TAN', 'DEC--TAN']
-    w.wcs.cdelt = np.array([axis_scale, axis_scale])
+    w.wcs.cdelt = np.array([-axis_scale, axis_scale])
     return w
 
 

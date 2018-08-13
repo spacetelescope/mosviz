@@ -156,16 +156,11 @@ class DrawableImageWidget(MOSImageWidget):
     def set_slit_limits(self):
         """Set y limits of plot according to slit length"""
         if self.slit_controller.is_active:
-            if self.slit_controller.dx > self.slit_controller.dy:
-                y = self.slit_controller.y
-                dx = self.slit_controller.dx
-                x_min, x_max = self.slit_controller.x_bounds
-                y_min, y_max = (y - dx/2., y + dx/2.)
-            else:
-                x = self.slit_controller.x
-                dy = self.slit_controller.dy
-                x_min, x_max = (x - dy/2., x + dy/2.)
-                y_min, y_max = self.slit_controller.y_bounds
+            # We want the image dimensions to be dy x dy
+            dy = self.slit_controller.dy
+            x = self.slit_controller.x
+            x_min, x_max = (x - dy/2., x + dy/2.)
+            y_min, y_max = self.slit_controller.y_bounds
 
             self.set_limits(x_min, x_max, y_min, y_max)
 
