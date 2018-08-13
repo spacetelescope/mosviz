@@ -14,12 +14,19 @@ def construct_test_wcs(ra=0., dec=0., x=0., y=0., area=1.0):
     """
     Constructs an `~astropy.wcs.WCS` object according to params.
     WCS object will always have ['RA---TAN', 'DEC--TAN'] transform.
-    :param ra: Center RA in deg
-    :param dec: Center DEC in deg
-    :param x: Center x pixel
-    :param y: Center Y pixel
-    :param area: ﻿Projected plane pixel area (deg**2/pix)
-    :return: `~astropy.wcs.WCS`
+
+    Parameters
+    ----------
+    ra, dec : float
+        Center (ra, dec) in deg
+    x, y : float
+        Center (x, y) pixell
+    area : float
+        ﻿Projected plane pixel area (deg**2/pix)
+
+    Returns
+    --------
+    wcs : `~astropy.wcs.WCS`
     """
     axis_scale = np.sqrt(area)
     w = WCS()
@@ -28,6 +35,44 @@ def construct_test_wcs(ra=0., dec=0., x=0., y=0., area=1.0):
     w.wcs.ctype = ['RA---TAN', 'DEC--TAN']
     w.wcs.cdelt = np.array([-axis_scale, axis_scale])
     return w
+
+
+def check_is_close(a, b, name_a='a', name_b='b'):
+    """
+    Parameters
+    ----------
+    a, b : numeric
+        Values to be compared.
+    name_a, name_b: str
+        Variable name of values.
+        Displayed if exception is raised.
+
+    Raises
+    ------
+    Exception: If a and b and not close
+    """
+    if not np.isclose(a, b):
+        raise Exception("{0} and {1} alues are not close: "
+                        "np.isclose({0}, {1})".format(name_a, name_b, a, b))
+
+
+def check_all_close(a, b, name_a='a', name_b='b'):
+    """
+    Parameters
+    ----------
+    a, b : array
+        arrays to be compared.
+    name_a, name_b : str
+        Variable name of arrays.
+        Displayed if exception is raised.
+
+    Raises
+    ------
+    Exception: If values in a and b and not close
+    """
+    if not np.allclose(a, b):
+        raise Exception("{0} and {1} alues are not close: "
+                        "np.isclose({0}, {1})".format(name_a, name_b, a, b))
 
 
 def check_slits_and_patchs(slit_controller):
@@ -47,24 +92,26 @@ def check_patch_attr(slit_controller, x, y, width, length):
     """
     Chcek the patch position, dimension and bounds.
     Params are the expected values.
-    :param slit_controller: SlitController
-    :param x: correct center x pixel
-    :param y: correct center y pixel
-    :param width: correct width
-    :param length: correct length
+    Parameters
+    ----------
+    slit_controller : SlitController
+        Slit controller to be tested.
+    x, y, width, length : float
+        Correct center x pixel, center y pixel, width and length.
     """
 
     x_bounds = np.array([x - (width / 2.), x + (width / 2.)])
     y_bounds = np.array([y - (length / 2.), y + (length / 2.)])
 
-    assert np.isclose(slit_controller.x, x)
-    assert np.isclose(slit_controller.y, y)
-    assert np.isclose(slit_controller.dx, width)
-    assert np.isclose(slit_controller.dy, length)
-    assert np.isclose(slit_controller.width, width)
-    assert np.isclose(slit_controller.length, length)
-    assert np.allclose(np.array(slit_controller.x_bounds), x_bounds)
-    assert np.allclose(np.array(slit_controller.y_bounds), y_bounds)
+    check_is_close(slit_controller.x, x)
+    check_is_close(slit_controller.y, y)
+    check_is_close(slit_controller.dx, width)
+    check_is_close(slit_controller.dy, length)
+    check_is_close(slit_controller.width, width)
+    check_is_close(slit_controller.length, length)
+    check_all_close(np.array(slit_controller.x_bounds), x_bounds)
+    check_all_close(np.array(slit_controller.y_bounds), y_bounds)
+    check_all_close(np.array(slit_controller.y_bounds), y_bounds)
 
 
 def check_distruction(slit_controller):
@@ -222,7 +269,7 @@ def test_current_slit(glue_gui):
         dx = ang_width / scale
         dy = ang_length / scale
 
-        assert np.isclose(dx, slit_controller.dx)
-        assert np.isclose(dy, slit_controller.dy)
-        assert np.isclose(xp, slit_controller.x)
-        assert np.isclose(yp, slit_controller.y)
+        check_is_close(dx, slit_controller.dx)
+        check_is_close(dy, slit_controller.dy)
+        check_is_close(xp, slit_controller.x)
+        check_is_close(yp, slit_controller.y)

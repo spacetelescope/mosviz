@@ -1,7 +1,16 @@
+# name_of_slit:
+#   name: "Display name of slit" # Required
+#   length: float or list # User input if not specified
+#   width: float or list # User input if not specified
+#   length_units: string astropy unit # arcsec if not specified
+#   width_units: string astropy unit # arcsec if not specified
+
 nirspec_msa:
   name: "NIRSpec MSA (Single Slit)"
   length: 3.3
   width: 0.2
+  length_units: "arcsec"
+  width_units: "arcsec"
 
 deimos_lvmslitc:
   name: "DEIMOS LVMslitC"
@@ -12,33 +21,47 @@ deimos_lvmslitc:
     - 1.0
     - 1.2
     - 1.5
+  length_units: "arcsec"
+  width_units: "arcsec"
 
 deimos_longmirr:
   name: "DEIMOS LongMirr"
   length: 205
   width: 0.7
+  length_units: "arcsec"
+  width_units: "arcsec"
 
 deimos_long07:
   name: "DEIMOS Long 0.7"
   length: 82
   width: 0.7
+  length_units: "arcsec"
+  width_units: "arcsec"
 
 deimos_long08:
   name: "DEIMOS Long 0.8"
   length: 82
   width: 0.8
+  length_units: "arcsec"
+  width_units: "arcsec"
 
 deimos_long10b:
   name: "DEIMOS Long 1.0B"
   length: 82
   width: 1.0
+  length_units: "arcsec"
+  width_units: "arcsec"
 
 deimos_long12:
   name: "DEIMOS Long 1.2"
   length: 82
   width: 1.2
+  length_units: "arcsec"
+  width_units: "arcsec"
 
 deimos_long15:
   name: "DEIMOS Long 1.5"
   length: 82
   width: 1.5
+  length_units: "arcsec"
+  width_units: "arcsec"

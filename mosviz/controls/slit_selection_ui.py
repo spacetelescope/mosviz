@@ -1,6 +1,7 @@
 import os
 import yaml
 
+import astropy.units as u
 from qtpy.QtWidgets import (QDialog, QLineEdit, QLabel, QComboBox,
                             QHBoxLayout, QVBoxLayout, QPushButton)
 
@@ -52,7 +53,7 @@ class SlitSelectionUI(QDialog):
         hbl3 = QHBoxLayout()
         hbl3.addWidget(self.slit_length_label)
         hbl3.addWidget(self.slit_length_input)
-        hbl2.addWidget(self.slit_length_combo)
+        hbl3.addWidget(self.slit_length_combo)
         hbl3.addWidget(self.slit_length_units)
 
         self.okButton = QPushButton('Apply')
@@ -76,6 +77,7 @@ class SlitSelectionUI(QDialog):
 
         self._load_selections()
         self._populate_combo()
+        self.update_info(0)
 
         self.show()
 
@@ -96,17 +98,29 @@ class SlitSelectionUI(QDialog):
         combo_input = [(name, key) for name, key in zip(name_list, key_list)]
         update_combobox(self.slit_type_combo, combo_input, default_index=default_index)
 
-    def get_width(self):
+    @property
+    def width(self):
         if self.slit_width_combo.isVisible():
-            return self.slit_width_combo.currentData()
+            width = self.slit_width_combo.currentData()
         else:
-            return self.slit_width_input.text()
+            width = self.slit_width_input.text()
+        return float(width)
 
-    def get_length(self):
+    @property
+    def length(self):
         if self.slit_length_combo.isVisible():
-            return self.slit_length_combo.currentData()
+            length = self.slit_length_combo.currentData()
         else:
-            return self.slit_length_input.text()
+            length = self.slit_length_input.text()
+        return float(length)
+
+    @property
+    def width_units(self):
+        return u.Unit(self.slit_width_units.text())
+
+    @property
+    def length_units(self):
+        return u.Unit(self.slit_length_units.text())
 
     def update_info(self, index):
         """
@@ -116,8 +130,10 @@ class SlitSelectionUI(QDialog):
         key = self.slit_type_combo.currentData()
 
         length = width = None
+        width_units = length_units = 'arcsec'
         if key == 'default':
             slit_info = self.mosviz_viewer.get_slit_dimensions_from_file()
+            width_units, length_units = self.mosviz_viewer.get_slit_units_from_file()
             if slit_info is None:
                 length, width = ['N/A', 'N/A']
             else:
@@ -127,6 +143,9 @@ class SlitSelectionUI(QDialog):
                 length = self.slit_dict[key]['length']
             if 'width' in self.slit_dict[key]:
                 width = self.slit_dict[key]['width']
+
+            width_units = self.slit_dict[key]['width_units'] if 'width_units' in self.slit_dict[key] else 'arcsec'
+            length_units = self.slit_dict[key]['length_units'] if 'length_units' in self.slit_dict[key] else 'arcsec'
 
         for input_widget in [self.slit_width_input, self.slit_length_input]:
             input_widget.setStyleSheet("")
@@ -146,6 +165,7 @@ class SlitSelectionUI(QDialog):
             self.slit_width_input.show()
             self.slit_width_input.setText(str(width))
             self.slit_width_input.setDisabled(True)
+        self.slit_width_units.setText(width_units)
 
         if isinstance(length, list):
             self.slit_length_input.hide()
@@ -162,6 +182,7 @@ class SlitSelectionUI(QDialog):
             self.slit_length_input.show()
             self.slit_length_input.setText(str(length))
             self.slit_length_input.setDisabled(True)
+        self.slit_length_units.setText(length_units)
 
     def input_validation(self):
         red = "background-color: rgba(255, 0, 0, 128);"
@@ -200,8 +221,8 @@ class SlitSelectionUI(QDialog):
             else:
                 self.mosviz_viewer.add_slit()
         else:
-            width = self.get_width()
-            length = self.get_length()
+            width = (self.width * self.width_units).to(u.arcsec)
+            length = (self.length * self.length_units).to(u.arcsec)
             self.mosviz_viewer.add_slit(width=width, length=length)
 
         if self.mosviz_viewer.slit_controller.is_active:

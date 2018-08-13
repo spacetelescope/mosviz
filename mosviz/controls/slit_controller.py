@@ -88,11 +88,16 @@ class SlitController(HubListener):
     def construct_simple_rectangle(self, x=None, y=None, width=None, length=None):
         """
         Simple matplotlib rectangle patch.
-        :param x: center of slit in x axis in pix
-        :param y: center of slit in y axis in pix
-        :param width: width of slit in pix
-        :param length: length of slit in pix
-        :return: patch
+
+        Parameters
+        ----------
+        x, y : float
+            Center (x, y) of slit in pix.
+        width, length : float
+            width and length of slit in pix.
+        Returns
+        -------
+        patch : `matplotlib.patches.Rectangle`
         """
         self.destruct()
 
@@ -107,11 +112,16 @@ class SlitController(HubListener):
         """
         Slit constructed using WCS and coords information.
         Utilizes `regions` package.
-        :param x: center of slit in x axis in pix
-        :param y: center of slit in y axis in pix
-        :param length: length of slit in arcsec
-        :param width: width of slit in arcsec
-        :return: patch
+
+        Parameters
+        ----------
+        x, y : float
+            Center (x, y) of slit in pix.
+        width, length : float
+            width and length of slit in pix.
+        Returns
+        -------
+        patch : `matplotlib.patches.Rectangle`
         """
         self.destruct()
 
@@ -127,12 +137,18 @@ class SlitController(HubListener):
         """
         Slit constructed using WCS and coords information.
         Utilizes `regions` package.
-        :param wcs: `astropy.wcs.WCS` object
-        :param ra: ra of slit in deg
-        :param dec: dec of slit in deg
-        :param width: width of slit in arcsec
-        :param length: length of slit in arcsec
-        :return: patch
+
+        Parameters
+        ----------
+        wcs : `astropy.wcs.WCS`
+        ra, dec : float
+            Center (ra, dec) of slit in deg.
+        width, length : float
+            Angular width and length of slit in arcsec.
+
+        Returns
+        -------
+        patch : `matplotlib.patches.Rectangle`
         """
         self.destruct()
 
@@ -152,14 +168,22 @@ class SlitController(HubListener):
 
     def move(self, x, y):
         """
-        Move the bottom right corner of the patch
-        :param x: center x position in pix
-        :param y: center y position in pix
-        :return: bool, true if success
+        Move the bottom right corner of the patch.
+
+        Parameters
+        ----------
+        x, y : float
+            Center (x, y) of slit in pix.
+
+        Returns
+        -------
+        bool : true if success.
         """
         if self.is_active:
             x_corner, y_corner = (x - self.width / 2, y - self.length / 2)
             self._patch.set_xy((x_corner, y_corner))
+            return True
+        return False
 
     def destruct(self):
         """
@@ -175,7 +199,6 @@ class SlitController(HubListener):
 
     def launch_slit_ui(self):
         """
-        Launches UI for slit selection
-        :return:
+        Launches UI for slit selection.
         """
         return SlitSelectionUI(self.mosviz_viewer, self.mosviz_viewer)

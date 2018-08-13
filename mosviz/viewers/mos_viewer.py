@@ -847,6 +847,10 @@ class MOSVizViewer(DataViewer):
             return [length, width]
         return None
 
+    def get_slit_units_from_file(self):
+        # TODO: Update once units infrastructure is in place
+        return ["arcsec", "arcsec"]
+
     def get_comment(self):
         idx = self.data_idx
         i = self.toolbar.source_select.currentIndex()
