@@ -129,7 +129,7 @@ class SlitController(HubListener):
 
         self._slit = None
         self._pix_slit = RectanglePixelRegion(center=pixcoord, width=width, height=length)
-        self._patch = self._pix_slit.as_patch(edgecolor='red', facecolor='none')
+        self._patch = self._pix_slit.as_artist(edgecolor='red', facecolor='none')
 
         return self._patch
 
@@ -162,7 +162,7 @@ class SlitController(HubListener):
 
         self._slit = RectangleSkyRegion(center=skycoord, width=width, height=length)
         self._pix_slit = self._slit.to_pixel(wcs)
-        self._patch = self._pix_slit.as_patch(edgecolor='red', facecolor='none')
+        self._patch = self._pix_slit.as_artist(edgecolor='red', facecolor='none')
 
         return self._patch
 
