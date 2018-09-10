@@ -160,6 +160,9 @@ class MOSVizViewer(DataViewer):
         self.toolbar.exposure_select.currentIndexChanged[int].connect(
             lambda ind: self.load_exposure(ind))
 
+        self.toolbar.exposure_select.currentIndexChanged[int].connect(
+            lambda ind: self._set_exposure_navigation(ind))
+
         # Connect the specviz button
         if SpecVizViewer is not None:
             self.toolbar.open_specviz.triggered.connect(
@@ -167,15 +170,21 @@ class MOSVizViewer(DataViewer):
         else:
             self.toolbar.open_specviz.setDisabled(True)
 
-        # Connect previous and forward buttons
+        # Connect slit previous and forward buttons
         self.toolbar.cycle_next_action.triggered.connect(
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() + 1))
-
-        # Connect previous and previous buttons
         self.toolbar.cycle_previous_action.triggered.connect(
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() - 1))
+
+        # Connect exposure previous and forward buttons
+        self.toolbar.exposure_next_action.triggered.connect(
+            lambda: self._set_exposure_navigation(
+                self.toolbar.exposure_select.currentIndex() + 1))
+        self.toolbar.exposure_previous_action.triggered.connect(
+            lambda: self._set_exposure_navigation(
+                self.toolbar.exposure_select.currentIndex() - 1))
 
         # Connect the toolbar axes setting actions
         self.toolbar.lock_x_action.triggered.connect(
@@ -522,6 +531,24 @@ class MOSVizViewer(DataViewer):
             self.toolbar.cycle_next_action.setDisabled(True)
         else:
             self.toolbar.cycle_next_action.setDisabled(False)
+
+    def _set_exposure_navigation(self, index):
+
+        if index > self.toolbar.exposure_select.count():
+            return
+
+        if 0 <= index < self.toolbar.exposure_select.count():
+            self.toolbar.exposure_select.setCurrentIndex(index)
+
+        if index < 1:
+            self.toolbar.exposure_previous_action.setDisabled(True)
+        else:
+            self.toolbar.exposure_previous_action.setDisabled(False)
+
+        if index >= self.toolbar.exposure_select.count() - 1:
+            self.toolbar.exposure_next_action.setDisabled(True)
+        else:
+            self.toolbar.exposure_next_action.setDisabled(False)
 
     def _open_in_specviz(self):
         _specviz_instance = self.session.application.new_data_viewer(

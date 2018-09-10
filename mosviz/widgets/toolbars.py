@@ -55,6 +55,13 @@ class MOSViewerToolbar(BasicToolbar):
             QIcon(os.path.join(ICON_DIR, "Next-96.png")),
             "Next", self)
 
+        self.exposure_previous_action = QAction(
+            QIcon(os.path.join(ICON_DIR, "Previous-96.png")),
+            "Previous exp.", self)
+        self.exposure_next_action = QAction(
+            QIcon(os.path.join(ICON_DIR, "Next-96.png")),
+            "Next exp.", self)
+
         # Include the dropdown widgets
         self.source_select = QComboBox()
         self.exposure_select = QComboBox()
@@ -63,6 +70,8 @@ class MOSViewerToolbar(BasicToolbar):
         self.addAction(self.cycle_previous_action)
         self.addAction(self.cycle_next_action)
         self.addWidget(self.source_select)
+        self.addAction(self.exposure_previous_action)
+        self.addAction(self.exposure_next_action)
         self.addWidget(self.exposure_select)
 
         # Include a button to open spectrum in specviz
