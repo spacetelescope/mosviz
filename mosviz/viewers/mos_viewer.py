@@ -580,17 +580,22 @@ class MOSVizViewer(DataViewer):
 
         self.current_row = row
 
+        # Level 2 is optional
+        is_level2 = "level2" in self.catalog.meta["loaders"]
+
         # Get loaders
         loader_spectrum1d = SPECTRUM1D_LOADERS[self.catalog.meta["loaders"]["spectrum1d"]]
         loader_spectrum2d = SPECTRUM2D_LOADERS[self.catalog.meta["loaders"]["spectrum2d"]]
         loader_cutout = CUTOUT_LOADERS[self.catalog.meta["loaders"]["cutout"]]
-        loader_level2 = LEVEL2_LOADERS[self.catalog.meta["loaders"]["level2"]]
+        if is_level2:
+            loader_level2 = LEVEL2_LOADERS[self.catalog.meta["loaders"]["level2"]]
 
         # Get column names
         colname_spectrum1d = self.catalog.meta["special_columns"]["spectrum1d"]
         colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
-        colname_level2 = self.catalog.meta["special_columns"]["level2"]
+        if is_level2:
+            colname_level2 = self.catalog.meta["special_columns"]["level2"]
 
         # Get mandatory data
         spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
@@ -601,17 +606,18 @@ class MOSVizViewer(DataViewer):
 
         # See if optional data exists; if so, ingest them.
         basename_cutout = os.path.basename(row[colname_cutout])
-        basename_level2 = os.path.basename(row[colname_level2])
         if basename_cutout:
             image_data = loader_cutout(row[colname_cutout])
             self._update_data_components(image_data, key='cutout')
         else:
             image_data = None
-        if basename_level2:
-            level2_data = loader_level2(row[colname_level2])
-            self._update_data_components(level2_data, key='level2')
-        else:
-            level2_data = None
+
+        level2_data = None
+        if is_level2:
+            basename_level2 = os.path.basename(row[colname_level2])
+            if basename_level2:
+                level2_data = loader_level2(row[colname_level2])
+                self._update_data_components(level2_data, key='level2')
 
         # Keep data that will be used to refresh the 2D spectrum widget.
         self.spec2d_data = spec2d_data
@@ -619,8 +625,6 @@ class MOSVizViewer(DataViewer):
 
         # Plot
         self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
-
-
 
     def load_exposure(self, index):
         '''

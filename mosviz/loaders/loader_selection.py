@@ -62,12 +62,25 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         self.data = data
 
+        # level 2 data is optional. This flag is used throughout
+        # the code to control the input and display of information
+        # associated with level 2 data.
+        self.is_level2 = False
+        for component in data.components:
+            if component.label.lower() == 'level2':
+                self.is_level2 = True
+
         self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
+
+        if not self.is_level2:
+            self.combosel_level2.setEnabled(False)
+            self.combosel_loader_level2.setEnabled(False)
 
         LoaderSelectionDialog.loader_spectrum1d.set_choices(self, sorted(SPECTRUM1D_LOADERS))
         LoaderSelectionDialog.loader_spectrum2d.set_choices(self, sorted(SPECTRUM2D_LOADERS))
         LoaderSelectionDialog.loader_cutout.set_choices(self, sorted(CUTOUT_LOADERS))
-        LoaderSelectionDialog.loader_level2.set_choices(self, sorted(LEVEL2_LOADERS))
+        if self.is_level2:
+            LoaderSelectionDialog.loader_level2.set_choices(self, sorted(LEVEL2_LOADERS))
 
         if 'loaders' in data.meta:
 
@@ -79,8 +92,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 self.loader_spectrum2d = loaders['spectrum2d']
             if "cutout" in loaders and loaders['cutout'] in CUTOUT_LOADERS:
                 self.loader_cutout = loaders['cutout']
-            if "level2" in loaders and loaders['level2'] in LEVEL2_LOADERS:
-                self.loader_level2 = loaders['level2']
+            if self.is_level2:
+                if "level2" in loaders and loaders['level2'] in LEVEL2_LOADERS:
+                    self.loader_level2 = loaders['level2']
 
         if self.loader_spectrum1d is None:
             self.loader_spectrum1d = 'NIRSpec 1D Spectrum'
@@ -88,8 +102,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             self.loader_spectrum2d = 'NIRSpec 2D Spectrum'
         if self.loader_cutout is None:
             self.loader_cutout = 'NIRCam Image'
-        if self.loader_level2 is None:
-            self.loader_level2 = 'NIRCam Level 2'
+        if self.is_level2:
+            if self.loader_level2 is None:
+                self.loader_level2 = 'NIRCam Level 2'
 
         # We set up ComponentIDComboHelper which takes care of populating the
         # combo box with the components.
@@ -154,7 +169,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         self.data.meta['loaders']['spectrum1d'] = self.loader_spectrum1d
         self.data.meta['loaders']['spectrum2d'] = self.loader_spectrum2d
         self.data.meta['loaders']['cutout'] = self.loader_cutout
-        self.data.meta['loaders']['level2'] = self.loader_level2
+        if self.is_level2:
+            self.data.meta['loaders']['level2'] = self.loader_level2
 
         if 'special_columns' not in self.data.meta:
             self.data.meta['special_columns'] = {}
@@ -171,6 +187,10 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         # Check whether the files indicated by the filename columns do in fact
         # exist
         for column in ['spectrum1d', 'spectrum2d', 'cutout', 'level2']:
+
+            if not self.is_level2 and column in ['level2']:
+                continue
+
             column_name = getattr(self, column)
 
             filenames = self.data.get_component(column_name).labels
@@ -195,6 +215,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         loaders = [SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS, LEVEL2_LOADERS]
 
         for column, loaders in zip(['spectrum1d', 'spectrum2d', 'cutout', 'level2'], loaders):
+
+            if not self.is_level2 and column in ['level2']:
+                continue
 
             loader_name = getattr(self, 'loader_' + column)
             loader = loaders[loader_name]
