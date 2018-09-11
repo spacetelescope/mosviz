@@ -104,7 +104,7 @@ class SlitSelectionUI(QDialog):
             width = self.slit_width_combo.currentData()
         else:
             width = self.slit_width_input.text()
-        return float(width)
+        return u.Quantity(width)
 
     @property
     def length(self):
@@ -112,7 +112,7 @@ class SlitSelectionUI(QDialog):
             length = self.slit_length_combo.currentData()
         else:
             length = self.slit_length_input.text()
-        return float(length)
+        return u.Quantity(length)
 
     @property
     def width_units(self):
@@ -130,7 +130,7 @@ class SlitSelectionUI(QDialog):
         key = self.slit_type_combo.currentData()
 
         length = width = None
-        width_units = length_units = 'arcsec'
+        width_units = length_units = ''
         if key == 'default':
             slit_info = self.mosviz_viewer.get_slit_dimensions_from_file()
             width_units, length_units = self.mosviz_viewer.get_slit_units_from_file()
@@ -143,9 +143,8 @@ class SlitSelectionUI(QDialog):
                 length = self.slit_dict[key]['length']
             if 'width' in self.slit_dict[key]:
                 width = self.slit_dict[key]['width']
-
-            width_units = self.slit_dict[key]['width_units'] if 'width_units' in self.slit_dict[key] else 'arcsec'
-            length_units = self.slit_dict[key]['length_units'] if 'length_units' in self.slit_dict[key] else 'arcsec'
+        else:
+            width_units = length_units = 'arcsec'
 
         for input_widget in [self.slit_width_input, self.slit_length_input]:
             input_widget.setStyleSheet("")
@@ -196,7 +195,7 @@ class SlitSelectionUI(QDialog):
                 success = False
             else:
                 try:
-                    num = float(input_widget.text())
+                    num = u.Quantity(input_widget.text()).value
                     if num <= 0:
                         input_widget.setStyleSheet(red)
                         success = False
@@ -217,7 +216,7 @@ class SlitSelectionUI(QDialog):
         if key == "default":
             slit_info = self.mosviz_viewer.get_slit_dimensions_from_file()
             if slit_info is None:
-                self.mosviz_viewer.slit_controller.destruct()
+                self.mosviz_viewer.slit_controller.clear()
             else:
                 self.mosviz_viewer.add_slit()
         else:
@@ -225,7 +224,7 @@ class SlitSelectionUI(QDialog):
             length = (self.length * self.length_units).to(u.arcsec)
             self.mosviz_viewer.add_slit(width=width, length=length)
 
-        if self.mosviz_viewer.slit_controller.is_active:
+        if self.mosviz_viewer.slit_controller.has_slits:
             self.mosviz_viewer.image_widget.draw_slit()
             self.mosviz_viewer.image_widget.set_slit_limits()
             self.mosviz_viewer.image_widget._redraw()

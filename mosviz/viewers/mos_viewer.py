@@ -41,7 +41,7 @@ from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
 from ..widgets.layer_widget import SimpleLayerWidget
-from ..controls.slit_controller import SlitController
+from ..controls.slits.slit_controller import SlitController
 
 __all__ = ['MOSVizViewer']
 
@@ -613,7 +613,7 @@ class MOSVizViewer(DataViewer):
         if length is None:
             length = row[self.catalog.meta["special_columns"]["slit_length"]]
 
-        self.slit_controller.construct_sky_region(wcs, ra, dec, width, length)
+        self.slit_controller.add_rectangle_sky_slit(wcs, ra, dec, width, length)
 
     def render_data(self, row, spec1d_data=None, spec2d_data=None,
                     image_data=None):
@@ -659,20 +659,20 @@ class MOSVizViewer(DataViewer):
             array = image_data.get_component(image_data.id['Flux']).data
 
             # Add the slit patch to the plot
+            self.slit_controller.clear_slits()
             if "slit_width" in self.catalog.meta["special_columns"] and \
                     "slit_length" in self.catalog.meta["special_columns"] and \
                     wcs is not None:
                 self.add_slit(row)
                 self.image_widget.draw_slit()
             else:
-                self.slit_controller.destruct()
                 self.image_widget.reset_limits()
 
             self.image_widget.set_image(array, wcs=wcs, interpolation='none', origin='lower')
 
             self.image_widget.axes.set_xlabel("Spatial X")
             self.image_widget.axes.set_ylabel("Spatial Y")
-            if self.slit_controller.is_active:
+            if self.slit_controller.has_slits:
                 self.image_widget.set_slit_limits()
 
             self.image_widget._redraw()
@@ -691,11 +691,10 @@ class MOSVizViewer(DataViewer):
             x_min = spectrum2d_disp.min()
             x_max = spectrum2d_disp.max()
 
-            if self.slit_controller.is_active:
+            if self.slit_controller.has_slits and\
+                    None not in self.slit_controller.y_bounds:
                 y_min, y_max = self.slit_controller.y_bounds
             else:
-                # Note: if slit_controller.is_active, y_min and y_max
-                # are already computed in the image_data section
                 y_min = -0.5
                 y_max = spec2d_data.shape[0] - 0.5
 

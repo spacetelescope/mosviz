@@ -75,27 +75,14 @@ def check_all_close(a, b, name_a='a', name_b='b'):
                         "np.isclose({0}, {1})".format(name_a, name_b, a, b))
 
 
-def check_slits_and_patchs(slit_controller):
-    """Check if patch is correctly available"""
-    assert slit_controller.is_active == (slit_controller._patch is not None)
-
-    if slit_controller._pix_slit is not None and slit_controller._patch is None:
-        raise Exception("Slit Controller has _pix_slit but no patch.")
-    if slit_controller._slit is not None and slit_controller._patch is None:
-        raise Exception("Slit Controller has _slit but no patch.")
-
-    patch = slit_controller.patch
-    assert(patch is not None) == slit_controller.is_active
-
-
-def check_patch_attr(slit_controller, x, y, width, length):
+def check_rectangle_patch_attr(slit, x, y, width, length):
     """
     Chcek the patch position, dimension and bounds.
     Params are the expected values.
     Parameters
     ----------
-    slit_controller : SlitController
-        Slit controller to be tested.
+    slit : _MOSVizSlit
+        Slit to be tested.
     x, y, width, length : float
         Correct center x pixel, center y pixel, width and length.
     """
@@ -103,55 +90,21 @@ def check_patch_attr(slit_controller, x, y, width, length):
     x_bounds = np.array([x - (width / 2.), x + (width / 2.)])
     y_bounds = np.array([y - (length / 2.), y + (length / 2.)])
 
-    check_is_close(slit_controller.x, x)
-    check_is_close(slit_controller.y, y)
-    check_is_close(slit_controller.dx, width)
-    check_is_close(slit_controller.dy, length)
-    check_is_close(slit_controller.width, width)
-    check_is_close(slit_controller.length, length)
-    check_all_close(np.array(slit_controller.x_bounds), x_bounds)
-    check_all_close(np.array(slit_controller.y_bounds), y_bounds)
-    check_all_close(np.array(slit_controller.y_bounds), y_bounds)
+    check_is_close(slit.x, x)
+    check_is_close(slit.y, y)
+    check_is_close(slit.dx, width)
+    check_is_close(slit.dy, length)
+    check_is_close(slit.width, width)
+    check_is_close(slit.length, length)
+    check_all_close(np.array(slit.x_bounds), x_bounds)
+    check_all_close(np.array(slit.y_bounds), y_bounds)
+    check_all_close(np.array(slit.y_bounds), y_bounds)
 
 
-def check_distruction(slit_controller):
+def check_clear_slits(slit_controller):
     """Make sure all attributes are reset"""
-    assert slit_controller.is_active is False
-    assert slit_controller._patch is None
-    assert slit_controller._slit is None
-    assert slit_controller._pix_slit is None
-
-
-def test_construct_simple_rectangle(glue_gui):
-    """Test the `SlitController.construct_simple_rectangle` function"""
-    mosviz_gui = MOSVizViewer(glue_gui.session)
-    slit_controller = mosviz_gui.slit_controller
-
-    # Construct a 20x10 (l x w) rectangle
-    x, y = (5., 10.)
-    width = 10.
-    length = 20.
-
-    slit_controller.construct_simple_rectangle(x=x, y=y, width=width, length=length)
-
-    check_slits_and_patchs(slit_controller)
-    check_patch_attr(slit_controller, x, y, width, length)
-
-    # Test move function for this parch
-    x, y = (500., 100.)
-    slit_controller.move(x=x, y=y)
-
-    check_slits_and_patchs(slit_controller)
-    check_patch_attr(slit_controller, x, y, width, length)
-
-    # Test drawing the slit
-    mosviz_gui.image_widget.draw_slit()
-
-    # Test removing the path
-    slit_controller.destruct()
-    check_distruction(slit_controller)
-
-    mosviz_gui.close(warn=False)
+    assert slit_controller.has_slits is False
+    assert len(slit_controller.slits) == 0
 
 
 def test_construct_pix_region(glue_gui):
@@ -164,26 +117,24 @@ def test_construct_pix_region(glue_gui):
     width = 10.
     length = 20.
 
-    slit_controller.construct_pix_region(x=x, y=y, width=width, length=length)
+    assert not slit_controller.has_slits
+    slit_controller.add_rectangle_pixel_slit(x=x, y=y, width=width, length=length)
+    assert slit_controller.has_slits
 
-    assert slit_controller._pix_slit is not None
-
-    check_slits_and_patchs(slit_controller)
-    check_patch_attr(slit_controller, x, y, width, length)
+    check_rectangle_patch_attr(slit_controller.slits[0], x, y, width, length)
 
     # Test move function for this parch
     x, y = (500., 100.)
-    slit_controller.move(x=x, y=y)
+    slit_controller.slits[0].move(x=x, y=y)
 
-    check_slits_and_patchs(slit_controller)
-    check_patch_attr(slit_controller, x, y, width, length)
+    check_rectangle_patch_attr(slit_controller.slits[0], x, y, width, length)
 
     # Test drawing the slit
     mosviz_gui.image_widget.draw_slit()
 
-    # Test removing the path
-    slit_controller.destruct()
-    check_distruction(slit_controller)
+    # Test removing the paths
+    slit_controller.clear_slits()
+    check_clear_slits(slit_controller)
     mosviz_gui.close(warn=False)
 
 
@@ -204,29 +155,26 @@ def test_construct_sky_region(glue_gui):
     # note fits indexing starts at 1
     wcs = construct_test_wcs(ra, dec, x+1, y+1, area)
 
-    slit_controller.construct_sky_region(wcs, ra, dec,
-                                         (ang_width*u.deg).to(u.arcsec),
-                                         (ang_length*u.deg).to(u.arcsec))
+    assert not slit_controller.has_slits
+    slit_controller.add_rectangle_sky_slit(wcs, ra, dec,
+                                           (ang_width*u.deg).to(u.arcsec),
+                                           (ang_length*u.deg).to(u.arcsec))
+    assert slit_controller.has_slits
 
-    assert slit_controller._slit is not None
-    assert slit_controller._pix_slit is not None
-
-    check_slits_and_patchs(slit_controller)
-    check_patch_attr(slit_controller, x, y, width, length)
+    check_rectangle_patch_attr(slit_controller.slits[0], x, y, width, length)
 
     # Test move function for this parch
     x, y = (500., 100.)
-    slit_controller.move(x=x, y=y)
+    slit_controller.slits[0].move(x=x, y=y)
 
-    check_slits_and_patchs(slit_controller)
-    check_patch_attr(slit_controller, x, y, width, length)
+    check_rectangle_patch_attr(slit_controller.slits[0], x, y, width, length)
 
     # Test drawing the slit
     mosviz_gui.image_widget.draw_slit()
 
-    # Test removing the path
-    slit_controller.destruct()
-    check_distruction(slit_controller)
+    # Test removing the paths
+    slit_controller.clear_slits()
+    check_clear_slits(slit_controller)
     mosviz_gui.close(warn=False)
 
 
@@ -251,8 +199,7 @@ def test_current_slit(glue_gui):
     if "slit_width" in mosviz_gui.catalog.meta["special_columns"] and \
             "slit_length" in mosviz_gui.catalog.meta["special_columns"] and \
             mosviz_gui.cutout_wcs is not None:
-        mosviz_gui.render
-        assert slit_controller.is_active
+        assert slit_controller.has_slits
         row = mosviz_gui.current_row
         ra = row[mosviz_gui.catalog.meta["special_columns"]["slit_ra"]]
         dec = row[mosviz_gui.catalog.meta["special_columns"]["slit_dec"]]
@@ -269,7 +216,7 @@ def test_current_slit(glue_gui):
         dx = ang_width / scale
         dy = ang_length / scale
 
-        check_is_close(dx, slit_controller.dx)
-        check_is_close(dy, slit_controller.dy)
-        check_is_close(xp, slit_controller.x)
-        check_is_close(yp, slit_controller.y)
+        check_is_close(dx, slit_controller.slits[0].dx)
+        check_is_close(dy, slit_controller.slits[0].dy)
+        check_is_close(xp, slit_controller.slits[0].x)
+        check_is_close(yp, slit_controller.slits[0].y)
