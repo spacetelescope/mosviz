@@ -150,5 +150,3 @@ class SlitController:
         Launches UI for slit selection.
         """
         return SlitSelectionUI(self.mosviz_viewer, self.mosviz_viewer)
-
-
