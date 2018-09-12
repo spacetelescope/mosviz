@@ -18,8 +18,6 @@ from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
 from glue.utils.qt import pick_item
 
-from specutils.core.generic import Spectrum1DRef
-
 from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy import units as u
@@ -522,17 +520,6 @@ class MOSVizViewer(DataViewer):
     def _open_in_specviz(self):
         _specviz_instance = self.session.application.new_data_viewer(
             SpecVizViewer)
-
-        spec1d_data = self._loaded_data['spectrum1d']
-
-        spec_data = Spectrum1DRef(
-            data=spec1d_data.get_component(spec1d_data.id['Flux']).data,
-            dispersion=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
-            uncertainty=StdDevUncertainty(spec1d_data.get_component(spec1d_data.id['Uncertainty']).data),
-            unit="", name=self.current_row['id'],
-            wcs=WCS(spec1d_data.header))
-
-        _specviz_instance.open_data(spec_data)
 
     def load_selection(self, row):
         """
