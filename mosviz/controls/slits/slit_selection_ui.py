@@ -216,13 +216,13 @@ class SlitSelectionUI(QDialog):
         if key == "default":
             slit_info = self.mosviz_viewer.get_slit_dimensions_from_file()
             if slit_info is None:
-                self.mosviz_viewer.slit_controller.clear()
+                self.mosviz_viewer.slit_controller.clear_slits()
             else:
                 self.mosviz_viewer.add_slit()
         else:
             width = (self.width * self.width_units).to(u.arcsec)
             length = (self.length * self.length_units).to(u.arcsec)
-            self.mosviz_viewer.slit_controller.clear()
+            self.mosviz_viewer.slit_controller.clear_slits()
             self.mosviz_viewer.add_slit(width=width, length=length)
 
         if self.mosviz_viewer.slit_controller.has_slits:
