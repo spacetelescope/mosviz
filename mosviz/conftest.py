@@ -34,13 +34,43 @@ from astropy.tests.pytest_plugins import *
 #
 ## This is to figure out the affiliated package version, rather than
 ## using Astropy's
-# try:
-#     from .version import version
-# except ImportError:
-#     version = 'dev'
-#
-# try:
-#     packagename = os.path.basename(os.path.dirname(__file__))
-#     TESTED_VERSIONS[packagename] = version
-# except NameError:   # Needed to support Astropy <= 1.0.0
-#     pass
+import pytest
+
+try:
+    from .version import version
+except ImportError:
+    version = 'dev'
+
+try:
+    packagename = os.path.basename(os.path.dirname(__file__))
+    TESTED_VERSIONS[packagename] = version
+except NameError:   # Needed to support Astropy <= 1.0.0
+    pass
+
+import os
+
+from glue.core import DataCollection
+from glue.app.qt.application import GlueApplication
+from glue.core import data_factories
+
+from .viewers.mos_viewer import MOSVizViewer
+
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'tests', 'data')
+DEIMOSTABLE = os.path.join(TEST_DATA_DIR, 'deimos_mosviz.tbl')
+
+@pytest.fixture(scope='session')
+def glue_gui():
+
+    d = data_factories.load_data(DEIMOSTABLE)
+    dc = DataCollection([])
+    dc.append(d)
+
+    # Creates glue instance
+    app = GlueApplication(dc)
+    app.setVisible(True)
+
+    # Adds data to the MosVizViewer
+    app.new_data_viewer(MOSVizViewer)
+    app.viewers[0][0].add_data_for_testing(app.data_collection[0])
+
+    return app

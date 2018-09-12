@@ -13,7 +13,9 @@ environment:
 
       NUMPY_VERSION: "stable"
       CONDA_DEPENDENCIES: "pyqt numpy astropy glue-core>=0.13 specviz=0.5"
-      PIP_DEPENDENCIES: "pytest-qt"
+
+      # N.B regions package: need the work in master as of 9-11-2018 which has not yet been released
+      PIP_DEPENDENCIES: "pytest-qt git+https://github.com/astropy/regions.git"
 
       # Conda packages for affiliated packages are hosted in channel
       # "astropy" while builds for astropy LTS with recent numpy versions
@@ -23,9 +25,6 @@ environment:
       CONDA_CHANNELS: "glueviz/label/dev glueviz astropy-ci-extras astropy"
 
   matrix:
-
-      - PYTHON_VERSION: "2.7"
-        ASTROPY_VERSION: "stable"
 
       - PYTHON_VERSION: "3.5"
         ASTROPY_VERSION: "stable"

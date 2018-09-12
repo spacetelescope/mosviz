@@ -1,7 +1,5 @@
 # This provides a helper class that can be used to link the limits of axes
 
-from __future__ import print_function, division, absolute_import
-
 from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
 

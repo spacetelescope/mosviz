@@ -1,9 +1,8 @@
-from __future__ import print_function, division, absolute_import
-
 import os
 from collections import OrderedDict
 
 import numpy as np
+from pathlib import Path
 from qtpy import compat
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton
@@ -19,14 +18,10 @@ from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
 from glue.utils.qt import pick_item
 
-from specutils.core.generic import Spectrum1DRef
-
 from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy import units as u
 from astropy.wcs import WCS
-from astropy.coordinates import SkyCoord
-from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
     from specviz.third_party.glue.data_viewer import SpecVizViewer
@@ -44,6 +39,7 @@ from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
 from ..widgets.layer_widget import SimpleLayerWidget
+from ..controls.slits.slit_controller import SlitController
 
 __all__ = ['MOSVizViewer']
 
@@ -56,6 +52,9 @@ class MOSVizViewer(DataViewer):
 
     def __init__(self, session, parent=None):
         super(MOSVizViewer, self).__init__(session, parent=parent)
+
+        self.slit_controller = SlitController(self)
+
         self.load_ui()
 
         # Define some data containers
@@ -65,6 +64,7 @@ class MOSVizViewer(DataViewer):
         self.comments = False
         self.textChangedAt = None
         self.mask = None
+        self.cutout_wcs = None
 
         self.catalog = None
         self.current_row = None
@@ -84,7 +84,7 @@ class MOSVizViewer(DataViewer):
         path = os.path.join(UI_DIR, 'mos_widget.ui')
         loadUi(path, self.central_widget)
 
-        self.image_widget = DrawableImageWidget()
+        self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
         self.spectrum2d_widget = MOSImageWidget()
         self.spectrum1d_widget = Line1DWidget()
 
@@ -278,6 +278,74 @@ class MOSVizViewer(DataViewer):
         self._unpack_selection(data)
         return True
 
+    def add_data_for_testing(self, data):
+        """
+        Processes data message from the central communication hub.
+
+        Parameters
+        ----------
+        data : :class:`glue.core.data.Data`
+            Data object.
+        """
+
+        # Check whether the data is suitable for the MOSViz viewer - basically
+        # we expect a table of 1D columns with at least three string and four
+        # floating-point columns.
+        if data.ndim != 1:
+            QMessageBox.critical(self, "Error", "MOSViz viewer can only be used "
+                                 "for data with 1-dimensional components",
+                                 buttons=QMessageBox.Ok)
+            return False
+
+        components = [data.get_component(cid) for cid in data.visible_components]
+        categorical = [c for c in components if c.categorical]
+        if len(categorical) < 3:
+            QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
+                                 "three string components/columns, representing "
+                                 "the filenames of the 1D and 2D spectra and "
+                                 "cutouts", buttons=QMessageBox.Ok)
+            return False
+
+        # We can relax the following requirement if we make the slit parameters
+        # optional
+        numerical = [c for c in components if c.numeric]
+        if len(numerical) < 4:
+            QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
+                                 "four numerical components/columns, representing "
+                                 "the slit position, length, and position angle",
+                                 buttons=QMessageBox.Ok)
+            return False
+
+        # Block of code to bypass the loader_selection gui
+        #########################################################
+        if 'loaders' not in data.meta:
+            data.meta['loaders'] = {}
+
+        # Deimos data
+        data.meta['loaders']['spectrum1d'] = "DEIMOS 1D Spectrum"
+        data.meta['loaders']['spectrum2d'] = "DEIMOS 2D Spectrum"
+        data.meta['loaders']['cutout'] = "ACS Cutout Image"
+
+        if 'special_columns' not in data.meta:
+            data.meta['special_columns'] = {}
+
+        data.meta['special_columns']['spectrum1d'] = 'spectrum1d'
+        data.meta['special_columns']['spectrum2d'] = 'spectrum2d'
+        data.meta['special_columns']['source_id'] = 'id'
+        data.meta['special_columns']['cutout'] = 'cutout'
+        data.meta['special_columns']['slit_ra'] = 'ra'
+        data.meta['special_columns']['slit_dec'] = 'dec'
+        data.meta['special_columns']['slit_width'] = 'slit_width'
+        data.meta['special_columns']['slit_length'] = 'slit_length'
+
+        data.meta['loaders_confirmed'] = True
+        #########################################################
+
+        self._primary_data = data
+        self._layer_view.data = data
+        self._unpack_selection(data)
+        return True
+
     def add_subset(self, subset):
         """
         Processes subset messages from the central communication hub.
@@ -389,7 +457,8 @@ class MOSVizViewer(DataViewer):
                     self.comments = True
                 elif str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
                     self.filepath = component._load_log.path
-                    path = '/'.join(component._load_log.path.split('/')[:-1])
+                    p = Path(self.filepath)
+                    path = os.path.sep.join(p.parts[:-1])
                     self.catalog[str(att)] = [os.path.join(path, x)
                                               for x in comp_labels]
                 else:
@@ -455,17 +524,6 @@ class MOSVizViewer(DataViewer):
         _specviz_instance = self.session.application.new_data_viewer(
             SpecVizViewer)
 
-        spec1d_data = self._loaded_data['spectrum1d']
-
-        spec_data = Spectrum1DRef(
-            data=spec1d_data.get_component(spec1d_data.id['Flux']).data,
-            dispersion=spec1d_data.get_component(spec1d_data.id['Wavelength']).data,
-            uncertainty=StdDevUncertainty(spec1d_data.get_component(spec1d_data.id['Uncertainty']).data),
-            unit="", name=self.current_row['id'],
-            wcs=WCS(spec1d_data.header))
-
-        _specviz_instance.open_data(spec_data)
-
     def load_selection(self, row):
         """
         Processes a row in the MOS catalog by first loading the data set,
@@ -526,6 +584,24 @@ class MOSVizViewer(DataViewer):
         else:
             cur_data.update_values_from_data(data)
 
+    def add_slit(self, row=None, width=None, length=None):
+        if row is None:
+            row = self.current_row
+
+        wcs = self.cutout_wcs
+        if wcs is None:
+            raise Exception("Image viewer has no WCS information")
+
+        ra = row[self.catalog.meta["special_columns"]["slit_ra"]]
+        dec = row[self.catalog.meta["special_columns"]["slit_dec"]]
+
+        if width is None:
+            width = row[self.catalog.meta["special_columns"]["slit_width"]]
+        if length is None:
+            length = row[self.catalog.meta["special_columns"]["slit_length"]]
+
+        self.slit_controller.add_rectangle_sky_slit(wcs, ra, dec, width, length)
+
     def render_data(self, row, spec1d_data=None, spec2d_data=None,
                     image_data=None):
         """
@@ -562,34 +638,33 @@ class MOSVizViewer(DataViewer):
             self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
 
         if image_data is not None:
+            if not self.image_widget.isVisible():
+                self.image_widget.setVisible(True)
             wcs = image_data.coords.wcs
+            self.cutout_wcs = wcs
 
-            self.image_widget.set_image(image_data.get_component(image_data.id['Flux']).data,
-                                        wcs=wcs, interpolation='none', origin='lower')
+            array = image_data.get_component(image_data.id['Flux']).data
+
+            # Add the slit patch to the plot
+            self.slit_controller.clear_slits()
+            if "slit_width" in self.catalog.meta["special_columns"] and \
+                    "slit_length" in self.catalog.meta["special_columns"] and \
+                    wcs is not None:
+                self.add_slit(row)
+                self.image_widget.draw_slit()
+            else:
+                self.image_widget.reset_limits()
+
+            self.image_widget.set_image(array, wcs=wcs, interpolation='none', origin='lower')
 
             self.image_widget.axes.set_xlabel("Spatial X")
             self.image_widget.axes.set_ylabel("Spatial Y")
-
-            # Add the slit patch to the plot
-
-            ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
-            dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
-            slit_width = row[self.catalog.meta["special_columns"]["slit_width"]]
-            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
-
-            skycoord = SkyCoord(ra, dec, frame='fk5')
-            xp, yp = skycoord.to_pixel(wcs)
-
-            scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
-
-            dx = slit_width / scale
-            dy = slit_length / scale
-
-            self.image_widget.draw_rectangle(x=xp, y=yp,
-                                             width=dx, height=dy)
+            if self.slit_controller.has_slits:
+                self.image_widget.set_slit_limits()
 
             self.image_widget._redraw()
         else:
+            self.cutout_wcs = None
             self.image_widget.setVisible(False)
 
         # Plot the 2D spectrum data last because by then we can make sure that
@@ -597,20 +672,18 @@ class MOSVizViewer(DataViewer):
         # 1D spectrum are present so that the axes can be locked.
 
         if spec2d_data is not None:
-            wcs = spec2d_data.coords.wcs
-
             xp2d = np.arange(spec2d_data.shape[1])
             yp2d = np.repeat(0, spec2d_data.shape[1])
             spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
             x_min = spectrum2d_disp.min()
             x_max = spectrum2d_disp.max()
 
-            if image_data is None:
+            if self.slit_controller.has_slits and\
+                    None not in self.slit_controller.y_bounds:
+                y_min, y_max = self.slit_controller.y_bounds
+            else:
                 y_min = -0.5
                 y_max = spec2d_data.shape[0] - 0.5
-            else:
-                y_min = yp - dy / 2.
-                y_max = yp + dy / 2.
 
             extent = [x_min, x_max, y_min, y_max]
 
@@ -749,6 +822,20 @@ class MOSVizViewer(DataViewer):
             if name == ID:
                 return i
         return None
+
+    def get_slit_dimensions_from_file(self):
+        if self.catalog is None:
+            return None
+        if "slit_width" in self.catalog.meta["special_columns"] and \
+                "slit_length" in self.catalog.meta["special_columns"]:
+            width = self.current_row[self.catalog.meta["special_columns"]["slit_width"]]
+            length = self.current_row[self.catalog.meta["special_columns"]["slit_length"]]
+            return [length, width]
+        return None
+
+    def get_slit_units_from_file(self):
+        # TODO: Update once units infrastructure is in place
+        return ["arcsec", "arcsec"]
 
     def get_comment(self):
         idx = self.data_idx
@@ -970,7 +1057,7 @@ class MOSVizViewer(DataViewer):
 
             for i, line in enumerate(save_flag):
                 if line != "0" and line != "":
-                    line = com.replace("\n", " ")
+                    line = comments.replace("\n", " ")
                     key = str(obj_names[i])
                     flags[key] = line
 
