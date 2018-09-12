@@ -1,0 +1,60 @@
+# Last updated: 09/10/2018
+# name_of_slit:
+#   name: "Display name of slit" # Required
+#   type: MOSViz slit class
+#   length: Quantity or list # User input if not specified
+#   width: Quantity or list # User input if not specified
+
+nirspec_msa:
+  name: "NIRSpec MSA (Single Slit)"
+  type: "rectangle"
+  length: "3.3 arcsec"
+  width: "0.2 arcsec"
+
+deimos_lvmslitc:
+  name: "DEIMOS LVMslitC"
+  type: "rectangle"
+  length: "20 arcsec"
+  width:
+    - "0.7 arcsec"
+    - "0.8 arcsec"
+    - "1.0 arcsec"
+    - "1.2 arcsec"
+    - "1.5 arcsec"
+
+deimos_longmirr:
+  name: "DEIMOS LongMirr"
+  type: "rectangle"
+  length: "205 arcsec"
+  width: "0.7 arcsec"
+
+deimos_long07:
+  name: "DEIMOS Long 0.7"
+  type: "rectangle"
+  length: "82 arcsec"
+  width: "0.7 arcsec"
+
+deimos_long08:
+  name: "DEIMOS Long 0.8"
+  type: "rectangle"
+  length: "82 arcsec"
+  width: "0.8 arcsec"
+
+deimos_long10b:
+  name: "DEIMOS Long 1.0B"
+  type: "rectangle"
+  length: "82 arcsec"
+  width: "1.0 arcsec"
+
+deimos_long12:
+  name: "DEIMOS Long 1.2"
+  type: "rectangle"
+  length: "82 arcsec"
+  width: "1.2 arcsec"
+
+deimos_long15:
+  name: "DEIMOS Long 1.5"
+  type: "rectangle"
+  length: "82 arcsec"
+  width: "1.5 arcsec"
+

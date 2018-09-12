@@ -128,6 +128,9 @@ for root, dirs, files in os.walk(PACKAGENAME):
 package_info['package_data'][PACKAGENAME].extend(c_files)
 
 package_info['package_data'][PACKAGENAME].append('data/resources/*')
+package_info['package_data'][PACKAGENAME].append('data/ui/*')
+package_info['package_data'][PACKAGENAME].append('data/*')
+package_info['package_data'][PACKAGENAME].append('controls/slits/*')
 
 # Note that requires and provides should not be included in the call to
 # ``setup``, since these are now deprecated. See this link for more details:
