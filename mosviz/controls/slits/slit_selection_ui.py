@@ -222,6 +222,7 @@ class SlitSelectionUI(QDialog):
         else:
             width = (self.width * self.width_units).to(u.arcsec)
             length = (self.length * self.length_units).to(u.arcsec)
+            self.mosviz_viewer.slit_controller.clear()
             self.mosviz_viewer.add_slit(width=width, length=length)
 
         if self.mosviz_viewer.slit_controller.has_slits:
