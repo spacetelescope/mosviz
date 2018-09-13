@@ -534,6 +534,13 @@ class MOSVizViewer(DataViewer):
 
     def _set_exposure_navigation(self, index):
 
+        # For level 3-only data.
+        if index == None:
+            self.toolbar.exposure_select.setDisabled(True)
+            self.toolbar.exposure_next_action.setDisabled(True)
+            self.toolbar.exposure_previous_action.setDisabled(True)
+            return
+
         if index > self.toolbar.exposure_select.count():
             return
 
@@ -843,6 +850,8 @@ class MOSVizViewer(DataViewer):
             self.toolbar.exposure_select.addItems(['Level 3'])
             self.toolbar.exposure_select.addItems([component.label for component in level2_data.visible_components])
             self._set_exposure_navigation(0)
+        else:
+            self._set_exposure_navigation(None)
 
     @defer_draw
     def set_locked_axes(self, x=None, y=None):

@@ -24,8 +24,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 'categorical': True, 'numeric': False},
                {'property': 'cutout', 'default': 'cutout',
                 'categorical': True, 'numeric': False},
-               {'property': 'level2', 'default': 'level2',
-                'categorical': True, 'numeric': False},
                {'property': 'source_id', 'default': 'id',
                 'categorical': True, 'numeric': False},
                {'property': 'slit_ra', 'default': 'ra',
@@ -70,11 +68,21 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             if component.label.lower() == 'level2':
                 self.is_level2 = True
 
-        self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
+        # The UI that includes support for level 2 data must be built
+        # from scratch from a separate UI file. Using the same file for
+        # both (level 2 support, and level 3-only support) will require
+        # more in-depth code modifications in this module, involving
+        # the way glue supprts the initialization of widgets. Better keep
+        # eveything sepataed for now.
+        if self.is_level2:
+            self.ui = load_ui('loader_selection_level2.ui', self, directory=UI_DIR)
 
-        if not self.is_level2:
-            self.combosel_level2.setEnabled(False)
-            self.combosel_loader_level2.setEnabled(False)
+            # add one more combo box to the dialog.
+            level2_column = {'property': 'level2', 'default': 'level2',
+                             'categorical': True, 'numeric': False}
+            self.columns.insert(3, level2_column)
+        else:
+            self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
 
         LoaderSelectionDialog.loader_spectrum1d.set_choices(self, sorted(SPECTRUM1D_LOADERS))
         LoaderSelectionDialog.loader_spectrum2d.set_choices(self, sorted(SPECTRUM2D_LOADERS))
