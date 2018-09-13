@@ -111,7 +111,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                     if column_name in column['components']:
                         setattr(self, column['property'], column['components'][column_name])
 
-        # We now check whether each property is None, and if so we set it either
+        # We now check whether each property is not None, and if so we set it either
         # to the default, if present, or to the first component otherwise. In
         # future we could replace the default by a function that could do more
         # sophisticated auto-testing.
@@ -119,9 +119,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         for column in self.columns:
             if not column['components']:
                 continue
-            if getattr(self, column['property']) is None:
+            if getattr(self, column['property']) is not None:
                 if column['default'] in column['components']:
-                    setattr(self, column['property'], column['default'])
+                    setattr(self, column['property'], column['components'][column['default']])
                 else:
                     setattr(self, column['property'], sorted(column['components'])[0])
 
