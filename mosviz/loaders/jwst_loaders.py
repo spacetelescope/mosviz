@@ -5,11 +5,11 @@ from astropy.table import Table
 from glue.core import Data
 from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
 
-from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_cutout_loader
+from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_cutout_loader, mosviz_level2_loader
 
 
 __all__ = ['pre_nirspec_spectrum1d_reader', 'pre_nirspec_spectrum2d_reader',
-           'pre_nircam_image_reader']
+           'pre_nircam_image_reader', 'pre_nirspec_level2_reader']
 
 
 @mosviz_spectrum1d_loader("NIRSpec 1D Spectrum")
@@ -151,3 +151,57 @@ def pre_nircam_image_reader(file_name):
     hdulist.close()
 
     return data
+
+
+@mosviz_level2_loader('Pre NIRSpec 2D Level 2 Spectra')
+def pre_nirspec_level2_reader(file_name):
+    """
+    THIS IS A TEST!
+
+    """
+
+    #TODO The level 2 file has multiple exposures.
+    #TODO the level 2 test file has SCI extensions with different shapes.
+    #TODO
+
+    hdulist = fits.open(file_name)
+    data = Data(label='2D Spectra')
+
+    hdulist[1].header['CTYPE2'] = 'Spatial Y'
+    data.header = hdulist[1].header
+
+    # This is a stop gap fix to let fake data be ingested as
+    # level 2 apectra. The level 2 file we have for testing
+    # right now has SCI extensions with different sized arrays
+    # among them. It remains to be seen if this is a expected
+    # feature of level 2 spectra, or just a temporary glitch.
+    # In case it's actually what lvel 2 spectral files look
+    # like, proper handling must be put in place to allow
+    # glue Data objects with different sized components. Or,
+    # if that is not feasible, to properly cut the arrays so
+    # as to make them all of the same size. The solution below
+    # is a naive interpretation of this concept.
+    x_min = 10000
+    y_min = 10000
+    for k in range(1, len(hdulist)):
+        if 'SCI' in hdulist[k].header['EXTNAME']:
+            x_min = min(x_min, hdulist[k].data.shape[0])
+            y_min = min(y_min, hdulist[k].data.shape[1])
+
+    # hdulist[k].header['CTYPE2'] = 'Spatial Y'
+    # wcs = WCS(hdulist[1].header)
+    # original WCS has both axes named "LAMBDA", glue requires unique component names
+
+    # data.coords = coordinates_from_wcs(wcs)
+    # data.header = hdulist[k].header
+    # data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
+
+    count = 1
+    for k in range(1, len(hdulist)):
+        if 'SCI' in hdulist[k].header['EXTNAME']:
+            data.add_component(hdulist[k].data[0:x_min, 0:y_min], 'Flux_' + '{:03d}'.format(count))
+            count += 1
+            # data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
+
+    return data
+
