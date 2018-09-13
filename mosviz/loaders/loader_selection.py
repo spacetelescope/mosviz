@@ -143,9 +143,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         for column in self.columns:
             if not column['components']:
                 continue
-            if getattr(self, column['property']) is None:
+            if getattr(self, column['property']) is not None:
                 if column['default'] in column['components']:
-                    setattr(self, column['property'], column['default'])
+                    setattr(self, column['property'], column['components'][column['default']])
                 else:
                     setattr(self, column['property'], sorted(column['components'])[0])
 
