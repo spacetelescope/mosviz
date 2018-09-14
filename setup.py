@@ -151,7 +151,7 @@ setup(name=PACKAGENAME,
       # This is currently required as a workaround for a bug in bottleneck,
       # which is a dependency of glue.
       setup_requires=['numpy'],
-      install_requires=metadata.get('install_requires', 'astropy').strip().split(),
+      install_requires=metadata.get('install_requires', 'astropy>=3.0').strip().split(),
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,
