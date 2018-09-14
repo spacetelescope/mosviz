@@ -74,3 +74,9 @@ def glue_gui():
     app.viewers[0][0].add_data_for_testing(app.data_collection[0])
 
     return app
+
+
+@pytest.fixture(autouse=True)
+def reset_state(glue_gui):
+    reset_mosviz = glue_gui.viewers[0][0]
+    reset_mosviz.toolbar.source_select.setCurrentIndex(0)
