@@ -18,10 +18,14 @@ from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
 from glue.utils.qt import pick_item
 
+from specutils.core.generic import Spectrum1DRef
+
 from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy import units as u
 from astropy.wcs import WCS
+from astropy.coordinates import SkyCoord
+from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
     from specviz.third_party.glue.data_viewer import SpecVizViewer
@@ -753,41 +757,20 @@ class MOSVizViewer(DataViewer):
         # we set up the extent of the image appropriately if the cutout and the
         # 1D spectrum are present so that the axes can be locked.
 
-
-#TODO
         # We are repurposing the spectrum 2d widget to handle the display of both
         # the level 3 and level 2 spectra.
         if spec2d_data is not None or level2d_data is not None:
+
+            # These are probably retrievable from the slit controller.
+            scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
+            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
+            dy = slit_length / scale
+            ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
+            dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
+            skycoord = SkyCoord(ra, dec, frame='fk5')
+            xp, yp = skycoord.to_pixel(wcs)
+
             self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data, level2_data)
-
-#TODO new code to display the 2D data.
-        if spec2d_data is not None:
-            xp2d = np.arange(spec2d_data.shape[1])
-            yp2d = np.repeat(0, spec2d_data.shape[1])
-            spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
-            x_min = spectrum2d_disp.min()
-            x_max = spectrum2d_disp.max()
-
-            if self.slit_controller.has_slits and\
-                    None not in self.slit_controller.y_bounds:
-                y_min, y_max = self.slit_controller.y_bounds
-            else:
-                y_min = -0.5
-                y_max = spec2d_data.shape[0] - 0.5
-
-            extent = [x_min, x_max, y_min, y_max]
-
-            self.spectrum2d_widget.set_image(
-                image=spec2d_data.get_component(
-                    spec2d_data.id['Flux']).data,
-                interpolation='none', aspect='auto',
-                extent=extent, origin='lower')
-
-            self.spectrum2d_widget.axes.set_xlabel("Wavelength")
-            self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
-
-            self.spectrum2d_widget._redraw()
-#TODO
 
         # Clear the meta information widget
         # NOTE: this process is inefficient
@@ -860,12 +843,12 @@ class MOSVizViewer(DataViewer):
         x_min = spectrum2d_disp.min()
         x_max = spectrum2d_disp.max()
 
-        if image_data is None:
+        if self.slit_controller.has_slits and \
+                        None not in self.slit_controller.y_bounds:
+            y_min, y_max = self.slit_controller.y_bounds
+        else:
             y_min = -0.5
             y_max = spec2d_data.shape[0] - 0.5
-        else:
-            y_min = yp - dy / 2.
-            y_max = yp + dy / 2.
 
         self.extent = [x_min, x_max, y_min, y_max]
 
