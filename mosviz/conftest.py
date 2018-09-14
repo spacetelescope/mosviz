@@ -78,5 +78,11 @@ def glue_gui():
 
 @pytest.fixture(autouse=True)
 def reset_state(glue_gui):
+    # This yields the test itself
+    yield
+
+    # Returns the applications to this state between tests
+    # Currently, this only changes the index of the combobox back to 0.
+    # TODO: In the future, this may need to be more robust
     reset_mosviz = glue_gui.viewers[0][0]
     reset_mosviz.toolbar.source_select.setCurrentIndex(0)
