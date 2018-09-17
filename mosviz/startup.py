@@ -6,10 +6,6 @@ from mosviz import __version__
 
 @startup_action('mosviz')
 def mosviz_setup(session, data_collection):
-
-    # Update the application window title
-    session.application.setWindowTitle('MOSViz v{0} (powered by glue)'.format(__version__))
-
     # Make sure the application is visible first to avoid issues with
     # splitters not being in sync in MOSViz viewer
     session.application.show()

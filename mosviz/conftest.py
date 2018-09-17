@@ -2,7 +2,11 @@
 # by importing them here in conftest.py they are discoverable by py.test
 # no matter how it is invoked within the source tree.
 
-from astropy.tests.pytest_plugins import *
+# As of Astropy 3.0, the pytest plugins provided by Astropy are
+# automatically made available when Astropy is installed. This means it's
+# not necessary to import them here, but we still need to import global
+# variables that are used for configuration.
+from astropy.tests.plugins.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
 
 ## Uncomment the following line to treat all DeprecationWarnings as
 ## exceptions. For Astropy v2.0 or later, there are 2 additional keywords,
@@ -14,6 +18,7 @@ from astropy.tests.pytest_plugins import *
 ## To ignore some specific deprecation warning messages for Python version
 ## MAJOR.MINOR or later, add:
 ##     warnings_to_ignore_by_pyver={(MAJOR, MINOR): ['Message to ignore']}
+# from astropy.tests.helper import enable_deprecations_as_exceptions
 # enable_deprecations_as_exceptions()
 
 ## Uncomment and customize the following lines to add/remove entries from
@@ -74,3 +79,15 @@ def glue_gui():
     app.viewers[0][0].add_data_for_testing(app.data_collection[0])
 
     return app
+
+
+@pytest.fixture(autouse=True)
+def reset_state(glue_gui):
+    # This yields the test itself
+    yield
+
+    # Returns the applications to this state between tests
+    # Currently, this only changes the index of the combobox back to 0.
+    # TODO: In the future, this may need to be more robust
+    reset_mosviz = glue_gui.viewers[0][0]
+    reset_mosviz.toolbar.source_select.setCurrentIndex(0)
