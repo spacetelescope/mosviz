@@ -2,8 +2,12 @@ MOS visualization tool
 ----------------------
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
-    :target: http://www.astropy.org
-    :alt: Powered by Astropy Badge
+  :target: http://www.astropy.org
+  :alt: Powered by Astropy Badge
+
+.. image:: https://codecov.io/gh/spacetelescope/mosviz/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/spacetelescope/mosviz
+  :alt: Coverage results
 
 MOSViz is a quick-look analysis and visualization tool for multi-object spectroscopy (MOS).
 

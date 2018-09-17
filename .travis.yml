@@ -18,8 +18,6 @@ addons:
     apt:
         packages:
             - graphviz
-            - texlive-latex-extra
-            - dvipng
 
 env:
     global:
@@ -43,7 +41,7 @@ env:
         # List other runtime dependencies for the package that are available as
         # pip packages here.
         # N.B regions package: need the work in master as of 9-11-2018 which has not yet been released
-        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx_automodapi qtpy git+https://github.com/astropy/regions.git'
+        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx_automodapi qtpy git+https://github.com/astropy/regions.git codecov'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -84,8 +82,6 @@ matrix:
         - os: linux
           env: ASTROPY_VERSION=development
                EVENT_TYPE='pull_request push cron'
-        - os: linux
-          env: ASTROPY_VERSION=lts
 
         # Try all python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different
@@ -133,6 +129,4 @@ script:
    - $MAIN_CMD $SETUP_CMD
 
 after_success:
-    # If coveralls.io is set up for this package, uncomment the line below.
-    # The coveragerc file may be customized as needed for your package.
-    # - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='mosviz/tests/coveragerc'; fi
+    - if [[ $SETUP_CMD == *coverage* ]]; then codecov; fi

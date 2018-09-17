@@ -143,7 +143,7 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                     if column_name in column['components']:
                         setattr(self, column['property'], column['components'][column_name])
 
-        # We now check whether each property is None, and if so we set it either
+        # We now check whether each property is not None, and if so we set it either
         # to the default, if present, or to the first component otherwise. In
         # future we could replace the default by a function that could do more
         # sophisticated auto-testing.
