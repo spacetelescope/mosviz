@@ -47,5 +47,5 @@ of your dataset. This dialog will also contains options to overlay slit position
 Once your configuration is set, click OK. Now the visualization dashboard should contain
 an image cutout, a 2D spectrum and a 1D specturm.
 
-.. image:: images/mosviz_data_dialog.png
+.. image:: images/mosviz_deimos_data.png
    :align: center
