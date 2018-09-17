@@ -24,6 +24,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 'categorical': True, 'numeric': False},
                {'property': 'cutout', 'default': 'cutout',
                 'categorical': True, 'numeric': False},
+               {'property': 'level2', 'default': 'level2',
+                'categorical': True, 'numeric': False},
                {'property': 'source_id', 'default': 'id',
                 'categorical': True, 'numeric': False},
                {'property': 'slit_ra', 'default': 'ra',
@@ -68,21 +70,15 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             if component.label.lower() == 'level2':
                 self.is_level2 = True
 
-        # The UI that includes support for level 2 data must be built
-        # from scratch from a separate UI file. Using the same file for
-        # both (level 2 support, and level 3-only support) will require
-        # more in-depth code modifications in this module, involving
-        # the way glue supprts the initialization of widgets. Better keep
-        # eveything sepataed for now.
-        if self.is_level2:
-            self.ui = load_ui('loader_selection_level2.ui', self, directory=UI_DIR)
+        self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
 
-            # add one more combo box to the dialog.
-            level2_column = {'property': 'level2', 'default': 'level2',
-                             'categorical': True, 'numeric': False}
-            self.columns.insert(3, level2_column)
-        else:
-            self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
+        # By defult, ui is built for level 2 data. Must be
+        # re-configured for level 3-only data.
+        if not self.is_level2:
+            self.columns.pop(3)
+            self.ui.combosel_level2.hide()
+            self.ui.combosel_loader_level2.hide()
+            self.ui.label_14.hide()
 
         LoaderSelectionDialog.loader_spectrum1d.set_choices(self, sorted(SPECTRUM1D_LOADERS))
         LoaderSelectionDialog.loader_spectrum2d.set_choices(self, sorted(SPECTRUM2D_LOADERS))
@@ -184,7 +180,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             self.data.meta['special_columns'] = {}
 
         for column in self.columns:
-            self.data.meta['special_columns'][column['property']] = getattr(self, column['property']).label
+            attr = getattr(self, column['property'])
+            self.data.meta['special_columns'][column['property']] = attr.label
 
         self.data.meta['loaders_confirmed'] = True
 
