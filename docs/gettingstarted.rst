@@ -24,15 +24,29 @@ There are many ways to open a dataset with MOSViz:
 
 We will use
 a dataset from the `Deimos <https://www2.keck.hawaii.edu/inst/deimos/>`_ 
-instrument at Keck Observaotry. When the data set is loaded in the data collection,
-drag and drop the dataset from the data collection to the main window. A dialog will
-appear asking you to select a data viewer, select the MOSViz viewer. Next you will be 
-prompted with another dialog asking you to specify the different components from the dataset.
-The main components of a MOSViz dataset are:
+instrument at the Keck Observatory. The main components of a MOSViz 
+dataset are:
 
 * A 2D image cutout
 * A 2D spectrum
 * A 2D spectrum
+
+++++++++++++++++
+Visualizing Data
+++++++++++++++++
+
+When the dataset is loaded in the data collection, drag and drop the dataset 
+from the data collection to the visualization dashboard. A dialog will appear asking you 
+to select a data viewer, select the **MOSViz viewer**. Next you will be prompted with
+another dialog asking you to specify the different viewers for each component
+of your dataset. This dialog will also contains options to overlay slit positions.
+
+.. figure::  images/mosviz_data_dialog.png
+   :align:   center
+   Figure 2: MOSViz GUI with Deimos multiobject spectroscopy dataset opened in view.
+
+Once your configuration is set, click OK. Now the visualization dashboard should contain
+an image cutout, a 2D spectrum and a 1D specturm.
 
 .. figure::  images/mosviz_data_dialog.png
    :align:   center
