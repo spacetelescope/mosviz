@@ -27,11 +27,12 @@ def test_starting_state(glue_gui):
     assert source_combo.currentText() == source_combo.itemText(1)
     assert mosviz_gui.toolbar.cycle_previous_action.isEnabled() == True
 
+    # both exposure buttons are disabled at startup with level 3-only data.
     assert exposure_combo.currentText() == exposure_combo.itemText(0)
     assert mosviz_gui.toolbar.exposure_previous_action.isEnabled() == False
     mosviz_gui.toolbar.exposure_next_action.trigger()
     assert exposure_combo.currentText() == exposure_combo.itemText(1)
-    assert mosviz_gui.toolbar.exposure_previous_action.isEnabled() == True
+    assert mosviz_gui.toolbar.exposure_previous_action.isEnabled() == False
 
 
 def test_ending_state(glue_gui):
