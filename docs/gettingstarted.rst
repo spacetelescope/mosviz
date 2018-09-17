@@ -25,8 +25,9 @@ a dataset from the `Deimos <https://www2.keck.hawaii.edu/inst/deimos/>`_
 instrument at the Keck Observatory. The main components of a MOSViz 
 dataset are:
 
+* A catalog of targets in tabular form
 * A 2D image cutout
-* A 2D spectrum
+* A 1D spectrum
 * A 2D spectrum
 
 ++++++++++++++++
@@ -36,7 +37,7 @@ Visualizing Data
 When the dataset is loaded in the data collection, drag and drop the dataset 
 from the data collection to the visualization dashboard. A dialog will appear asking you 
 to select a data viewer, select the **MOSViz viewer**. Next you will be prompted with
-another dialog asking you to specify the different viewers for each component
+another dialog asking you to specify the readers for each component
 of your dataset. This dialog will also contains options to overlay slit positions. For 
 this example we are going to use the default settings.
 
@@ -44,7 +45,7 @@ this example we are going to use the default settings.
    :align: center
 
 Once your configuration is set, click OK. Now the visualization dashboard should contain
-an image cutout, a 2D spectrum and a 1D specturm.
+a MOSViz viewer with views of all of the different dataset components. 
 
 .. image:: images/mosviz_deimos_data.png
    :align: center
