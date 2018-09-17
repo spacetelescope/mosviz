@@ -9,7 +9,7 @@ MOS Visualization Tool
   :target: https://codecov.io/gh/spacetelescope/mosviz
   :alt: Coverage results
 
-MOSViz is a quick-look analysis and visualization tool for multi-object spectroscopy (MOS). It is built on top of the "glue" visualization tool.
+MOSViz is a quick-look analysis and visualization tool for multi-object spectroscopy (MOS). It is built on top of the `Glue <http://glueviz.org>`_  visualization tool.
 
 .. image:: /docs/images/MOSViz_viewer.png
 
