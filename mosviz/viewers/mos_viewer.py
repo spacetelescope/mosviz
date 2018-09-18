@@ -175,7 +175,7 @@ class MOSVizViewer(DataViewer):
         else:
             self.toolbar.open_specviz.setDisabled(True)
 
-        # Connect slit previous and forward buttons
+        # Connect slit previous and next buttons
         self.toolbar.cycle_next_action.triggered.connect(
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() + 1))
@@ -183,7 +183,7 @@ class MOSVizViewer(DataViewer):
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() - 1))
 
-        # Connect exposure previous and forward buttons
+        # Connect exposure previous and next buttons
         self.toolbar.exposure_next_action.triggered.connect(
             lambda: self._set_exposure_navigation(
                 self.toolbar.exposure_select.currentIndex() + 1))
@@ -541,9 +541,15 @@ class MOSVizViewer(DataViewer):
 
         # For level 3-only data.
         if index == None:
+            # for some unknown reason (related to layout
+            # managers perhaps?), the combo box does not
+            # disappear from screen even when forced to
+            # hide. Next best solution is to disable it.
+            self.toolbar.exposure_select.setVisible(False)
             self.toolbar.exposure_select.setDisabled(True)
-            self.toolbar.exposure_next_action.setDisabled(True)
-            self.toolbar.exposure_previous_action.setDisabled(True)
+
+            self.toolbar.exposure_next_action.setVisible(False)
+            self.toolbar.exposure_previous_action.setVisible(False)
             return
 
         if index > self.toolbar.exposure_select.count():
