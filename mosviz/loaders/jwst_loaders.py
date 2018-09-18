@@ -204,4 +204,3 @@ def pre_nirspec_level2_reader(file_name):
             # data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
 
     return data
-
