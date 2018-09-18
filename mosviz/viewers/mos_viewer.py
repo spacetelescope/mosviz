@@ -18,8 +18,6 @@ from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
 from glue.utils.qt import pick_item
 
-from specutils.core.generic import Spectrum1DRef
-
 from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy import units as u
