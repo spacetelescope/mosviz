@@ -22,6 +22,8 @@ from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
 from astropy import units as u
 from astropy.wcs import WCS
+from astropy.coordinates import SkyCoord
+from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
     from specviz.third_party.glue.data_viewer import SpecVizViewer
@@ -34,7 +36,7 @@ except ImportError:
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
 from ..loaders.loader_selection import confirm_loaders_and_column_names
-from ..loaders.utils import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
+from ..loaders.utils import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS, LEVEL2_LOADERS
 from ..widgets.viewer_options import OptionsWidget
 from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
@@ -157,6 +159,13 @@ class MOSVizViewer(DataViewer):
         self.toolbar.source_select.currentIndexChanged[int].connect(
             lambda ind: self._set_navigation(ind))
 
+        # Connect the exposure selection event
+        self.toolbar.exposure_select.currentIndexChanged[int].connect(
+            lambda ind: self.load_exposure(ind))
+
+        self.toolbar.exposure_select.currentIndexChanged[int].connect(
+            lambda ind: self._set_exposure_navigation(ind))
+
         # Connect the specviz button
         if SpecVizViewer is not None:
             self.toolbar.open_specviz.triggered.connect(
@@ -164,15 +173,21 @@ class MOSVizViewer(DataViewer):
         else:
             self.toolbar.open_specviz.setDisabled(True)
 
-        # Connect previous and forward buttons
+        # Connect slit previous and next buttons
         self.toolbar.cycle_next_action.triggered.connect(
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() + 1))
-
-        # Connect previous and previous buttons
         self.toolbar.cycle_previous_action.triggered.connect(
             lambda: self._set_navigation(
                 self.toolbar.source_select.currentIndex() - 1))
+
+        # Connect exposure previous and next buttons
+        self.toolbar.exposure_next_action.triggered.connect(
+            lambda: self._set_exposure_navigation(
+                self.toolbar.exposure_select.currentIndex() + 1))
+        self.toolbar.exposure_previous_action.triggered.connect(
+            lambda: self._set_exposure_navigation(
+                self.toolbar.exposure_select.currentIndex() - 1))
 
         # Connect the toolbar axes setting actions
         self.toolbar.lock_x_action.triggered.connect(
@@ -520,6 +535,37 @@ class MOSVizViewer(DataViewer):
         else:
             self.toolbar.cycle_next_action.setDisabled(False)
 
+    def _set_exposure_navigation(self, index):
+
+        # For level 3-only data.
+        if index == None:
+            # for some unknown reason (related to layout
+            # managers perhaps?), the combo box does not
+            # disappear from screen even when forced to
+            # hide. Next best solution is to disable it.
+            self.toolbar.exposure_select.setVisible(False)
+            self.toolbar.exposure_select.setDisabled(True)
+
+            self.toolbar.exposure_next_action.setVisible(False)
+            self.toolbar.exposure_previous_action.setVisible(False)
+            return
+
+        if index > self.toolbar.exposure_select.count():
+            return
+
+        if 0 <= index < self.toolbar.exposure_select.count():
+            self.toolbar.exposure_select.setCurrentIndex(index)
+
+        if index < 1:
+            self.toolbar.exposure_previous_action.setDisabled(True)
+        else:
+            self.toolbar.exposure_previous_action.setDisabled(False)
+
+        if index >= self.toolbar.exposure_select.count() - 1:
+            self.toolbar.exposure_next_action.setDisabled(True)
+        else:
+            self.toolbar.exposure_next_action.setDisabled(False)
+
     def _open_in_specviz(self):
         _specviz_instance = self.session.application.new_data_viewer(
             SpecVizViewer)
@@ -539,29 +585,73 @@ class MOSVizViewer(DataViewer):
 
         self.current_row = row
 
+        # Level 2 is optional
+        is_level2 = "level2" in self.catalog.meta["loaders"]
+
         # Get loaders
         loader_spectrum1d = SPECTRUM1D_LOADERS[self.catalog.meta["loaders"]["spectrum1d"]]
         loader_spectrum2d = SPECTRUM2D_LOADERS[self.catalog.meta["loaders"]["spectrum2d"]]
         loader_cutout = CUTOUT_LOADERS[self.catalog.meta["loaders"]["cutout"]]
+        if is_level2:
+            loader_level2 = LEVEL2_LOADERS[self.catalog.meta["loaders"]["level2"]]
 
         # Get column names
         colname_spectrum1d = self.catalog.meta["special_columns"]["spectrum1d"]
         colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
+        if is_level2:
+            colname_level2 = self.catalog.meta["special_columns"]["level2"]
 
+        # Get mandatory data
         spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
         spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
 
-        basename = os.path.basename(row[colname_cutout])
-        if basename == "None":
-            self.render_data(row, spec1d_data, spec2d_data, None)
-        else:
+        # See if optional data exists; if so, ingest them.
+        basename_cutout = os.path.basename(row[colname_cutout])
+        if basename_cutout:
             image_data = loader_cutout(row[colname_cutout])
             self._update_data_components(image_data, key='cutout')
-            self.render_data(row, spec1d_data, spec2d_data, image_data)
+        else:
+            image_data = None
+
+        level2_data = None
+        if is_level2:
+            basename_level2 = os.path.basename(row[colname_level2])
+            if basename_level2:
+                level2_data = loader_level2(row[colname_level2])
+                self._update_data_components(level2_data, key='level2')
+
+        # Keep data that will be used to refresh the 2D spectrum widget.
+        self.spec2d_data = spec2d_data
+        self.level2_data = level2_data
+
+        # Plot
+        self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
+
+    def load_exposure(self, index):
+        '''
+        Loads the level 2 exposure into the 2D spectrum plot widget.
+
+        It can also load back the level 3 spectrum.
+        '''
+        name = self.toolbar.exposure_select.currentText()
+        if 'Level 3' in name:
+            self.spectrum2d_widget.set_image(
+                image = self.spec2d_data.get_component(self.spec2d_data.id['Flux']).data,
+                interpolation = 'none',
+                aspect = 'auto',
+                extent = self.extent,
+                origin='lower')
+        else:
+            if name in [component.label for component in self.level2_data.components]:
+                self.spectrum2d_widget.set_image(
+                    image = self.level2_data.get_component(self.level2_data.id[name]).data,
+                    interpolation = 'none',
+                    aspect = 'auto',
+                    extent = self.extent, origin='lower')
 
     def _update_data_components(self, data, key):
         """
@@ -603,7 +693,7 @@ class MOSVizViewer(DataViewer):
         self.slit_controller.add_rectangle_sky_slit(wcs, ra, dec, width, length)
 
     def render_data(self, row, spec1d_data=None, spec2d_data=None,
-                    image_data=None):
+                    image_data=None, level2_data=None):
         """
         Render the updated data sets in the individual plot widgets within the
         MOSViz viewer.
@@ -671,32 +761,20 @@ class MOSVizViewer(DataViewer):
         # we set up the extent of the image appropriately if the cutout and the
         # 1D spectrum are present so that the axes can be locked.
 
-        if spec2d_data is not None:
-            xp2d = np.arange(spec2d_data.shape[1])
-            yp2d = np.repeat(0, spec2d_data.shape[1])
-            spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
-            x_min = spectrum2d_disp.min()
-            x_max = spectrum2d_disp.max()
+        # We are repurposing the spectrum 2d widget to handle the display of both
+        # the level 3 and level 2 spectra.
+        if spec2d_data is not None or level2d_data is not None:
 
-            if self.slit_controller.has_slits and\
-                    None not in self.slit_controller.y_bounds:
-                y_min, y_max = self.slit_controller.y_bounds
-            else:
-                y_min = -0.5
-                y_max = spec2d_data.shape[0] - 0.5
+            # These are probably retrievable from the slit controller.
+            scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
+            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
+            dy = slit_length / scale
+            ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
+            dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
+            skycoord = SkyCoord(ra, dec, frame='fk5')
+            xp, yp = skycoord.to_pixel(wcs)
 
-            extent = [x_min, x_max, y_min, y_max]
-
-            self.spectrum2d_widget.set_image(
-                image=spec2d_data.get_component(
-                    spec2d_data.id['Flux']).data,
-                interpolation='none', aspect='auto',
-                extent=extent, origin='lower')
-
-            self.spectrum2d_widget.axes.set_xlabel("Wavelength")
-            self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
-
-            self.spectrum2d_widget._redraw()
+            self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data, level2_data)
 
         # Clear the meta information widget
         # NOTE: this process is inefficient
@@ -756,6 +834,49 @@ class MOSVizViewer(DataViewer):
 
             self.meta_form_layout.addRow(self.input_save, self.input_refresh)
 
+    def _load_spectrum2d_widget(self, dy, yp, image_data, spec2d_data, level2_data):
+
+        if not spec2d_data:
+            return
+
+        xp2d = np.arange(spec2d_data.shape[1])
+        yp2d = np.repeat(0, spec2d_data.shape[1])
+
+        spectrum2d_disp, spectrum2d_offset = spec2d_data.coords.pixel2world(xp2d, yp2d)
+
+        x_min = spectrum2d_disp.min()
+        x_max = spectrum2d_disp.max()
+
+        if self.slit_controller.has_slits and \
+                        None not in self.slit_controller.y_bounds:
+            y_min, y_max = self.slit_controller.y_bounds
+        else:
+            y_min = -0.5
+            y_max = spec2d_data.shape[0] - 0.5
+
+        self.extent = [x_min, x_max, y_min, y_max]
+
+        # By default, displays the level 3 spectrum. The level 2
+        # data is plotted elsewhere, driven by the exposure_select
+        # combo box signals.
+        self.spectrum2d_widget.set_image(
+            image = spec2d_data.get_component(spec2d_data.id['Flux']).data,
+            interpolation = 'none',
+            aspect = 'auto',
+            extent = self.extent, origin='lower')
+
+        self.spectrum2d_widget.axes.set_xlabel("Wavelength")
+        self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
+        self.spectrum2d_widget._redraw()
+
+        # Populates the level 2 exposures combo box
+        if level2_data:
+            self.toolbar.exposure_select.clear()
+            self.toolbar.exposure_select.addItems(['Level 3'])
+            self.toolbar.exposure_select.addItems([component.label for component in level2_data.visible_components])
+            self._set_exposure_navigation(0)
+        else:
+            self._set_exposure_navigation(None)
 
     @defer_draw
     def set_locked_axes(self, x=None, y=None):

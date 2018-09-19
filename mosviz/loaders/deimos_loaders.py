@@ -4,7 +4,7 @@ from astropy.wcs import WCS
 from glue.core import Data
 from glue.core.coordinates import coordinates_from_wcs
 
-from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader
+from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_level2_loader
 
 
 __all__ = ['deimos_spectrum1D_reader', 'deimos_spectrum2D_reader']
