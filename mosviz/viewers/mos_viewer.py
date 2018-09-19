@@ -26,12 +26,9 @@ from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
-    from specviz.third_party.glue.data_viewer import SpecVizViewer
+    from specviz.third_party.glue.viewer import SpecvizDataViewer
 except ImportError:
-    try:
-        from specviz.external.glue.data_viewer import SpecVizViewer
-    except ImportError:
-        SpecVizViewer = None
+    SpecvizDataViewer = None
 
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, Spectrum2DWidget, DrawableImageWidget
@@ -42,6 +39,8 @@ from ..widgets.share_axis import SharedAxisHelper
 from .. import UI_DIR
 from ..widgets.layer_widget import SimpleLayerWidget
 from ..controls.slits.slit_controller import SlitController
+
+from specviz.widgets.workspace import Workspace
 
 __all__ = ['MOSVizViewer']
 
@@ -87,14 +86,15 @@ class MOSVizViewer(DataViewer):
         loadUi(path, self.central_widget)
 
         self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
-        self.spectrum2d_widget = Spectrum2DWidget()
-        self.spectrum1d_widget = Line1DWidget()
+        self.spectrum2d_widget = MOSImageWidget()
+        self._specviz_viewer = SpecvizDataViewer(self.session)
+        self.spectrum1d_widget = self._specviz_viewer.specviz_window
 
         # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
         # and we control the sharing later by setting .sharex and .sharey on the
         # helper
-        self.spectrum2d_spectrum1d_share = SharedAxisHelper(self.spectrum2d_widget._axes,
-                                                            self.spectrum1d_widget._axes)
+        # self.spectrum2d_spectrum1d_share = SharedAxisHelper(self.spectrum2d_widget._axes,
+        #                                                     self.spectrum1d_widget._axes)
         self.spectrum2d_image_share = SharedAxisHelper(self.spectrum2d_widget._axes,
                                                        self.image_widget._axes)
 
@@ -167,7 +167,7 @@ class MOSVizViewer(DataViewer):
             lambda ind: self._set_exposure_navigation(ind))
 
         # Connect the specviz button
-        if SpecVizViewer is not None:
+        if SpecvizDataViewer is not None:
             self.toolbar.open_specviz.triggered.connect(
                 lambda: self._open_in_specviz())
         else:
@@ -568,7 +568,7 @@ class MOSVizViewer(DataViewer):
 
     def _open_in_specviz(self):
         _specviz_instance = self.session.application.new_data_viewer(
-            SpecVizViewer)
+            SpecvizDataViewer)
 
     def load_selection(self, row):
         """
@@ -693,33 +693,7 @@ class MOSVizViewer(DataViewer):
         self._check_unsaved_comments()
 
         if spec1d_data is not None:
-
-            spectrum1d_x = spec1d_data[spec1d_data.id['Wavelength']]
-            spectrum1d_y = spec1d_data[spec1d_data.id['Flux']]
-            spectrum1d_yerr = spec1d_data[spec1d_data.id['Uncertainty']]
-
-            self.spectrum1d_widget.set_data(x=spectrum1d_x,
-                                            y=spectrum1d_y,
-                                            yerr=spectrum1d_yerr)
-
-            # Try to retrieve the wcs information
-            try:
-                flux_unit = spec1d_data.header.get('BUNIT', 'Jy').lower()
-                flux_unit = flux_unit.replace('counts', 'count')
-                flux_unit = u.Unit(flux_unit)
-            except ValueError:
-                flux_unit = u.Unit("Jy")
-
-            try:
-                disp_unit = spec1d_data.header.get('CUNIT1', 'Angstrom').lower()
-                disp_unit = u.Unit(disp_unit)
-            except ValueError:
-                disp_unit = u.Unit("Angstrom")
-
-            self.spectrum1d_widget.axes.set_xlabel("Wavelength [{}]".format(disp_unit))
-            self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
-        else:
-            self.spectrum1d_widget.no_data()
+            self._specviz_viewer.add_data(spec1d_data)
 
         if image_data is not None:
             if not self.image_widget.isVisible():
