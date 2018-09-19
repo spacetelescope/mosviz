@@ -24,7 +24,7 @@ There are many ways to open a dataset with MOSViz:
 
 * By selecting the **Open Data Set** item under the **File** menu or using the equivalent shortcut (e.g. **Ctrl+O** on Linux, **Cmd+O** on Mac).
 * Dragging and dropping data files on the main window.
-* Through the terminal `$ mosviz my_mos_dataset.tbl`
+* Through the terminal `$ mosviz deimos_mosviz.tbl`
 
 Find and open `deimos_mosviz.tbl` which should be in the `deimos.zip` file you downloaded above.
 We will use
@@ -48,7 +48,12 @@ Visualizing Data
 
 When the dataset is loaded in the data collection, drag and drop the dataset 
 from the data collection to the visualization dashboard. A dialog will appear asking you 
-to select a data viewer, select the **MOSViz viewer**. Next you will be prompted with
+to select a data viewer, select the **MOSViz viewer**. 
+
+.. image:: images/click_drag_drop.png
+   :align: center
+
+Next you will be prompted with
 another dialog asking you to specify the readers for each component
 of your dataset. This dialog will also contains options to overlay slit positions. For 
 this example we are going to use the default settings.
