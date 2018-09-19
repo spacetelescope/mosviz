@@ -86,7 +86,7 @@ class MOSVizViewer(DataViewer):
         loadUi(path, self.central_widget)
 
         self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
-        self.spectrum2d_widget = MOSImageWidget()
+        self.spectrum2d_widget = Spectrum2DWidget()
         self._specviz_viewer = SpecvizDataViewer(self.session)
         self.spectrum1d_widget = self._specviz_viewer.specviz_window
 
@@ -694,6 +694,8 @@ class MOSVizViewer(DataViewer):
 
         if spec1d_data is not None:
             self._specviz_viewer.add_data(spec1d_data)
+        else:
+            self.spectrum1d_widget.no_data()
 
         if image_data is not None:
             if not self.image_widget.isVisible():
