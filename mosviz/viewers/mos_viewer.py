@@ -756,7 +756,7 @@ class MOSVizViewer(DataViewer):
 
         # We are repurposing the spectrum 2d widget to handle the display of both
         # the level 3 and level 2 spectra.
-        if spec2d_data is not None or level2d_data is not None:
+        if spec2d_data is not None or level2_data is not None:
 
             # These are probably retrievable from the slit controller.
             scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
