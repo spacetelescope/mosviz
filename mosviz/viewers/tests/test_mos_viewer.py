@@ -1,6 +1,3 @@
-import pytest
-
-
 def get_mosviz_gui(glue_gui):
     """
     Pulls MOSVizViewer out of the glue instance and returns it
