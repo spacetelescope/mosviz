@@ -32,7 +32,7 @@ except ImportError:
         SpecVizViewer = None
 
 from ..widgets.toolbars import MOSViewerToolbar
-from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
+from ..widgets.plots import Line1DWidget, Spectrum2DWidget, DrawableImageWidget
 from ..loaders.loader_selection import confirm_loaders_and_column_names
 from ..loaders.utils import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS
 from ..widgets.viewer_options import OptionsWidget
@@ -85,7 +85,7 @@ class MOSVizViewer(DataViewer):
         loadUi(path, self.central_widget)
 
         self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
-        self.spectrum2d_widget = MOSImageWidget()
+        self.spectrum2d_widget = Spectrum2DWidget()
         self.spectrum1d_widget = Line1DWidget()
 
         # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
@@ -549,19 +549,29 @@ class MOSVizViewer(DataViewer):
         colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
 
-        spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
-        spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
+        spec1d_basename = os.path.basename(row[colname_spectrum1d])
+        if spec1d_basename == "None":
+            spec1d_data = None
+        else:
+            spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
+
+        spec2d_basename = os.path.basename(row[colname_spectrum2d])
+        if spec2d_basename == "None":
+            spec2d_data = None
+        else:
+            spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
+
+        image_basename = os.path.basename(row[colname_cutout])
+        if image_basename == "None":
+            image_data = None
+        else:
+            image_data = loader_cutout(row[colname_cutout])
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
+        self._update_data_components(image_data, key='cutout')
 
-        basename = os.path.basename(row[colname_cutout])
-        if basename == "None":
-            self.render_data(row, spec1d_data, spec2d_data, None)
-        else:
-            image_data = loader_cutout(row[colname_cutout])
-            self._update_data_components(image_data, key='cutout')
-            self.render_data(row, spec1d_data, spec2d_data, image_data)
+        self.render_data(row, spec1d_data, spec2d_data, image_data)
 
     def _update_data_components(self, data, key):
         """
@@ -578,11 +588,16 @@ class MOSVizViewer(DataViewer):
         """
         cur_data = self._loaded_data.get(key, None)
 
-        if cur_data is None:
+        if cur_data is not None and data is None:
+            self._loaded_data[key] = None
+            self.session.data_collection.remove(cur_data)
+        elif cur_data is None and data is not None:
             self._loaded_data[key] = data
             self.session.data_collection.append(data)
-        else:
+        elif data is not None:
             cur_data.update_values_from_data(data)
+        else:
+            return
 
     def add_slit(self, row=None, width=None, length=None):
         if row is None:
@@ -636,6 +651,8 @@ class MOSVizViewer(DataViewer):
 
             self.spectrum1d_widget.axes.set_xlabel("Wavelength [{}]".format(disp_unit))
             self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
+        else:
+            self.spectrum1d_widget.no_data()
 
         if image_data is not None:
             if not self.image_widget.isVisible():
@@ -697,6 +714,8 @@ class MOSVizViewer(DataViewer):
             self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
 
             self.spectrum2d_widget._redraw()
+        else:
+            self.spectrum2d_widget.no_data()
 
         # Clear the meta information widget
         # NOTE: this process is inefficient
