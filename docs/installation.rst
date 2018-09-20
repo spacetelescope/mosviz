@@ -30,6 +30,11 @@ To launch MOSViz now you enter::
 Install via source
 ------------------
 
+.. warning::
+    Using the Conda install is the preferred method for installing MOSViz to ensure
+    that all dependencies are met. If you install via source/pip be aware that
+    some dependencies will need to be installed manually!
+
 MosViz can also be installed manually using the source code and requires the
 following dependencies to be installed on your system. Most of these will be
 handled automatically by the setup functions.
