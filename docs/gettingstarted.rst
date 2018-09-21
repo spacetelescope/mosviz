@@ -54,7 +54,7 @@ to select a data viewer, select the **MOSViz viewer**.
    :align: center
 
 Next you will be prompted with
-another dialog asking you to specify the readers for each component
+another dialog asking you to specify the data readers for each component
 of your dataset. This dialog will also contains options to overlay slit positions. For 
 this example we are going to use the default settings.
 
