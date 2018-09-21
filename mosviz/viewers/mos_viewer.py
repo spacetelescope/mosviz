@@ -575,9 +575,10 @@ class MOSVizViewer(DataViewer):
         Processes a row in the MOS catalog by first loading the data set,
         updating the stored data components, and then rendering the data on
         the visible MOSViz viewer plots.
+
         Parameters
         ----------
-        row : :class:`astropy.table.Row`
+        row : `astropy.table.Row`
             A row object representing a row in the MOS catalog. Each key
             should be a column name.
         """
