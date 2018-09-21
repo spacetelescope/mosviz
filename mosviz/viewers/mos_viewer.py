@@ -34,7 +34,7 @@ except ImportError:
         SpecVizViewer = None
 
 from ..widgets.toolbars import MOSViewerToolbar
-from ..widgets.plots import Line1DWidget, MOSImageWidget, DrawableImageWidget
+from ..widgets.plots import Line1DWidget, Spectrum2DWidget, DrawableImageWidget
 from ..loaders.loader_selection import confirm_loaders_and_column_names
 from ..loaders.utils import SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS, CUTOUT_LOADERS, LEVEL2_LOADERS
 from ..widgets.viewer_options import OptionsWidget
@@ -87,7 +87,7 @@ class MOSVizViewer(DataViewer):
         loadUi(path, self.central_widget)
 
         self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
-        self.spectrum2d_widget = MOSImageWidget()
+        self.spectrum2d_widget = Spectrum2DWidget()
         self.spectrum1d_widget = Line1DWidget()
 
         # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
@@ -578,58 +578,46 @@ class MOSVizViewer(DataViewer):
 
         Parameters
         ----------
-        row : :class:`astropy.table.Row`
+        row : `astropy.table.Row`
             A row object representing a row in the MOS catalog. Each key
             should be a column name.
         """
 
         self.current_row = row
 
-        # Level 2 is optional
-        is_level2 = "level2" in self.catalog.meta["loaders"]
-
         # Get loaders
         loader_spectrum1d = SPECTRUM1D_LOADERS[self.catalog.meta["loaders"]["spectrum1d"]]
         loader_spectrum2d = SPECTRUM2D_LOADERS[self.catalog.meta["loaders"]["spectrum2d"]]
         loader_cutout = CUTOUT_LOADERS[self.catalog.meta["loaders"]["cutout"]]
-        if is_level2:
-            loader_level2 = LEVEL2_LOADERS[self.catalog.meta["loaders"]["level2"]]
 
         # Get column names
         colname_spectrum1d = self.catalog.meta["special_columns"]["spectrum1d"]
         colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
-        if is_level2:
-            colname_level2 = self.catalog.meta["special_columns"]["level2"]
 
-        # Get mandatory data
-        spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
-        spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
+        spec1d_basename = os.path.basename(row[colname_spectrum1d])
+        if spec1d_basename == "None":
+            spec1d_data = None
+        else:
+            spec1d_data = loader_spectrum1d(row[colname_spectrum1d])
+
+        spec2d_basename = os.path.basename(row[colname_spectrum2d])
+        if spec2d_basename == "None":
+            spec2d_data = None
+        else:
+            spec2d_data = loader_spectrum2d(row[colname_spectrum2d])
+
+        image_basename = os.path.basename(row[colname_cutout])
+        if image_basename == "None":
+            image_data = None
+        else:
+            image_data = loader_cutout(row[colname_cutout])
 
         self._update_data_components(spec1d_data, key='spectrum1d')
         self._update_data_components(spec2d_data, key='spectrum2d')
+        self._update_data_components(image_data, key='cutout')
 
-        # See if optional data exists; if so, ingest them.
-        basename_cutout = os.path.basename(row[colname_cutout])
-        if basename_cutout:
-            image_data = loader_cutout(row[colname_cutout])
-            self._update_data_components(image_data, key='cutout')
-        else:
-            image_data = None
-
-        level2_data = None
-        if is_level2:
-            basename_level2 = os.path.basename(row[colname_level2])
-            if basename_level2:
-                level2_data = loader_level2(row[colname_level2])
-                self._update_data_components(level2_data, key='level2')
-
-        # Keep data that will be used to refresh the 2D spectrum widget.
-        self.spec2d_data = spec2d_data
-        self.level2_data = level2_data
-
-        # Plot
-        self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
+        self.render_data(row, spec1d_data, spec2d_data, image_data)
 
     def load_exposure(self, index):
         '''
@@ -658,7 +646,6 @@ class MOSVizViewer(DataViewer):
         Update the data components that act as containers for the displayed
         data in the MOSViz viewer. This obviates the need to keep creating new
         data components.
-
         Parameters
         ----------
         data : :class:`glue.core.data.Data`
@@ -668,11 +655,16 @@ class MOSVizViewer(DataViewer):
         """
         cur_data = self._loaded_data.get(key, None)
 
-        if cur_data is None:
+        if cur_data is not None and data is None:
+            self._loaded_data[key] = None
+            self.session.data_collection.remove(cur_data)
+        elif cur_data is None and data is not None:
             self._loaded_data[key] = data
             self.session.data_collection.append(data)
-        else:
+        elif data is not None:
             cur_data.update_values_from_data(data)
+        else:
+            return
 
     def add_slit(self, row=None, width=None, length=None):
         if row is None:
@@ -726,6 +718,8 @@ class MOSVizViewer(DataViewer):
 
             self.spectrum1d_widget.axes.set_xlabel("Wavelength [{}]".format(disp_unit))
             self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
+        else:
+            self.spectrum1d_widget.no_data()
 
         if image_data is not None:
             if not self.image_widget.isVisible():
@@ -763,7 +757,7 @@ class MOSVizViewer(DataViewer):
 
         # We are repurposing the spectrum 2d widget to handle the display of both
         # the level 3 and level 2 spectra.
-        if spec2d_data is not None or level2d_data is not None:
+        if spec2d_data is not None or level2_data is not None:
 
             # These are probably retrievable from the slit controller.
             scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
@@ -775,6 +769,8 @@ class MOSVizViewer(DataViewer):
             xp, yp = skycoord.to_pixel(wcs)
 
             self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data, level2_data)
+        else:
+            self.spectrum2d_widget.no_data()
 
         # Clear the meta information widget
         # NOTE: this process is inefficient
