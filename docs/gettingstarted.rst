@@ -11,7 +11,7 @@ Once you have MOSViz
 `installed <https://mosviz.readthedocs.io/en/latest/installation.html>`_ 
 you can launch the GUI by typing:
 
-`$ mosviz`
+``$ mosviz``
 
 .. image:: images/empty_mosviz_view.png
    :align: center
@@ -24,9 +24,9 @@ There are many ways to open a dataset with MOSViz:
 
 * By selecting the **Open Data Set** item under the **File** menu or using the equivalent shortcut (e.g. **Ctrl+O** on Linux, **Cmd+O** on Mac).
 * Dragging and dropping data files on the main window.
-* Through the terminal `$ mosviz deimos_mosviz.tbl`
+* Through the terminal ``$ mosviz deimos_mosviz.tbl``
 
-Find and open `deimos_mosviz.tbl` which should be in the `deimos.zip` file you downloaded above.
+Find and open ``deimos_mosviz.tbl`` which should be in the ``deimos.zip`` file you downloaded above.
 We will use
 a dataset from the `Deimos <https://www2.keck.hawaii.edu/inst/deimos/>`_ 
 instrument at the Keck Observatory. The main components of a MOSViz 
