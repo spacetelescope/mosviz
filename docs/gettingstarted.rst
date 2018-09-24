@@ -5,7 +5,7 @@ Getting Started with MOSViz
 This page will walk you through the basics of the MOSViz GUI. The data we will
 use for this tutorial is located here:
 
-* :download:`deimos.zip <https://zenodo.org/record/1421377/files/deimos.zip>`
+* Click to download data: `deimos.zip <https://zenodo.org/record/1421377/files/deimos.zip>`_
 
 Once you have MOSViz 
 `installed <https://mosviz.readthedocs.io/en/latest/installation.html>`_ 
