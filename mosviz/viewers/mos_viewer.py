@@ -87,8 +87,10 @@ class MOSVizViewer(DataViewer):
 
         self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
         self.spectrum2d_widget = Spectrum2DWidget()
-        self._specviz_viewer = SpecvizDataViewer(self.session)
-        self.spectrum1d_widget = self._specviz_viewer.specviz_window
+
+        self._specviz_viewer = Workspace()
+        self._specviz_viewer.add_plot_window()
+        self.spectrum1d_widget = self._specviz_viewer.current_plot_window
 
         # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
         # and we control the sharing later by setting .sharex and .sharey on the
@@ -107,7 +109,7 @@ class MOSVizViewer(DataViewer):
         self.meta_form_layout.setFieldGrowthPolicy(self.meta_form_layout.ExpandingFieldsGrow)
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
         self.central_widget.right_vertical_splitter.addWidget(self.spectrum2d_widget)
-        self.central_widget.right_vertical_splitter.addWidget(self.spectrum1d_widget)
+        self.central_widget.right_vertical_splitter.addWidget(self.spectrum1d_widget.widget())
 
         # Set the splitter stretch factors
         self.central_widget.left_vertical_splitter.setStretchFactor(0, 1)
@@ -693,7 +695,13 @@ class MOSVizViewer(DataViewer):
         self._check_unsaved_comments()
 
         if spec1d_data is not None:
-            self._specviz_viewer.add_data(spec1d_data)
+            from specviz.third_party.glue.utils import glue_data_to_spectrum1d
+            self._specviz_viewer.model.clear()
+            spec = glue_data_to_spectrum1d(spec1d_data, 'Flux')
+            data_item = self._specviz_viewer.model.add_data(spec, 'Spectrum1D')
+            plot_data_item = self.spectrum1d_widget.proxy_model.item_from_id(data_item.identifier)
+            plot_data_item.visible = True
+            self.spectrum1d_widget.plot_widget.on_item_changed(data_item)
         else:
             self.spectrum1d_widget.no_data()
 
