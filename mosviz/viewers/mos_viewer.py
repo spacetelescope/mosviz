@@ -95,8 +95,6 @@ class MOSVizViewer(DataViewer):
         # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
         # and we control the sharing later by setting .sharex and .sharey on the
         # helper
-        # self.spectrum2d_spectrum1d_share = SharedAxisHelper(self.spectrum2d_widget._axes,
-        #                                                     self.spectrum1d_widget._axes)
         self.spectrum2d_image_share = SharedAxisHelper(self.spectrum2d_widget._axes,
                                                        self.image_widget._axes)
 
@@ -866,12 +864,23 @@ class MOSVizViewer(DataViewer):
         # we shouldn't change the y setting.
 
         if x is not None:
-            self.spectrum2d_spectrum1d_share.sharex = x
+            if x:  # Lock the x axis if x is True
+                def on_x_range_changed(view):
+                    self.spectrum2d_widget.axes.set_xlim(*view.viewRange()[0])
+                    self.spectrum2d_widget._redraw()
+
+                self.spectrum1d_widget.plot_widget.getPlotItem().sigXRangeChanged.connect(
+                    on_x_range_changed)
+
+                # Fire an initial signal to update the axis linking the ui
+                on_x_range_changed(self.spectrum1d_widget.plot_widget.getPlotItem().getViewBox())
+            else:  # Unlock the x axis if x is False
+                self.spectrum1d_widget.plot_widget.getPlotItem().sigXRangeChanged.disconnect()
 
         if y is not None:
             self.spectrum2d_image_share.sharey = y
 
-        self.spectrum1d_widget._redraw()
+        # self.spectrum1d_widget._redraw()
         self.spectrum2d_widget._redraw()
         self.image_widget._redraw()
 

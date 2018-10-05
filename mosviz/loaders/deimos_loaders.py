@@ -51,6 +51,8 @@ def deimos_spectrum2D_reader(file_name):
 
     with fits.open(file_name) as hdulist:
         data = Data(label='2D Spectrum')
+        hdulist[1].header['CTYPE1'] = 'LINEAR'
+        hdulist[1].header['CUNIT1'] = 'Angstrom'
         hdulist[1].header['CTYPE2'] = 'Spatial Y'
         wcs = WCS(hdulist[1].header)
         # original WCS has both axes named "LAMBDA", glue requires unique component names
