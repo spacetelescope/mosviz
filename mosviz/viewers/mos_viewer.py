@@ -847,6 +847,13 @@ class MOSVizViewer(DataViewer):
         self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
         self.spectrum2d_widget._redraw()
 
+        # If the axis are linked between the 1d and 2d views, setting the data
+        # often ignores the initial bounds and instead uses the bounds of the
+        # 2d data until the 1d view is moved. Force the 2d viewer to honor
+        # the 1d view bounds.
+        self.spectrum1d_widget.plot_widget.getPlotItem().sigXRangeChanged.emit(
+            None, self.spectrum1d_widget.plot_widget.viewRange()[0])
+
         # Populates the level 2 exposures combo box
         if level2_data:
             self.toolbar.exposure_select.clear()
