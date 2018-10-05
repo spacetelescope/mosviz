@@ -693,7 +693,7 @@ class MOSVizViewer(DataViewer):
         self._check_unsaved_comments()
 
         if spec1d_data is not None:
-            from specviz.third_party.glue.utils import glue_data_to_spectrum1d
+            # Clear the specviz model of any rendered plot items
             self._specviz_viewer.model.clear()
             spec = glue_data_to_spectrum1d(spec1d_data, 'Flux')
             data_item = self._specviz_viewer.model.add_data(spec, 'Spectrum1D')
