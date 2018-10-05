@@ -41,6 +41,7 @@ from ..widgets.layer_widget import SimpleLayerWidget
 from ..controls.slits.slit_controller import SlitController
 
 from specviz.widgets.workspace import Workspace
+from specviz.third_party.glue.utils import glue_data_to_spectrum1d
 
 __all__ = ['MOSVizViewer']
 
@@ -695,13 +696,27 @@ class MOSVizViewer(DataViewer):
         if spec1d_data is not None:
             # Clear the specviz model of any rendered plot items
             self._specviz_viewer.model.clear()
+
+            # TODO: This should not be needed. Must explore why the core model
+            # is out of sync with the proxy model.
+            self.spectrum1d_widget.plot_widget.clear_plots()
+
+            # Create a new Spectrum1D object from the flux data attribute of
+            # the incoming data
             spec = glue_data_to_spectrum1d(spec1d_data, 'Flux')
+
+            # Create a DataItem from the Spectrum1D object, which adds the data
+            # to the internel specviz model
             data_item = self._specviz_viewer.model.add_data(spec, 'Spectrum1D')
+
+            # Get the PlotDataItem rendered via the plot's proxy model and
+            # ensure that it is visible in the plot
             plot_data_item = self.spectrum1d_widget.proxy_model.item_from_id(data_item.identifier)
             plot_data_item.visible = True
+            plot_data_item.color = "#000000"
+
+            # Explicitly let the plot widget know that data items have changed
             self.spectrum1d_widget.plot_widget.on_item_changed(data_item)
-        else:
-            self.spectrum1d_widget.no_data()
 
         if image_data is not None:
             if not self.image_widget.isVisible():
@@ -838,10 +853,11 @@ class MOSVizViewer(DataViewer):
         # data is plotted elsewhere, driven by the exposure_select
         # combo box signals.
         self.spectrum2d_widget.set_image(
-            image = spec2d_data.get_component(spec2d_data.id['Flux']).data,
-            interpolation = 'none',
-            aspect = 'auto',
-            extent = self.extent, origin='lower')
+            image=spec2d_data.get_component(spec2d_data.id['Flux']).data,
+            interpolation='none',
+            aspect='auto',
+            extent=self.extent,
+            origin='lower')
 
         self.spectrum2d_widget.axes.set_xlabel("Wavelength")
         self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
