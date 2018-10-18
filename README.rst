@@ -14,6 +14,12 @@ MOSViz is a quick-look analysis and visualization tool for multi-object spectros
 .. image:: /docs/images/MOSViz_viewer.png
 
 
+Installation
+------------
+
+See the `wiki <https://github.com/spacetelescope/mosviz/wiki>`_ for installation of the most recent nightly version. 
+
+
 License
 -------
 
