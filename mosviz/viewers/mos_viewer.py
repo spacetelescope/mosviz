@@ -26,12 +26,9 @@ from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
-    from specviz.third_party.glue.data_viewer import SpecVizViewer
+    from specviz.third_party.glue.viewer import SpecvizDataViewer
 except ImportError:
-    try:
-        from specviz.external.glue.data_viewer import SpecVizViewer
-    except ImportError:
-        SpecVizViewer = None
+    SpecvizDataViewer = None
 
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, Spectrum2DWidget, DrawableImageWidget
@@ -167,7 +164,7 @@ class MOSVizViewer(DataViewer):
             lambda ind: self._set_exposure_navigation(ind))
 
         # Connect the specviz button
-        if SpecVizViewer is not None:
+        if SpecvizDataViewer is not None:
             self.toolbar.open_specviz.triggered.connect(
                 lambda: self._open_in_specviz())
         else:
@@ -568,7 +565,7 @@ class MOSVizViewer(DataViewer):
 
     def _open_in_specviz(self):
         _specviz_instance = self.session.application.new_data_viewer(
-            SpecVizViewer)
+            SpecvizDataViewer)
 
     def load_selection(self, row):
         """
