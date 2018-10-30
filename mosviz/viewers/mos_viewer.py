@@ -564,8 +564,8 @@ class MOSVizViewer(DataViewer):
             self.toolbar.exposure_next_action.setDisabled(False)
 
     def _open_in_specviz(self):
-        _specviz_instance = self.session.application.new_data_viewer(
-            SpecvizDataViewer)
+        self._specviz_instance = self.session.application.new_data_viewer(SpecvizDataViewer)
+        self._specviz_instance.add_data(self._loaded_data['spectrum1d'])
 
     def load_selection(self, row):
         """
