@@ -94,4 +94,4 @@ def main(argv=sys.argv):
 
     ga.run_startup_action('mosviz')
 
-    sys.exit(ga.start(maximized=True))
+    ga.start(maximized=True)
