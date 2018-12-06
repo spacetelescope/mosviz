@@ -508,7 +508,6 @@ class MOSVizViewer(DataViewer):
         self.toolbar.source_select.blockSignals(True)
 
         self.toolbar.source_select.clear()
-
         if len(self.catalog) > 0 and self.catalog.meta["special_columns"]["source_id"] in self.catalog.colnames:
             self.toolbar.source_select.addItems(self.catalog[self.catalog.meta["special_columns"]["source_id"]][:])
 
@@ -570,6 +569,15 @@ class MOSVizViewer(DataViewer):
     def _open_in_specviz(self):
         _specviz_instance = self.session.application.new_data_viewer(
             SpecvizDataViewer)
+
+        # Create a new Spectrum1D object from the flux data attribute of
+        # the incoming data
+        spec = glue_data_to_spectrum1d(self._loaded_data['spectrum1d'], 'Flux')
+
+        # Create a DataItem from the Spectrum1D object, which adds the data
+        # to the internel specviz model
+        data_item = _specviz_instance.specviz_window.model.add_data(spec, 'Spectrum1D')
+        _specviz_instance.specviz_window.force_plot(data_item)
 
     def load_selection(self, row):
         """
@@ -694,12 +702,12 @@ class MOSVizViewer(DataViewer):
         self._check_unsaved_comments()
 
         if spec1d_data is not None:
-            # Clear the specviz model of any rendered plot items
-            self._specviz_viewer.model.clear()
-
             # TODO: This should not be needed. Must explore why the core model
             # is out of sync with the proxy model.
             self.spectrum1d_widget.plot_widget.clear_plots()
+
+            # Clear the specviz model of any rendered plot items
+            self._specviz_viewer.model.clear()
 
             # Create a new Spectrum1D object from the flux data attribute of
             # the incoming data
