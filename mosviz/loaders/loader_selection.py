@@ -228,26 +228,29 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
             loader = loaders[loader_name]
             column_name = getattr(self, column)
             filenames = self.data.get_component(column_name).labels
+            path = os.sep.join(
+                self.data._load_log.path.split(os.sep)[:-1])
 
             test_filename = "None"
             for filename in filenames:
+                file_path = os.path.join(path, filename)
                 if os.path.basename(filename) != "None":
                     test_filename = filename
                     break
 
             if test_filename == "None":
                 continue
-
             try:
-                loader(test_filename)
-            except Exception as e:
+                loader(file_path)
+
+                self.validate(True, "All spectra and cutout files exist and "
+                              "the loaders are able to read in the first one "
+                              "of each.")
+            except:
                 self.validate(False, "An error occurred when trying to read in "
                               "'{0}' using the loader '{1}' (see terminal for "
                               "the full error).".format(filenames[0], loader_name))
-                print(e)
-
-        self.validate(True, "All spectra and cutout files exist and the loaders "
-                      "are able to read in the first one of each.")
+                return
 
     def validate(self, valid, message):
         if valid:
