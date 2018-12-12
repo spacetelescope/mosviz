@@ -16,7 +16,7 @@ from glue.core.component import CategoricalComponent
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
-from glue.utils.qt import pick_item
+from glue.utils.qt import pick_item, get_qapp
 
 from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
@@ -567,8 +567,19 @@ class MOSVizViewer(DataViewer):
             self.toolbar.exposure_next_action.setDisabled(False)
 
     def _open_in_specviz(self):
-        _specviz_instance = self.session.application.new_data_viewer(
-            SpecvizDataViewer)
+        if self._specviz_instance is None:
+            # Store a reference to the currently opened data viewer. This means
+            # new "open in specviz" events will be added to the current viewer
+            # as opposed to opening a new viewer.
+            self._specviz_instance = self.session.application.new_data_viewer(
+                SpecvizDataViewer)
+
+            # Clear the reference to ensure no qt dangling pointers
+            def _clear_instance_reference():
+                self._specviz_instance = None
+
+            self._specviz_instance.window_closed.connect(
+                _clear_instance_reference)
 
         # Create a new Spectrum1D object from the flux data attribute of
         # the incoming data
@@ -576,8 +587,9 @@ class MOSVizViewer(DataViewer):
 
         # Create a DataItem from the Spectrum1D object, which adds the data
         # to the internel specviz model
-        data_item = _specviz_instance.specviz_window.model.add_data(spec, 'Spectrum1D')
-        _specviz_instance.specviz_window.force_plot(data_item)
+        data_item = self._specviz_instance.current_workspace.model.add_data(
+            spec, 'Spectrum1D')
+        self._specviz_instance.current_workspace.force_plot(data_item)
 
     def load_selection(self, row):
         """
