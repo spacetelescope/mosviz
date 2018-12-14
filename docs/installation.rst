@@ -2,19 +2,19 @@
 Installation
 ************
 
-MOSViz is packaged in the Conda environment system and therefore 
-requires Miniconda to be installed. This makes it reasonably simple 
-to install MOSViz along with all its dependencies.
-
-If you do not have Miniconda, please follow the `instructions here
-<https://conda.io/miniconda.html>`_ to install it, or scroll down for
-manual installation of MOSViz.
+MOSViz is packaged and distributed through both Anaconda via the GlueViz
+channel, as well as through the Python Package Index (PyPI). It is also
+available from source.
 
 
 Install via Conda
 -----------------
 
-Once you have Miniconda installed, then all you have to do to install MOSViz is
+In order to use the Anaconda package, you must first install an
+Anaconda distribution. If you do not have Anaconda, please follow the
+`instructions here <https://www.anaconda.com/download>`_ to install it.
+
+Once you have Anaconda installed, all you have to do to install MOSViz is
 simply type the following at any Bash terminal prompt::
 
     $ conda create -n <environment_name> -c glueviz mosviz
@@ -26,6 +26,19 @@ Next activate your MOSViz conda environment::
 To launch MOSViz now you enter::
 
     $ mosviz
+
+
+Install via PyPI
+----------------
+
+To install MOSViz using PyPI type the following at any terminal prompt::
+
+    $ pip install mosviz
+
+You will also need to install the PyQt package as well by typing the following::
+
+    $ pip install pyqt5
+
 
 Install via source
 ------------------
@@ -60,6 +73,7 @@ Or, have the `pip <http://pip.pypa.org>`_ package manager do everything for you:
 
 Either way, the MosView Viewer should show up in the list of available Glue
 viewers.
+
 
 SpecViz functionality
 ---------------------
