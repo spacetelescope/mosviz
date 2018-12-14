@@ -76,4 +76,4 @@ def test_exposure_at_end_state(glue_gui):
     assert mosviz_gui.toolbar.exposure_next_action.isEnabled() == False
     mosviz_gui.toolbar.exposure_previous_action.trigger()
     assert exposure_combo.currentText() == exposure_combo.itemText(exposure_combo.count() - 2)
-    assert mosviz_gui.toolbar.exposure_next_action.isEnabled() == False
+    assert mosviz_gui.toolbar.exposure_next_action.isEnabled() == True
