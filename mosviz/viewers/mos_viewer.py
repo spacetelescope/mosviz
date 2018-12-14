@@ -51,6 +51,8 @@ class MOSVizViewer(DataViewer):
     LABEL = "MOSViz Viewer"
     window_closed = Signal()
     _toolbar_cls = MOSViewerToolbar
+    tools = []
+    subtools = []
 
     def __init__(self, session, parent=None):
         super(MOSVizViewer, self).__init__(session, parent=parent)
@@ -92,6 +94,7 @@ class MOSVizViewer(DataViewer):
         self._specviz_viewer = Workspace()
         self._specviz_viewer.add_plot_window()
         self.spectrum1d_widget = self._specviz_viewer.current_plot_window
+        self.spectrum1d_widget.plot_widget.getPlotItem().layout.setContentsMargins(45, 0, 25, 0)
 
         # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
         # and we control the sharing later by setting .sharex and .sharey on the
@@ -543,11 +546,10 @@ class MOSVizViewer(DataViewer):
             # managers perhaps?), the combo box does not
             # disappear from screen even when forced to
             # hide. Next best solution is to disable it.
-            self.toolbar.exposure_select.setVisible(False)
-            self.toolbar.exposure_select.setDisabled(True)
+            self.toolbar.exposure_select.setEnabled(False)
 
-            self.toolbar.exposure_next_action.setVisible(False)
-            self.toolbar.exposure_previous_action.setVisible(False)
+            self.toolbar.exposure_next_action.setEnabled(False)
+            self.toolbar.exposure_previous_action.setEnabled(False)
             return
 
         if index > self.toolbar.exposure_select.count():
@@ -557,14 +559,14 @@ class MOSVizViewer(DataViewer):
             self.toolbar.exposure_select.setCurrentIndex(index)
 
         if index < 1:
-            self.toolbar.exposure_previous_action.setDisabled(True)
+            self.toolbar.exposure_previous_action.setEnabled(False)
         else:
-            self.toolbar.exposure_previous_action.setDisabled(False)
+            self.toolbar.exposure_previous_action.setEnabled(True)
 
         if index >= self.toolbar.exposure_select.count() - 1:
-            self.toolbar.exposure_next_action.setDisabled(True)
+            self.toolbar.exposure_next_action.setEnabled(False)
         else:
-            self.toolbar.exposure_next_action.setDisabled(False)
+            self.toolbar.exposure_next_action.setEnabled(True)
 
     def _open_in_specviz(self):
         if self._specviz_instance is None:
