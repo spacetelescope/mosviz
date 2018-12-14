@@ -11,3 +11,4 @@ dependencies:
   - glue-core>=0.13.0
   - qtpy
   - nomkl
+  - specviz>=0.5

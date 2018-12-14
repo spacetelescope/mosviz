@@ -93,5 +93,4 @@ def main(argv=sys.argv):
         ga.add_datasets(data_collection, datasets, auto_merge=False)
 
     ga.run_startup_action('mosviz')
-
-    sys.exit(ga.start(maximized=True))
+    ga.start(maximized=True)

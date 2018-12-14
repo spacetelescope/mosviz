@@ -16,7 +16,7 @@ from glue.core.component import CategoricalComponent
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.matplotlib import defer_draw
 from glue.utils.decorators import avoid_circular
-from glue.utils.qt import pick_item
+from glue.utils.qt import pick_item, get_qapp
 
 from astropy.table import Table
 from astropy.nddata.nduncertainty import StdDevUncertainty
@@ -26,12 +26,9 @@ from astropy.coordinates import SkyCoord
 from astropy.wcs.utils import proj_plane_pixel_area
 
 try:
-    from specviz.third_party.glue.data_viewer import SpecVizViewer
+    from specviz.third_party.glue.viewer import SpecvizDataViewer
 except ImportError:
-    try:
-        from specviz.external.glue.data_viewer import SpecVizViewer
-    except ImportError:
-        SpecVizViewer = None
+    SpecvizDataViewer = None
 
 from ..widgets.toolbars import MOSViewerToolbar
 from ..widgets.plots import Line1DWidget, Spectrum2DWidget, DrawableImageWidget
@@ -43,6 +40,9 @@ from .. import UI_DIR
 from ..widgets.layer_widget import SimpleLayerWidget
 from ..controls.slits.slit_controller import SlitController
 
+from specviz.widgets.workspace import Workspace
+from specviz.third_party.glue.utils import glue_data_to_spectrum1d
+
 __all__ = ['MOSVizViewer']
 
 
@@ -51,6 +51,8 @@ class MOSVizViewer(DataViewer):
     LABEL = "MOSViz Viewer"
     window_closed = Signal()
     _toolbar_cls = MOSViewerToolbar
+    tools = []
+    subtools = []
 
     def __init__(self, session, parent=None):
         super(MOSVizViewer, self).__init__(session, parent=parent)
@@ -88,13 +90,15 @@ class MOSVizViewer(DataViewer):
 
         self.image_widget = DrawableImageWidget(slit_controller=self.slit_controller)
         self.spectrum2d_widget = Spectrum2DWidget()
-        self.spectrum1d_widget = Line1DWidget()
+
+        self._specviz_viewer = Workspace()
+        self._specviz_viewer.add_plot_window()
+        self.spectrum1d_widget = self._specviz_viewer.current_plot_window
+        self.spectrum1d_widget.plot_widget.getPlotItem().layout.setContentsMargins(45, 0, 25, 0)
 
         # Set up helper for sharing axes. SharedAxisHelper defaults to no sharing
         # and we control the sharing later by setting .sharex and .sharey on the
         # helper
-        self.spectrum2d_spectrum1d_share = SharedAxisHelper(self.spectrum2d_widget._axes,
-                                                            self.spectrum1d_widget._axes)
         self.spectrum2d_image_share = SharedAxisHelper(self.spectrum2d_widget._axes,
                                                        self.image_widget._axes)
 
@@ -107,7 +111,7 @@ class MOSVizViewer(DataViewer):
         self.meta_form_layout.setFieldGrowthPolicy(self.meta_form_layout.ExpandingFieldsGrow)
         self.central_widget.left_vertical_splitter.insertWidget(0, self.image_widget)
         self.central_widget.right_vertical_splitter.addWidget(self.spectrum2d_widget)
-        self.central_widget.right_vertical_splitter.addWidget(self.spectrum1d_widget)
+        self.central_widget.right_vertical_splitter.addWidget(self.spectrum1d_widget.widget())
 
         # Set the splitter stretch factors
         self.central_widget.left_vertical_splitter.setStretchFactor(0, 1)
@@ -167,7 +171,7 @@ class MOSVizViewer(DataViewer):
             lambda ind: self._set_exposure_navigation(ind))
 
         # Connect the specviz button
-        if SpecVizViewer is not None:
+        if SpecvizDataViewer is not None:
             self.toolbar.open_specviz.triggered.connect(
                 lambda: self._open_in_specviz())
         else:
@@ -507,7 +511,6 @@ class MOSVizViewer(DataViewer):
         self.toolbar.source_select.blockSignals(True)
 
         self.toolbar.source_select.clear()
-
         if len(self.catalog) > 0 and self.catalog.meta["special_columns"]["source_id"] in self.catalog.colnames:
             self.toolbar.source_select.addItems(self.catalog[self.catalog.meta["special_columns"]["source_id"]][:])
 
@@ -543,11 +546,10 @@ class MOSVizViewer(DataViewer):
             # managers perhaps?), the combo box does not
             # disappear from screen even when forced to
             # hide. Next best solution is to disable it.
-            self.toolbar.exposure_select.setVisible(False)
-            self.toolbar.exposure_select.setDisabled(True)
+            self.toolbar.exposure_select.setEnabled(False)
 
-            self.toolbar.exposure_next_action.setVisible(False)
-            self.toolbar.exposure_previous_action.setVisible(False)
+            self.toolbar.exposure_next_action.setEnabled(False)
+            self.toolbar.exposure_previous_action.setEnabled(False)
             return
 
         if index > self.toolbar.exposure_select.count():
@@ -557,18 +559,39 @@ class MOSVizViewer(DataViewer):
             self.toolbar.exposure_select.setCurrentIndex(index)
 
         if index < 1:
-            self.toolbar.exposure_previous_action.setDisabled(True)
+            self.toolbar.exposure_previous_action.setEnabled(False)
         else:
-            self.toolbar.exposure_previous_action.setDisabled(False)
+            self.toolbar.exposure_previous_action.setEnabled(True)
 
         if index >= self.toolbar.exposure_select.count() - 1:
-            self.toolbar.exposure_next_action.setDisabled(True)
+            self.toolbar.exposure_next_action.setEnabled(False)
         else:
-            self.toolbar.exposure_next_action.setDisabled(False)
+            self.toolbar.exposure_next_action.setEnabled(True)
 
     def _open_in_specviz(self):
-        _specviz_instance = self.session.application.new_data_viewer(
-            SpecVizViewer)
+        if self._specviz_instance is None:
+            # Store a reference to the currently opened data viewer. This means
+            # new "open in specviz" events will be added to the current viewer
+            # as opposed to opening a new viewer.
+            self._specviz_instance = self.session.application.new_data_viewer(
+                SpecvizDataViewer)
+
+            # Clear the reference to ensure no qt dangling pointers
+            def _clear_instance_reference():
+                self._specviz_instance = None
+
+            self._specviz_instance.window_closed.connect(
+                _clear_instance_reference)
+
+        # Create a new Spectrum1D object from the flux data attribute of
+        # the incoming data
+        spec = glue_data_to_spectrum1d(self._loaded_data['spectrum1d'], 'Flux')
+
+        # Create a DataItem from the Spectrum1D object, which adds the data
+        # to the internel specviz model
+        data_item = self._specviz_instance.current_workspace.model.add_data(
+            spec, 'Spectrum1D')
+        self._specviz_instance.current_workspace.force_plot(data_item)
 
     def load_selection(self, row):
         """
@@ -693,33 +716,29 @@ class MOSVizViewer(DataViewer):
         self._check_unsaved_comments()
 
         if spec1d_data is not None:
+            # TODO: This should not be needed. Must explore why the core model
+            # is out of sync with the proxy model.
+            self.spectrum1d_widget.plot_widget.clear_plots()
 
-            spectrum1d_x = spec1d_data[spec1d_data.id['Wavelength']]
-            spectrum1d_y = spec1d_data[spec1d_data.id['Flux']]
-            spectrum1d_yerr = spec1d_data[spec1d_data.id['Uncertainty']]
+            # Clear the specviz model of any rendered plot items
+            self._specviz_viewer.model.clear()
 
-            self.spectrum1d_widget.set_data(x=spectrum1d_x,
-                                            y=spectrum1d_y,
-                                            yerr=spectrum1d_yerr)
+            # Create a new Spectrum1D object from the flux data attribute of
+            # the incoming data
+            spec = glue_data_to_spectrum1d(spec1d_data, 'Flux')
 
-            # Try to retrieve the wcs information
-            try:
-                flux_unit = spec1d_data.header.get('BUNIT', 'Jy').lower()
-                flux_unit = flux_unit.replace('counts', 'count')
-                flux_unit = u.Unit(flux_unit)
-            except ValueError:
-                flux_unit = u.Unit("Jy")
+            # Create a DataItem from the Spectrum1D object, which adds the data
+            # to the internel specviz model
+            data_item = self._specviz_viewer.model.add_data(spec, 'Spectrum1D')
 
-            try:
-                disp_unit = spec1d_data.header.get('CUNIT1', 'Angstrom').lower()
-                disp_unit = u.Unit(disp_unit)
-            except ValueError:
-                disp_unit = u.Unit("Angstrom")
+            # Get the PlotDataItem rendered via the plot's proxy model and
+            # ensure that it is visible in the plot
+            plot_data_item = self.spectrum1d_widget.proxy_model.item_from_id(data_item.identifier)
+            plot_data_item.visible = True
+            plot_data_item.color = "#000000"
 
-            self.spectrum1d_widget.axes.set_xlabel("Wavelength [{}]".format(disp_unit))
-            self.spectrum1d_widget.axes.set_ylabel("Flux [{}]".format(flux_unit))
-        else:
-            self.spectrum1d_widget.no_data()
+            # Explicitly let the plot widget know that data items have changed
+            self.spectrum1d_widget.plot_widget.on_item_changed(data_item)
 
         if image_data is not None:
             if not self.image_widget.isVisible():
@@ -856,14 +875,22 @@ class MOSVizViewer(DataViewer):
         # data is plotted elsewhere, driven by the exposure_select
         # combo box signals.
         self.spectrum2d_widget.set_image(
-            image = spec2d_data.get_component(spec2d_data.id['Flux']).data,
-            interpolation = 'none',
-            aspect = 'auto',
-            extent = self.extent, origin='lower')
+            image=spec2d_data.get_component(spec2d_data.id['Flux']).data,
+            interpolation='none',
+            aspect='auto',
+            extent=self.extent,
+            origin='lower')
 
         self.spectrum2d_widget.axes.set_xlabel("Wavelength")
         self.spectrum2d_widget.axes.set_ylabel("Spatial Y")
         self.spectrum2d_widget._redraw()
+
+        # If the axis are linked between the 1d and 2d views, setting the data
+        # often ignores the initial bounds and instead uses the bounds of the
+        # 2d data until the 1d view is moved. Force the 2d viewer to honor
+        # the 1d view bounds.
+        self.spectrum1d_widget.plot_widget.getPlotItem().sigXRangeChanged.emit(
+            None, self.spectrum1d_widget.plot_widget.viewRange()[0])
 
         # Populates the level 2 exposures combo box
         if level2_data:
@@ -882,12 +909,23 @@ class MOSVizViewer(DataViewer):
         # we shouldn't change the y setting.
 
         if x is not None:
-            self.spectrum2d_spectrum1d_share.sharex = x
+            if x:  # Lock the x axis if x is True
+                def on_x_range_changed(xlim):
+                    self.spectrum2d_widget.axes.set_xlim(*xlim)
+                    self.spectrum2d_widget._redraw()
+
+                self.spectrum1d_widget.plot_widget.getPlotItem().sigXRangeChanged.connect(
+                    lambda a, b: on_x_range_changed(b))
+
+                # Call the slot to update the axis linking initially
+                # FIXME: Currently, this does not work for some reason.
+                on_x_range_changed(self.spectrum1d_widget.plot_widget.viewRange()[0])
+            else:  # Unlock the x axis if x is False
+                self.spectrum1d_widget.plot_widget.getPlotItem().sigXRangeChanged.disconnect()
 
         if y is not None:
             self.spectrum2d_image_share.sharey = y
 
-        self.spectrum1d_widget._redraw()
         self.spectrum2d_widget._redraw()
         self.image_widget._redraw()
 
