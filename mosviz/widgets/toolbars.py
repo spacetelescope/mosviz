@@ -83,7 +83,7 @@ class MOSViewerToolbar(BasicToolbar):
         tool_button = QToolButton(self)
         tool_button.setText("Axes Settings")
         tool_button.setIcon(QIcon(os.path.join(ICON_DIR, "Settings-96.png")))
-        tool_button.setPopupMode(QToolButton.MenuButtonPopup)
+        tool_button.setPopupMode(QToolButton.InstantPopup)
         tool_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         # Create a menu for the axes settings drop down
