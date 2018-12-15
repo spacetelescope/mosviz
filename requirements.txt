@@ -1,0 +1,9 @@
+astropy-helpers
+sphinx-astropy
+sphinx
+gitpython
+astropy
+numpy
+glue-core
+pyqt5
+specviz
