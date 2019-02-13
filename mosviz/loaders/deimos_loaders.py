@@ -4,7 +4,7 @@ from astropy.wcs import WCS
 from glue.core import Data
 from glue.core.coordinates import coordinates_from_wcs
 
-from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader
+from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_level2_loader
 
 
 __all__ = ['deimos_spectrum1D_reader', 'deimos_spectrum2D_reader']
@@ -21,17 +21,21 @@ def deimos_spectrum1D_reader(file_name):
     along with their Wavelength and Inverse Variance
     arrays.
     """
-    hdulist = fits.open(file_name)
-    data = Data(label='1D Spectrum')
-    data.header = hdulist[1].header
+    with fits.open(file_name) as hdulist:
+        data = Data(label='1D Spectrum')
+        hdulist[1].header['CTYPE1'] = 'WAVE'
+        hdulist[1].header['CUNIT1'] = 'Angstrom'
+        data.header = hdulist[1].header
+        wcs = WCS(hdulist[1].header)
+        data.coords = coordinates_from_wcs(wcs)
 
-    full_wl = np.append(hdulist[1].data['LAMBDA'][0], hdulist[2].data['LAMBDA'][0])
-    full_spec = np.append(hdulist[1].data['SPEC'][0], hdulist[2].data['SPEC'][0])
-    full_ivar = np.append(hdulist[1].data['IVAR'][0], hdulist[2].data['IVAR'][0])
+        full_wl = np.append(hdulist[1].data['LAMBDA'][0], hdulist[2].data['LAMBDA'][0])
+        full_spec = np.append(hdulist[1].data['SPEC'][0], hdulist[2].data['SPEC'][0])
+        full_ivar = np.append(hdulist[1].data['IVAR'][0], hdulist[2].data['IVAR'][0])
 
-    data.add_component(full_wl, 'Wavelength')
-    data.add_component(full_spec, 'Flux')
-    data.add_component(1 / np.sqrt(full_ivar), 'Uncertainty')
+        data.add_component(full_wl, 'Wavelength')
+        data.add_component(full_spec, 'Flux')
+        data.add_component(1 / np.sqrt(full_ivar), 'Uncertainty')
 
     return data
 
@@ -45,14 +49,17 @@ def deimos_spectrum2D_reader(file_name):
     Wavelength information comes from the WCS.
     """
 
-    hdulist = fits.open(file_name)
-    data = Data(label='2D Spectrum')
-    hdulist[1].header['CTYPE2'] = 'Spatial Y'
-    wcs = WCS(hdulist[1].header)
-    # original WCS has both axes named "LAMBDA", glue requires unique component names
+    with fits.open(file_name) as hdulist:
+        data = Data(label='2D Spectrum')
+        hdulist[1].header['CTYPE1'] = 'WAVE'
+        hdulist[1].header['CUNIT1'] = 'Angstrom'
+        hdulist[1].header['CTYPE2'] = 'Spatial Y'
+        wcs = WCS(hdulist[1].header)
+        # original WCS has both axes named "LAMBDA", glue requires unique component names
 
-    data.coords = coordinates_from_wcs(wcs)
-    data.header = hdulist[1].header
-    data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
-    data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
+        data.coords = coordinates_from_wcs(wcs)
+        data.header = hdulist[1].header
+        data.add_component(hdulist[1].data['FLUX'][0], 'Flux')
+        data.add_component(1 / np.sqrt(hdulist[1].data['IVAR'][0]), 'Uncertainty')
+
     return data

@@ -9,6 +9,8 @@ from glue.viewers.common.qt.toolbar import BasicToolbar
 from glue.viewers.matplotlib.qt.widget import MplWidget
 from glue.viewers.common.qt.tool import Tool
 from glue.config import viewer_tool
+from glue.utils import defer_draw
+
 
 try:
     from glue.viewers.matplotlib.mpl_axes import init_mpl
@@ -85,8 +87,7 @@ class Line1DWidget(QMainWindow):
     def axes(self):
         return self._axes
 
-    def set_data(self, x, y, yerr=None):
-
+    def _clear_artists(self):
         # Note: we can't use self._axes.cla() here since that removes events
         # which will cause the locked axes to not work.
         for artist in self._artists:
@@ -94,6 +95,13 @@ class Line1DWidget(QMainWindow):
                 artist.remove()
             except ValueError:  # some artists may already not be in plot
                 pass
+
+        for t in self.axes.texts:
+            t.remove()
+
+    def set_data(self, x, y, yerr=None):
+        self._clear_artists()
+        self.axes.set_axis_on()
 
         # Plot data
         if yerr is None:
@@ -103,6 +111,30 @@ class Line1DWidget(QMainWindow):
 
         # Refresh canvas
         self._redraw()
+
+    def no_data(self):
+        self._clear_artists()
+        self.axes.set_axis_off()
+
+        xbounds = self.axes.get_xlim()
+        if xbounds is None:
+            return
+        x = sum(xbounds) / 2.
+
+        ybounds = self.axes.get_ylim()
+        if ybounds is None:
+            return
+        y = sum(ybounds) / 2.
+
+        fontdict = {"fontsize": 30,
+                    "color": "black",
+                    "ha": "center",
+                    "va": "center"}
+
+        self.axes.text(x, y, "No 1D Spectrum", fontdict=fontdict)
+        # Refresh canvas
+        self._redraw()
+
 
     def _redraw(self):
         self.central_widget.canvas.draw()
@@ -118,6 +150,56 @@ class MOSImageWidget(StandaloneImageViewer):
 
     def set_status(self, status):
         pass
+
+
+class Spectrum2DWidget(MOSImageWidget):
+
+    def __init__(self, *args, **kwargs):
+        super(MOSImageWidget, self).__init__(*args, **kwargs)
+
+    def _clear_image(self):
+        if self._im is not None:
+            self._im.remove()
+            self._im = None
+
+    @defer_draw
+    def set_image(self, image=None, wcs=None, **kwargs):
+        #self.axes.set_axis_on()
+
+        for c in self.axes.coords:
+            c.set_ticks_visible(True)
+            c.set_ticklabel_visible(True)
+
+        for t in self.axes.texts:
+            t.remove()
+        super(MOSImageWidget, self).set_image(image, wcs, **kwargs)
+
+    def no_data(self):
+        self._clear_image()
+        #self.axes.set_axis_off()
+
+        for c in self.axes.coords:
+            c.set_ticks_visible(False)
+            c.set_ticklabel_visible(False)
+
+        xbounds = self.axes.get_xlim()
+        if xbounds is None:
+            return
+        x = sum(xbounds) / 2.
+
+        ybounds = self.axes.get_ylim()
+        if ybounds is None:
+            return
+        y = sum(ybounds) / 2.
+
+        fontdict = {"fontsize": 30,
+                    "color": "black",
+                    "ha": "center",
+                    "va": "center"}
+
+        self.axes.text(x, y, "No 2D Spectrum", fontdict=fontdict)
+        # Refresh canvas
+        self._redraw()
 
 
 class DrawableImageWidget(MOSImageWidget):

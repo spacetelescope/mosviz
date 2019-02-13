@@ -2,39 +2,57 @@
 Installation
 ************
 
-MOSViz is distributed through the `Anaconda <https://anaconda.org>`_ package
-manager. Specifically, it lives within Space Telescope Science Institute's
-`AstroConda <https://astroconda.readthedocs.io/>`_ channel.
-
-If you do not have Anaconda, please follow the `instructions here
-<https://www.continuum.io/downloads>`_ to install it, or scroll down for
-manual installation of MOSViz.
+MOSViz is packaged and distributed through both Anaconda via the GlueViz
+channel, as well as through the Python Package Index (PyPI). It is also
+available from source.
 
 
-Install via Anaconda
---------------------
+Install via Conda
+-----------------
 
-If you have AstroConda setup, then all you have to do to install SpecViz is
+In order to use the Anaconda package, you must first install an
+Anaconda distribution. If you do not have Anaconda, please follow the
+`instructions here <https://www.anaconda.com/download>`_ to install it.
+
+Once you have Anaconda installed, all you have to do to install MOSViz is
 simply type the following at any Bash terminal prompt::
 
-    $ conda install mosviz
+    $ conda create -n <environment_name> -c glueviz mosviz
 
-If you do not have AstroConda setup, then you can install SpecViz by
-specifying the channel in your install command::
+Next activate your MOSViz conda environment::
 
-    $ conda install --channel http://ssb.stsci.edu/astroconda mosviz
+    $ conda activate <environment_name>
 
-At this point, you can simply load a MOS catalog into Glue and view the data
-via the newly-installed MosViz Viewer.
+To launch MOSViz now you enter::
+
+    $ mosviz
+
+
+Install via PyPI
+----------------
+
+To install MOSViz using PyPI type the following at any terminal prompt::
+
+    $ pip install mosviz
+
+You will also need to install the PyQt package as well by typing the following::
+
+    $ pip install pyqt5
+
 
 Install via source
 ------------------
+
+.. warning::
+    Using the Conda install is the preferred method for installing MOSViz to ensure
+    that all dependencies are met. If you install via source/pip be aware that
+    some dependencies will need to be installed manually!
 
 MosViz can also be installed manually using the source code and requires the
 following dependencies to be installed on your system. Most of these will be
 handled automatically by the setup functions.
 
-* Python 3 (recommended) or Python 2
+* Python 3
 * Astropy
 * Numpy
 * Scipy
@@ -55,6 +73,7 @@ Or, have the `pip <http://pip.pypa.org>`_ package manager do everything for you:
 
 Either way, the MosView Viewer should show up in the list of available Glue
 viewers.
+
 
 SpecViz functionality
 ---------------------

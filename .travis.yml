@@ -40,8 +40,7 @@ env:
 
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        # N.B regions package: need the work in master as of 9-11-2018 which has not yet been released
-        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx_automodapi qtpy git+https://github.com/astropy/regions.git codecov'
+        - PIP_DEPENDENCIES='sphinx_rtd_theme sphinx_automodapi qtpy codecov regions>=0.3 specviz>=0.6.2'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -89,7 +88,7 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11
+          env: PYTHON_VERSION=3.5
 
         # Try numpy pre-release
         - os: linux

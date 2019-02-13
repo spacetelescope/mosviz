@@ -1,4 +1,4 @@
-MOS visualization tool
+MOS Visualization Tool
 ----------------------
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
@@ -9,7 +9,15 @@ MOS visualization tool
   :target: https://codecov.io/gh/spacetelescope/mosviz
   :alt: Coverage results
 
-MOSViz is a quick-look analysis and visualization tool for multi-object spectroscopy (MOS).
+MOSViz is a quick-look analysis and visualization tool for multi-object spectroscopy (MOS). It is built on top of the `Glue <http://glueviz.org>`_  visualization tool.
+
+.. image:: /docs/images/MOSViz_viewer.png
+
+
+Installation
+------------
+
+See the `wiki <https://github.com/spacetelescope/mosviz/wiki>`_ for installation of the most recent nightly version. 
 
 
 License
