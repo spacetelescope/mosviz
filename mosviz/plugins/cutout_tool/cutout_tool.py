@@ -23,8 +23,6 @@ from astropy.coordinates import SkyCoord
 from astropy.nddata.utils import (Cutout2D, NoOverlapError)
 from astropy import log
 
-from .. import UI_DIR
-
 __all__ = ["natural_sort", "unique_id", "CutoutTool",
            "NIRSpecCutoutTool", "nIRSpec_cutout_tool",
            "GeneralCutoutTool", "general_cutout_tool"]
@@ -346,8 +344,11 @@ class NIRSpecCutoutTool(CutoutTool):
         self.initUI()
 
     def initUI(self):
-        path = os.path.join(UI_DIR, 'cutout_tool.ui')
-        loadUi(path, self)
+
+        plugin_path = os.path.dirname(os.path.abspath(__file__))
+        ui_dir = os.path.join(plugin_path, "ui")
+        ui_path = os.path.join(ui_dir, 'cutout_tool.ui')
+        loadUi(ui_path, self)
         self.statusBar().showMessage("Waiting for user input")
 
         self.progress_bar = self.progressBar
@@ -801,8 +802,11 @@ class GeneralCutoutTool(CutoutTool):
         self.initUI()
 
     def initUI(self):
-        path = os.path.join(UI_DIR, 'general_cutout_tool.ui')
-        loadUi(path, self)
+
+        plugin_path = os.path.dirname(os.path.abspath(__file__))
+        ui_dir = os.path.join(plugin_path, "ui")
+        ui_path = os.path.join(ui_dir, 'general_cutout_tool.ui')
+        loadUi(ui_path, self)
         self.statusBar().showMessage("Waiting for user input")
 
         self.progress_bar = self.progressBar

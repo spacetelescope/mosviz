@@ -14,8 +14,7 @@ import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS
 
-from .. import UI_DIR
-from .cutout_tool import natural_sort, unique_id, NIRSpecCutoutTool
+from mosviz.plugins.cutout_tool import natural_sort, unique_id, NIRSpecCutoutTool
 
 __all__ = ["NIRSpecTableGen", "nIRSpec_table_gen"]
 
@@ -45,8 +44,10 @@ class NIRSpecTableGen(QMainWindow):
         Set up user interface by loading the .ui file
         and configuring items in the GUI.
         """
-        path = os.path.join(UI_DIR, 'table_generator.ui')
-        loadUi(path, self)
+        plugin_path = os.path.dirname(os.path.abspath(__file__))
+        ui_dir = os.path.join(plugin_path, "ui")
+        ui_path = os.path.join(ui_dir, 'table_generator.ui')
+        loadUi(ui_path, self)
 
         self.setWindowTitle(self.title)
         self.statusBar().showMessage("Waiting for user input")
