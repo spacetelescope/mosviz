@@ -267,7 +267,7 @@ class MOSVizViewer(DataViewer):
                                  buttons=QMessageBox.Ok)
             return False
 
-        components = [data.get_component(cid) for cid in data.visible_components]
+        components = [data.get_component(cid) for cid in data.main_components]
 
         categorical = [c for c in components if c.categorical]
         if len(categorical) < 3:
@@ -316,7 +316,7 @@ class MOSVizViewer(DataViewer):
                                  buttons=QMessageBox.Ok)
             return False
 
-        components = [data.get_component(cid) for cid in data.visible_components]
+        components = [data.get_component(cid) for cid in data.main_components]
         categorical = [c for c in components if c.categorical]
         if len(categorical) < 3:
             QMessageBox.critical(self, "Error", "MOSViz viewer expected at least "
@@ -896,7 +896,8 @@ class MOSVizViewer(DataViewer):
         if level2_data:
             self.toolbar.exposure_select.clear()
             self.toolbar.exposure_select.addItems(['Level 3'])
-            self.toolbar.exposure_select.addItems([component.label for component in level2_data.visible_components])
+            components = level2_data.main_components + level2_data.derived_components
+            self.toolbar.exposure_select.addItems([component.label for component in components])
             self._set_exposure_navigation(0)
         else:
             self._set_exposure_navigation(None)
