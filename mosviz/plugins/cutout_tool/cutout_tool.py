@@ -28,6 +28,184 @@ __all__ = ["natural_sort", "unique_id", "CutoutTool",
            "GeneralCutoutTool", "general_cutout_tool"]
 
 
+def make_cutouts(table, imagename, image_label, output_file_format,
+                 output_dir_format, apply_rotation=False,
+                 image_ext=0, clobber=False, verbose=True, ispreview=False):
+    """
+    This function is a modified copy of astroimtools.cutout_tools.make_cutouts.
+    Make cutouts from a 2D image and write them to FITS files.
+
+    Catalog must have the following columns with unit info, where applicable:
+        * ``'id'`` - ID string; no unit necessary.
+        * ``'ra'`` - RA (e.g., in degrees).
+        * ``'dec'`` - DEC (e.g., in degrees).
+        * ``'cutout_x_size'`` - Cutout width (e.g., in arcsec).
+        * ``'cutout_y_size'`` - Cutout height (e.g., in arcsec).
+        * ``'cutout_pa'`` - Cutout angle (e.g., in degrees). This is only
+          use if user chooses to rotate the cutouts. Positive value
+          will result in a clockwise rotation.
+        * ``'spatial_pixel_scale'`` - Pixel scale (e.g., in arcsec/pix).
+
+    The following are no longer used, so they are now optional:
+        * ``'slit_pa'`` - Slit angle (e.g., in degrees).
+        * ``'slit_width'`` - Slit width (e.g., in arcsec).
+        * ``'slit_length'`` - Slit length (e.g., in arcsec).
+
+    Cutouts are organized as follows::
+        working_dir/
+            &lt;image_label&gt;_cutouts/
+                &lt;id&gt;_&lt;image_label&gt;_cutout.fits
+
+    Each cutout image is a simple single-extension FITS with updated WCS.
+    Its header has the following special keywords:
+        * ``OBJ_RA`` - RA of the cutout object in degrees.
+        * ``OBJ_DEC`` - DEC of the cutout object in degrees.
+        * ``OBJ_ROT`` - Rotation of cutout object in degrees.
+    Can add Qt.WindowStaysOnTopHint to supper to keep window ontop.
+
+    Parameters
+    ----------
+    table : QTable
+        Catalog table defining the sources to cut out.
+    imagename : str
+        Image to cut.
+    image_label : str
+        Label to name the cutout sub-directory and filenames.
+    apply_rotation : bool
+        Cutout will be rotated to a given angle. Default is `False`.
+    image_ext : int, optional
+        Image extension to extract header and data. Default is 0.
+    clobber : bool, optional
+        Overwrite existing files. Default is `False`.
+    verbose : bool, optional
+        Print extra info. Default is `True`.
+    """
+    """
+    Now libs:
+
+    """
+    # Optional dependencies...
+    from reproject import reproject_interp
+
+    with fits.open(imagename) as pf:
+        data = pf[image_ext].data
+        wcs = WCS(pf[image_ext].header)
+
+    # It is more efficient to operate on an entire column at once.
+    c = SkyCoord(table['ra'], table['dec'])
+    x = (table['cutout_x_size'] / table['spatial_pixel_scale']).value  # pix
+    y = (table['cutout_y_size'] / table['spatial_pixel_scale']).value  # pix
+    pscl = table['spatial_pixel_scale'].to(u.deg / u.pix)
+
+    # Do not rotate if column is missing.
+    if 'cutout_pa' not in table.colnames:
+        apply_rotation = False
+
+    # Sub-directory, relative to working directory.
+    path = output_dir_format.format(image_label)
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
+
+    # if self.progress_bar is not None:
+    #     self.progress_bar.setMinimum(0)
+    #     self.progress_bar.setMaximum(len(table)-1)
+    #     self.progress_bar.reset()
+    counter = 0
+    success_counter = 0
+    success_table = [False for x in range(len(table['id']))]
+
+    for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
+        # if self.kill:
+        #     return None, None
+        counter += 1
+        # if self.status_bar is not None:
+        #     self.status_bar().showMessage("Making cutouts (%s/%s)"
+        #         %(counter, len(success_table)))
+        # if self.progress_bar is not None:
+        #     self.progress_bar.setValue(counter)
+        QApplication.processEvents()
+
+        if apply_rotation:
+            pix_rot = row['cutout_pa'].to(u.degree).value
+
+            cutout_wcs = WCS(naxis=2)
+            cutout_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
+            cutout_wcs.wcs.crval = [position.ra.deg, position.dec.deg]
+            cutout_wcs.wcs.crpix = [(x_pix - 1) * 0.5, (y_pix - 1) * 0.5]
+
+            try:
+                cutout_wcs.wcs.cd = wcs.wcs.cd
+                cutout_wcs.rotateCD(-pix_rot)
+            except AttributeError:
+                cutout_wcs.wcs.cdelt = wcs.wcs.cdelt
+                cutout_wcs.wcs.crota = [0, -pix_rot]
+
+            cutout_hdr = cutout_wcs.to_header()
+
+            try:
+                cutout_arr = reproject_interp(
+                    (data, wcs), cutout_hdr, shape_out=(y_pix, x_pix), order=2)
+            except Exception:
+                if verbose:
+                    log.info('reproject failed: '
+                             'Skipping {0}'.format(row['id']))
+                continue
+
+            cutout_arr = cutout_arr[0]  # Ignore footprint
+            cutout_hdr['OBJ_ROT'] = (pix_rot, 'Cutout rotation in degrees')
+
+        else:
+            try:
+                cutout = cutcls(position, size=(y_pix, x_pix))
+            except NoConvergence:
+                if verbose:
+                    log.info('WCS solution did not converge: '
+                             'Skipping {0}'.format(row['id']))
+                continue
+            except NoOverlapError:
+                if verbose:
+                    log.info('Cutout is not on image: '
+                             'Skipping {0}'.format(row['id']))
+                continue
+            else:
+                cutout_hdr = cutout.wcs.to_header()
+                cutout_arr = cutout.data
+
+        if np.array_equiv(cutout_arr, 0):
+            if verbose:
+                log.info('No data in cutout: Skipping {0}'.format(row['id']))
+            continue
+
+        fname = os.path.join(
+            path, output_file_format.format(row['id'], image_label))
+
+        # Construct FITS HDU.
+        hdu = fits.PrimaryHDU(cutout_arr)
+        hdu.header.update(cutout_hdr)
+        hdu.header['OBJ_RA'] = (position.ra.deg, 'Cutout object RA in deg')
+        hdu.header['OBJ_DEC'] = (position.dec.deg, 'Cutout object DEC in deg')
+
+        if ispreview:
+            return hdu
+        else:
+            hdu.writeto(fname, overwrite=clobber)
+
+        success_counter += 1
+        success_table[counter-1] = True
+        if verbose:
+            log.info('Wrote {0}'.format(fname))
+
+    # self.progressBar.setValue(counter)
+    QApplication.processEvents()
+
+    if ispreview:
+        return None
+    else:
+        return success_counter, success_table
+
+
 def natural_sort(array):
     """
     Function for natural sort (human sort)
@@ -87,6 +265,7 @@ def unique_id(ID, IDList):
 
     return ID, IDList
 
+
 class CutoutTool(QMainWindow):
 
     def __init__ (self, session, parent=None):
@@ -103,181 +282,6 @@ class CutoutTool(QMainWindow):
         self.output_file_format = '{0}_{1}_cutout.fits' #format(ID, image_label)
 
 
-    def make_cutouts(self, table, imagename, image_label, apply_rotation=False,
-                     image_ext=0, clobber=False, verbose=True, ispreview=False):
-        """
-        This function is a modified copy of astroimtools.cutout_tools.make_cutouts.
-        Make cutouts from a 2D image and write them to FITS files.
-
-        Catalog must have the following columns with unit info, where applicable:
-            * ``'id'`` - ID string; no unit necessary.
-            * ``'ra'`` - RA (e.g., in degrees).
-            * ``'dec'`` - DEC (e.g., in degrees).
-            * ``'cutout_x_size'`` - Cutout width (e.g., in arcsec).
-            * ``'cutout_y_size'`` - Cutout height (e.g., in arcsec).
-            * ``'cutout_pa'`` - Cutout angle (e.g., in degrees). This is only
-              use if user chooses to rotate the cutouts. Positive value
-              will result in a clockwise rotation.
-            * ``'spatial_pixel_scale'`` - Pixel scale (e.g., in arcsec/pix).
-
-        The following are no longer used, so they are now optional:
-            * ``'slit_pa'`` - Slit angle (e.g., in degrees).
-            * ``'slit_width'`` - Slit width (e.g., in arcsec).
-            * ``'slit_length'`` - Slit length (e.g., in arcsec).
-
-        Cutouts are organized as follows::
-            working_dir/
-                &lt;image_label&gt;_cutouts/
-                    &lt;id&gt;_&lt;image_label&gt;_cutout.fits
-
-        Each cutout image is a simple single-extension FITS with updated WCS.
-        Its header has the following special keywords:
-            * ``OBJ_RA`` - RA of the cutout object in degrees.
-            * ``OBJ_DEC`` - DEC of the cutout object in degrees.
-            * ``OBJ_ROT`` - Rotation of cutout object in degrees.
-        Can add Qt.WindowStaysOnTopHint to supper to keep window ontop.
-
-        Parameters
-        ----------
-        table : QTable
-            Catalog table defining the sources to cut out.
-        imagename : str
-            Image to cut.
-        image_label : str
-            Label to name the cutout sub-directory and filenames.
-        apply_rotation : bool
-            Cutout will be rotated to a given angle. Default is `False`.
-        image_ext : int, optional
-            Image extension to extract header and data. Default is 0.
-        clobber : bool, optional
-            Overwrite existing files. Default is `False`.
-        verbose : bool, optional
-            Print extra info. Default is `True`.
-        """
-        """
-        Now libs:
-
-        """
-        # Optional dependencies...
-        from reproject import reproject_interp
-
-        with fits.open(imagename) as pf:
-            data = pf[image_ext].data
-            wcs = WCS(pf[image_ext].header)
-
-        # It is more efficient to operate on an entire column at once.
-        c = SkyCoord(table['ra'], table['dec'])
-        x = (table['cutout_x_size'] / table['spatial_pixel_scale']).value  # pix
-        y = (table['cutout_y_size'] / table['spatial_pixel_scale']).value  # pix
-        pscl = table['spatial_pixel_scale'].to(u.deg / u.pix)
-
-        # Do not rotate if column is missing.
-        if 'cutout_pa' not in table.colnames:
-            apply_rotation = False
-
-        # Sub-directory, relative to working directory.
-        path = self.output_dir_format.format(image_label)
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-        cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
-
-        if self.progress_bar is not None:
-            self.progress_bar.setMinimum(0)
-            self.progress_bar.setMaximum(len(table)-1)
-            self.progress_bar.reset()
-        counter = 0
-        success_counter = 0
-        success_table = [False for x in range(len(table['id']))]
-
-        for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
-            if self.kill:
-                return None, None
-            counter += 1
-            if self.status_bar is not None:
-                self.status_bar().showMessage("Making cutouts (%s/%s)"
-                    %(counter, len(success_table)))
-            if self.progress_bar is not None:
-                self.progress_bar.setValue(counter)
-            QApplication.processEvents()
-
-            if apply_rotation:
-                pix_rot = row['cutout_pa'].to(u.degree).value
-
-                cutout_wcs = WCS(naxis=2)
-                cutout_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
-                cutout_wcs.wcs.crval = [position.ra.deg, position.dec.deg]
-                cutout_wcs.wcs.crpix = [(x_pix - 1) * 0.5, (y_pix - 1) * 0.5]
-
-                try:
-                    cutout_wcs.wcs.cd = wcs.wcs.cd
-                    cutout_wcs.rotateCD(-pix_rot)
-                except AttributeError:
-                    cutout_wcs.wcs.cdelt = wcs.wcs.cdelt
-                    cutout_wcs.wcs.crota = [0, -pix_rot]
-
-                cutout_hdr = cutout_wcs.to_header()
-
-                try:
-                    cutout_arr = reproject_interp(
-                        (data, wcs), cutout_hdr, shape_out=(y_pix, x_pix), order=2)
-                except Exception:
-                    if verbose:
-                        log.info('reproject failed: '
-                                 'Skipping {0}'.format(row['id']))
-                    continue
-
-                cutout_arr = cutout_arr[0]  # Ignore footprint
-                cutout_hdr['OBJ_ROT'] = (pix_rot, 'Cutout rotation in degrees')
-
-            else:
-                try:
-                    cutout = cutcls(position, size=(y_pix, x_pix))
-                except NoConvergence:
-                    if verbose:
-                        log.info('WCS solution did not converge: '
-                                 'Skipping {0}'.format(row['id']))
-                    continue
-                except NoOverlapError:
-                    if verbose:
-                        log.info('Cutout is not on image: '
-                                 'Skipping {0}'.format(row['id']))
-                    continue
-                else:
-                    cutout_hdr = cutout.wcs.to_header()
-                    cutout_arr = cutout.data
-
-            if np.array_equiv(cutout_arr, 0):
-                if verbose:
-                    log.info('No data in cutout: Skipping {0}'.format(row['id']))
-                continue
-
-            fname = os.path.join(
-                path, self.output_file_format.format(row['id'], image_label))
-
-            # Construct FITS HDU.
-            hdu = fits.PrimaryHDU(cutout_arr)
-            hdu.header.update(cutout_hdr)
-            hdu.header['OBJ_RA'] = (position.ra.deg, 'Cutout object RA in deg')
-            hdu.header['OBJ_DEC'] = (position.dec.deg, 'Cutout object DEC in deg')
-
-            if ispreview:
-                return hdu
-            else:
-                hdu.writeto(fname, overwrite=clobber)
-
-            success_counter += 1
-            success_table[counter-1] = True
-            if verbose:
-                log.info('Wrote {0}'.format(fname))
-
-        self.progressBar.setValue(counter)
-        QApplication.processEvents()
-
-        if ispreview:
-            return None
-        else:
-            return success_counter, success_table
 
     def get_spatial_pixel_scale(self, imagename):
         """
@@ -661,8 +665,9 @@ class NIRSpecCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        success_counter, success_table = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
+        success_counter, success_table = make_cutouts(
+            t, self.img_path, programName, self.output_file_format,
+                 self.output_dir_format, clobber=True,
             apply_rotation=True)
 
         if self.kill:
@@ -756,8 +761,9 @@ class NIRSpecCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        hdu = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
+        hdu = make_cutouts(
+            t, self.img_path, programName, self.output_file_format,
+                 self.output_dir_format, clobber=True,
             apply_rotation=True, ispreview=True)
 
         self.progress_bar.setMinimum(0)
@@ -1047,8 +1053,9 @@ class GeneralCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        success_counter, success_table = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
+        success_counter, success_table = make_cutouts(
+            t, self.img_path, programName, self.output_file_format,
+                 self.output_dir_format, clobber=True,
             apply_rotation=True)
 
         if self.kill:
@@ -1135,8 +1142,9 @@ class GeneralCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        hdu = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
+        hdu = make_cutouts(
+            t, self.img_path, programName, self.output_file_format,
+                 self.output_dir_format, clobber=True,
             apply_rotation=True, ispreview=True)
 
         self.progress_bar.setMinimum(0)
