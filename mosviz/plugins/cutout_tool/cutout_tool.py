@@ -28,9 +28,10 @@ __all__ = ["natural_sort", "unique_id", "CutoutTool",
            "GeneralCutoutTool", "general_cutout_tool"]
 
 
-def make_cutouts(table, imagename, image_label, output_file_format,
-                 output_dir_format, apply_rotation=False,
-                 image_ext=0, clobber=False, verbose=True, ispreview=False):
+def make_cutouts(table, imagename, image_label, output_file_format=None,
+                 output_dir_format=None, apply_rotation=False,
+                 image_ext=0, clobber=False, verbose=True, ispreview=False,
+                 gui_access=None):
     """
     This function is a modified copy of astroimtools.cutout_tools.make_cutouts.
     Make cutouts from a 2D image and write them to FITS files.
@@ -71,7 +72,11 @@ def make_cutouts(table, imagename, image_label, output_file_format,
         Image to cut.
     image_label : str
         Label to name the cutout sub-directory and filenames.
-    apply_rotation : bool
+    output_file_format : str, optional
+        Typically '{0}.fits'
+    output_dir_format : str, optional
+        Typically '{0}_cutouts'
+    apply_rotation : bool, optional
         Cutout will be rotated to a given angle. Default is `False`.
     image_ext : int, optional
         Image extension to extract header and data. Default is 0.
@@ -79,11 +84,20 @@ def make_cutouts(table, imagename, image_label, output_file_format,
         Overwrite existing files. Default is `False`.
     verbose : bool, optional
         Print extra info. Default is `True`.
+    gui_access : _GUIAccess, optional
+        Object that allows control and monitoring of the internal
+        algorithm by a GUI. Set to None if no GUI is involved.
     """
     """
     Now libs:
 
     """
+    # Define output names.
+    if not output_file_format:
+        output_file_format = '{0}.fits'
+    if not output_dir_format:
+        output_dir_format = '{0}_cutouts'
+
     # Optional dependencies...
     from reproject import reproject_interp
 
@@ -108,23 +122,20 @@ def make_cutouts(table, imagename, image_label, output_file_format,
 
     cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
 
-    # if self.progress_bar is not None:
-    #     self.progress_bar.setMinimum(0)
-    #     self.progress_bar.setMaximum(len(table)-1)
-    #     self.progress_bar.reset()
+    if gui_access:
+        gui_access.initialize(len(table)-1)
+
     counter = 0
     success_counter = 0
     success_table = [False for x in range(len(table['id']))]
 
     for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
-        # if self.kill:
-        #     return None, None
         counter += 1
-        # if self.status_bar is not None:
-        #     self.status_bar().showMessage("Making cutouts (%s/%s)"
-        #         %(counter, len(success_table)))
-        # if self.progress_bar is not None:
-        #     self.progress_bar.setValue(counter)
+        if gui_access:
+            gui_access.report(counter, len(success_table))
+            if gui_access.kill:
+                return None, None
+
         QApplication.processEvents()
 
         if apply_rotation:
@@ -197,13 +208,79 @@ def make_cutouts(table, imagename, image_label, output_file_format,
         if verbose:
             log.info('Wrote {0}'.format(fname))
 
-    # self.progressBar.setValue(counter)
+    if gui_access:
+        gui_access.setValue(counter)
+
     QApplication.processEvents()
 
     if ispreview:
         return None
     else:
         return success_counter, success_table
+
+
+class _GUIAccess():
+    """
+    Private class that enables the make_cutouts function to
+    report its status and progress to the mosviz cutout
+    tools GUIs. The API is defined by the make_cutouts function
+    itself.
+
+    Parameters
+    ---------
+    progress_bar : QProgressBar
+        a progress bar
+    status_bar : QStatusBar
+        a status bar
+    kill : bool, optional
+        a flag that allows the GUI to kill the cutout algorithm
+    """
+    def __init__(self, progress_bar, status_bar, kill=False):
+        self.progress_bar = progress_bar
+        self.status_bar = status_bar
+        self.kill = kill
+
+    def initialize(self, maximum):
+        """
+        Initialize the report.
+
+        Parameters
+        ---------
+        maximum : int
+            The maximum value to set in a progress bar
+        """
+        if self.progress_bar is not None:
+            self.progress_bar.setMinimum(0)
+            self.progress_bar.setMaximum(maximum)
+            self.progress_bar.reset()
+
+    def report(self, counter, maximum):
+        """
+        Report in progress and status bars.
+
+        Parameters
+        ----------
+        counter : int
+            The cutout being processed presently
+        maximum : int
+            The maximum value set in the progress bar
+        """
+        if self.status_bar is not None:
+            self.status_bar().showMessage("Making cutouts (%s/%s)"
+                %(counter, maximum))
+        if self.progress_bar is not None:
+            self.progress_bar.setValue(counter)
+
+    def setValue(self, value):
+        """
+        Sets a value in the progress bar.
+
+        Parameters
+        ----------
+        value : int
+            The value to set in the progress bar
+        """
+        self.progress_bar.setValue(value)
 
 
 def natural_sort(array):
@@ -281,8 +358,6 @@ class CutoutTool(QMainWindow):
         self.output_dir_format = '{0}_cutouts' #format(image_label)
         self.output_file_format = '{0}_{1}_cutout.fits' #format(ID, image_label)
 
-
-
     def get_spatial_pixel_scale(self, imagename):
         """
         Get spatial pixel scale from image.
@@ -310,8 +385,6 @@ class CutoutTool(QMainWindow):
             parent is not self.session.application):
             parent.raise_()
         super(CutoutTool, self).closeEvent(event)
-
-
 
 
 class NIRSpecCutoutTool(CutoutTool):
@@ -346,6 +419,9 @@ class NIRSpecCutoutTool(CutoutTool):
          '*.fts', '*.FTS', '*.fits.Z', '*.fits.z', '*.fitz',
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
+
+        self.gui_access = _GUIAccess(self.progress_bar, self.status_bar,
+                                     self.kill)
 
     def initUI(self):
 
@@ -666,9 +742,10 @@ class NIRSpecCutoutTool(CutoutTool):
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
         success_counter, success_table = make_cutouts(
-            t, self.img_path, programName, self.output_file_format,
-                 self.output_dir_format, clobber=True,
-            apply_rotation=True)
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, gui_access=self.gui_access)
 
         if self.kill:
             self.kill = False
@@ -762,9 +839,10 @@ class NIRSpecCutoutTool(CutoutTool):
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
         hdu = make_cutouts(
-            t, self.img_path, programName, self.output_file_format,
-                 self.output_dir_format, clobber=True,
-            apply_rotation=True, ispreview=True)
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, ispreview=True, gui_access=self.gui_access)
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
@@ -783,7 +861,6 @@ class NIRSpecCutoutTool(CutoutTool):
             import matplotlib.pyplot as plt
             plt.imshow(hdu.data)
             plt.show()
-
 
 
 class GeneralCutoutTool(CutoutTool):
@@ -806,6 +883,9 @@ class GeneralCutoutTool(CutoutTool):
          '*.fts', '*.FTS', '*.fits.Z', '*.fits.z', '*.fitz',
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
+
+        self.gui_access = _GUIAccess(self.progress_bar, self.status_bar,
+                                     self.kill)
 
     def initUI(self):
 
@@ -1054,9 +1134,10 @@ class GeneralCutoutTool(CutoutTool):
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
         success_counter, success_table = make_cutouts(
-            t, self.img_path, programName, self.output_file_format,
-                 self.output_dir_format, clobber=True,
-            apply_rotation=True)
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, gui_access=self.gui_access)
 
         if self.kill:
             self.kill = False
@@ -1143,9 +1224,10 @@ class GeneralCutoutTool(CutoutTool):
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
         hdu = make_cutouts(
-            t, self.img_path, programName, self.output_file_format,
-                 self.output_dir_format, clobber=True,
-            apply_rotation=True, ispreview=True)
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, ispreview=True, gui_access=self.gui_access)
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
