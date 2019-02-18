@@ -23,7 +23,7 @@ from astropy.coordinates import SkyCoord
 from astropy.nddata.utils import (Cutout2D, NoOverlapError)
 from astropy import log
 
-__all__ = ["natural_sort", "unique_id", "CutoutTool",
+__all__ = ["make_cutouts", "natural_sort", "unique_id", "CutoutTool",
            "NIRSpecCutoutTool", "nIRSpec_cutout_tool",
            "GeneralCutoutTool", "general_cutout_tool"]
 
