@@ -209,7 +209,7 @@ def make_cutouts(table, imagename, image_label, output_file_format=None,
             log.info('Wrote {0}'.format(fname))
 
     if gui_access:
-        gui_access.setValue(counter)
+        gui_access.set_value(counter)
 
     QApplication.processEvents()
 
@@ -222,9 +222,8 @@ def make_cutouts(table, imagename, image_label, output_file_format=None,
 class _GUIAccess():
     """
     Private class that enables the make_cutouts function to
-    report its status and progress to the mosviz cutout
-    tools GUIs. The API is defined by the make_cutouts function
-    itself.
+    report its status and progress to the mosviz cutout tools
+    GUIs. The API is defined by the make_cutouts function itself.
 
     Parameters
     ---------
@@ -271,7 +270,7 @@ class _GUIAccess():
         if self.progress_bar is not None:
             self.progress_bar.setValue(counter)
 
-    def setValue(self, value):
+    def set_value(self, value):
         """
         Sets a value in the progress bar.
 
