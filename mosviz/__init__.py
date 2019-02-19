@@ -22,10 +22,6 @@ class UnsupportedPythonError(Exception):
 if sys.version_info < tuple((int(val) for val in __minimum_python_version__.split('.'))):
     raise UnsupportedPythonError("mosviz does not support Python < {}".format(__minimum_python_version__))
 
-if not _ASTROPY_SETUP_:
-    # For egg_info test builds to pass, put package imports here.
-    pass
-
 
 def setup():
     from .viewers.mos_viewer import MOSVizViewer
