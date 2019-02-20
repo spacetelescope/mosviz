@@ -18,6 +18,7 @@ import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS\
 
+# these will eventually be imported from astropy.nddata.utils
 from .cutout_lib import cutouts_from_fits
 
 __all__ = ["go_make_cutouts", "natural_sort",
@@ -82,7 +83,7 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
         Overwrite existing files. Default is `False`.
     verbose : bool, optional
         Print extra info. Default is `True`.
-    gui_access : _GUIAccess, optional
+    gui_access : Report, optional
         Object that allows control and monitoring of the internal
         algorithm by a GUI. Set to None if no GUI is involved.
     """
@@ -109,30 +110,23 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
     table.rename_column("cutout_x_size", "cutout_width")
     table.rename_column("cutout_y_size", "cutout_height")
 
-    fits_cutouts = cutouts_from_fits(imagename, table, output_dir=path, overwrite=True, verbose=True)
+    fits_cutouts = cutouts_from_fits(imagename, table, output_dir=path,
+                                     overwrite=True, verbose=True)
 
     if ispreview:
         return None
     else:
+        success_list = [True if type(e)==fits.hdu.image.PrimaryHDU else False
+                        for e in fits_cutouts]
+        success_counter = success_list.count(True)
+        return success_counter, success_list
 
 
-        #TODO placeholder to force it to go to the end.
-        # We need to build a success_table by replacing the PrimaryHUD
-        # objects in the list with True, and make the success_counter
-        # count these.
-
-        success_table = fits_cutouts
-        success_counter = len(fits_cutouts)
-
-
-        return success_counter, success_table
-
-
-class _GUIAccess():
+class Report():
     """
-    Private class that enables the make_cutouts functions to
-    report their status and progress to the mosviz cutout tools
-    GUIs.
+    Class that enables the go_make_cutouts and related functions in
+    nddata.utils to report their status and progress to the mosviz
+    cutout tools GUIs.
 
     Parameters
     ---------
@@ -157,29 +151,31 @@ class _GUIAccess():
         maximum : int
             The maximum value to set in a progress bar
         """
+        self.maximum = maximum
+
         if self.progress_bar is not None:
             self.progress_bar.setMinimum(0)
-            self.progress_bar.setMaximum(maximum)
+            self.progress_bar.setMaximum(self.maximum)
             self.progress_bar.reset()
 
-    def report(self, counter, maximum):
+    def report(self, value, message="Making cutouts"):
         """
         Report in progress and status bars.
 
         Parameters
         ----------
-        counter : int
-            The cutout being processed presently
-        maximum : int
-            The maximum value set in the progress bar
+        value : int
+            Current value for progress bar
+        message : str
+            Text to display in status bar
         """
         if self.status_bar is not None:
-            self.status_bar().showMessage("Making cutouts (%s/%s)"
-                %(counter, maximum))
+            self.status_bar().showMessage(
+                message+("(%s/%s)"%(value, self.maximum)))
         if self.progress_bar is not None:
-            self.progress_bar.setValue(counter)
+            self.progress_bar.setValue(value)
 
-    def set_value(self, value):
+    def set_progress_value(self, value):
         """
         Sets a value in the progress bar.
 
@@ -328,7 +324,7 @@ class NIRSpecCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
-        self.gui_access = _GUIAccess(self.progress_bar, self.status_bar,
+        self.gui_access = Report(self.progress_bar, self.status_bar,
                                      self.kill)
 
     def initUI(self):
@@ -791,8 +787,8 @@ class GeneralCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
-        self.gui_access = _GUIAccess(self.progress_bar, self.status_bar,
-                                     self.kill)
+        self.gui_access = Report(self.progress_bar, self.status_bar,
+                                 self.kill)
 
     def initUI(self):
 

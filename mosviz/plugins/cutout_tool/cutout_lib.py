@@ -17,6 +17,11 @@ from astropy.nddata.utils import (Cutout2D, NoOverlapError)
 from astropy import log
 
 
+
+# These two functions should be replaced by
+# imports from astropy.nddata.utils
+
+
 def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True):
     """Make cutouts of catalog targets from a 2D image array.
     Expects input image WCS to be in the TAN projection.
@@ -222,7 +227,7 @@ def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True):
 
 
 def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
-                          output_dir=None, overwrite=False, verbose=True):
+                      output_dir=None, overwrite=False, verbose=True):
     """Wrapper for the make_cutouts function. This function will take in a single
     fits image and return an array containing a list of cutouts as fits hdus. It
     will also save the cutouts to file if requested.
