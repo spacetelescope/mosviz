@@ -177,8 +177,8 @@ class Report():
     """
     Class that enables the go_make_cutouts and related functions in
     nddata.utils to report their status and progress to the mosviz cutout
-    tools GUIs. These classes call function report_progress(*args, **kwargs)
-    which acts as interface to this class.
+    tools GUIs. These classes call function report(*args, **kwargs) which
+    acts as interface to this class.
 
     Parameters
     ---------
