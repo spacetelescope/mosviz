@@ -18,7 +18,7 @@ import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS\
 
-# these will eventually be imported from astropy.nddata.utils
+# this will be eventually imported from astropy.nddata.utils
 from .cutout_lib import cutouts_from_fits
 
 __all__ = ["go_make_cutouts", "natural_sort",
@@ -30,7 +30,7 @@ __all__ = ["go_make_cutouts", "natural_sort",
 def go_make_cutouts(table, imagename, image_label, output_file_format=None,
                  output_dir_format=None, apply_rotation=False,
                  image_ext=0, clobber=False, verbose=True, ispreview=False,
-                 gui_access=None):
+                 report=None):
     """
     This function is a modified copy of astroimtools.cutout_tools.make_cutouts.
     Make cutouts from a 2D image and write them to FITS files.
@@ -83,13 +83,9 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
         Overwrite existing files. Default is `False`.
     verbose : bool, optional
         Print extra info. Default is `True`.
-    gui_access : Report, optional
-        Object that allows control and monitoring of the internal
-        algorithm by a GUI. Set to None if no GUI is involved.
-    """
-    """
-    Now libs:
-
+    report : function, optional
+        Call back that allows monitoring of the internal algorithm by the
+        caller. Set to None if no reporting is needed.
     """
     # Define output names.
     if not output_file_format:
@@ -102,17 +98,12 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
     if not os.path.exists(path):
         os.mkdir(path)
 
-    if gui_access:
-        gui_access.initialize(len(table)-1)
-
-    success_table = [False for x in range(len(table['id']))]
-
     table.rename_column("cutout_x_size", "cutout_width")
     table.rename_column("cutout_y_size", "cutout_height")
 
     fits_cutouts = cutouts_from_fits(imagename, table, output_dir=path,
-                                     overwrite=True, verbose=True)
-
+                                     overwrite=True, verbose=True,
+                                     report=report)
     if ispreview:
         return None
     else:
@@ -120,71 +111,6 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
                         for e in fits_cutouts]
         success_counter = success_list.count(True)
         return success_counter, success_list
-
-
-class Report():
-    """
-    Class that enables the go_make_cutouts and related functions in
-    nddata.utils to report their status and progress to the mosviz
-    cutout tools GUIs.
-
-    Parameters
-    ---------
-    progress_bar : QProgressBar
-        a progress bar
-    status_bar : QStatusBar
-        a status bar
-    kill : bool, optional
-        a flag that allows the GUI to kill the cutout algorithm
-    """
-    def __init__(self, progress_bar, status_bar, kill=False):
-        self.progress_bar = progress_bar
-        self.status_bar = status_bar
-        self.kill = kill
-
-    def initialize(self, maximum):
-        """
-        Initialize the report.
-
-        Parameters
-        ---------
-        maximum : int
-            The maximum value to set in a progress bar
-        """
-        self.maximum = maximum
-
-        if self.progress_bar is not None:
-            self.progress_bar.setMinimum(0)
-            self.progress_bar.setMaximum(self.maximum)
-            self.progress_bar.reset()
-
-    def report(self, value, message="Making cutouts"):
-        """
-        Report in progress and status bars.
-
-        Parameters
-        ----------
-        value : int
-            Current value for progress bar
-        message : str
-            Text to display in status bar
-        """
-        if self.status_bar is not None:
-            self.status_bar().showMessage(
-                message+("(%s/%s)"%(value, self.maximum)))
-        if self.progress_bar is not None:
-            self.progress_bar.setValue(value)
-
-    def set_progress_value(self, value):
-        """
-        Sets a value in the progress bar.
-
-        Parameters
-        ----------
-        value : int
-            The value to set in the progress bar
-        """
-        self.progress_bar.setValue(value)
 
 
 def natural_sort(array):
@@ -245,6 +171,91 @@ def unique_id(ID, IDList):
     ID = ID+"_%s" % (IDList[ID])
 
     return ID, IDList
+
+
+class Report():
+    """
+    Class that enables the go_make_cutouts and related functions in
+    nddata.utils to report their status and progress to the mosviz cutout
+    tools GUIs. These classes call function report_progress(*args, **kwargs)
+    which acts as interface to this class.
+
+    Parameters
+    ---------
+    progress_bar : QProgressBar
+        a progress bar
+    status_bar : QStatusBar
+        a status bar
+    kill : bool, optional
+        a flag that allows the GUI to kill the cutout algorithm
+    """
+    def __init__(self, progress_bar, status_bar, kill=False):
+        self.progress_bar = progress_bar
+        self.status_bar = status_bar
+        self.kill = kill
+
+    def __call__(self, *args, **kwargs):
+        """
+        Callable form.
+
+        Parameters
+        ---------
+        args : tuple
+            One int value can be passed; it is interpreted as the current
+            value for the progress bar
+        kwargs : dict
+            'initialize' calls the initialize method
+            'message' is the message passed to the initialize method
+        """
+        if 'initialize' in kwargs:
+            self.initialize(kwargs['initialize'], message=kwargs['message'])
+        if len(args) == 1:
+            self.report(args[0])
+
+    def initialize(self, maximum, message="Making cutouts"):
+        """
+        Initialize the report.
+
+        Parameters
+        ---------
+        maximum : int
+            The maximum value to set in a progress bar
+        message : str
+            Text to display in status bar
+        """
+        self.maximum = maximum
+        self.message = message
+
+        if self.progress_bar is not None:
+            self.progress_bar.setMinimum(0)
+            self.progress_bar.setMaximum(self.maximum)
+            self.progress_bar.reset()
+
+        QApplication.processEvents()
+
+    def report(self, value, message=None):
+        """
+        Report in progress and status bars.
+
+        Parameters
+        ----------
+        value : int
+            Current value for progress bar
+        message : str
+            Text to display in status bar. If None, the text defined
+            at initialization time is used.
+        """
+        if self.status_bar is not None:
+            msg = self.message
+            if message != None:
+                msg = message
+            self.status_bar().showMessage(
+                msg + ("(%s/%s)"%(value, self.maximum)))
+
+        if self.progress_bar is not None:
+            self.progress_bar.setValue(value)
+
+        QApplication.processEvents()
 
 
 class CutoutTool(QMainWindow):
@@ -324,8 +335,7 @@ class NIRSpecCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
-        self.gui_access = Report(self.progress_bar, self.status_bar,
-                                     self.kill)
+        self.report = Report(self.progress_bar, self.status_bar, self.kill)
 
     def initUI(self):
 
@@ -522,9 +532,16 @@ class NIRSpecCutoutTool(CutoutTool):
 
         spatial_pixel_scale = self.get_spatial_pixel_scale(self.img_path)
 
+        counter = 0
+        self.report.initialize(len(fb))
+
         #Extract info from spectra files and save to catalog.
         for idx, fn in enumerate(fb): #For file name in file base:
             QApplication.processEvents()
+
+            counter += 1
+            self.report.report(counter, message="Making catalog")
+
             row = []
             #Catch file error or load WCS:
             filex1d = fn
@@ -648,7 +665,7 @@ class NIRSpecCutoutTool(CutoutTool):
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
-            apply_rotation=True, gui_access=self.gui_access)
+            apply_rotation=True, report=self.report)
 
         if self.kill:
             self.kill = False
@@ -745,7 +762,7 @@ class NIRSpecCutoutTool(CutoutTool):
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
-            apply_rotation=True, ispreview=True, gui_access=self.gui_access)
+            apply_rotation=True, ispreview=True, report=self.report)
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
@@ -787,7 +804,7 @@ class GeneralCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
-        self.gui_access = Report(self.progress_bar, self.status_bar,
+        self.report = Report(self.progress_bar, self.status_bar,
                                  self.kill)
 
     def initUI(self):
@@ -1041,7 +1058,7 @@ class GeneralCutoutTool(CutoutTool):
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
-            apply_rotation=True, gui_access=self.gui_access)
+            apply_rotation=True, report=self.report)
 
         if self.kill:
             self.kill = False
@@ -1131,7 +1148,7 @@ class GeneralCutoutTool(CutoutTool):
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
-            apply_rotation=True, ispreview=True, gui_access=self.gui_access)
+            apply_rotation=True, ispreview=True, report=self.report)
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
