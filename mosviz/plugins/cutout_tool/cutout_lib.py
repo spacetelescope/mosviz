@@ -394,6 +394,9 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
     cutouts = make_cutouts(data=data, catalog=catalog, wcs=wcs,
                            origin=origin, verbose=verbose, report=report)
 
+    if report:
+        report(initialize=len(cutouts), message="Writing files")
+
     # Convert cutouts to fits hdus.
     # Save the hdus to file if requested:
     fits_cutouts = []
@@ -426,5 +429,8 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
 
         # Add cutout to output list
         fits_cutouts.append(hdu)
+
+        if report:
+            report(idx)
 
     return fits_cutouts
