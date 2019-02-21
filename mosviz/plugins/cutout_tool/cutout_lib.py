@@ -313,30 +313,30 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
     --------
     Given a list of Hubble Ultra Deep Field RA and Dec coords,
     you may use the tool as follows:
-        >>> from astropy.table import Table
-        >>> import astropy.units as u
-
-        >>> ra = [53.18782913, 53.14794797, 53.15059559] * u.deg
-        >>> dec = [-27.79405589, -27.77392421, -27.77158621] * u.deg
-        >>> ids = ["Galax_0", 123, 53.15059559 * u.deg]
-        >>> cutout_width = cutout_height = [3.0, 4.0, 3.0] * u.arcsec
-
-        >>> catalog = Table(
-        ...     data=[ids, ra, dec, cutout_width, cutout_height],
-        ...     names=['id', 'ra', 'dec', 'cutout_width', 'cutout_height'])
-
-        # To get a list of PrimaryHDU objects:
-        >>> cutouts = cutouts_from_fits('h_udf_wfc_b_drz_img.fits', catalog)
-        # To save to fits file provide an output dir:
-        >>> cutouts = cutouts_from_fits('h_udf_wfc_b_drz_img.fits', catalog, output_dir='~/cutouts')
-
-        # The input image can be read in before the function call:
-        >>> image = fits.open('h_udf_wfc_b_drz_img.fits')
-        >>> cutouts = cutouts_from_fits(image, catalog, image_ext=0)
-
-        # If the above catalog table is saved in an ECSV file with the proper units information:
-        >>> catalog.write('catalog.ecsv', format='ascii.ecsv')
-        >>> cutouts = cutouts_from_fits('h_udf_wfc_b_drz_img.fits', 'catalog.ecsv')
+        # >>> from astropy.table import Table
+        # >>> import astropy.units as u
+        #
+        # >>> ra = [53.18782913, 53.14794797, 53.15059559] * u.deg
+        # >>> dec = [-27.79405589, -27.77392421, -27.77158621] * u.deg
+        # >>> ids = ["Galax_0", 123, 53.15059559 * u.deg]
+        # >>> cutout_width = cutout_height = [3.0, 4.0, 3.0] * u.arcsec
+        #
+        # >>> catalog = Table(
+        # ...     data=[ids, ra, dec, cutout_width, cutout_height],
+        # ...     names=['id', 'ra', 'dec', 'cutout_width', 'cutout_height'])
+        #
+        # # To get a list of PrimaryHDU objects:
+        # >>> cutouts = cutouts_from_fits('h_udf_wfc_b_drz_img.fits', catalog)
+        # # To save to fits file provide an output dir:
+        # >>> cutouts = cutouts_from_fits('h_udf_wfc_b_drz_img.fits', catalog, output_dir='~/cutouts')
+        #
+        # # The input image can be read in before the function call:
+        # >>> image = fits.open('h_udf_wfc_b_drz_img.fits')
+        # >>> cutouts = cutouts_from_fits(image, catalog, image_ext=0)
+        #
+        # # If the above catalog table is saved in an ECSV file with the proper units information:
+        # >>> catalog.write('catalog.ecsv', format='ascii.ecsv')
+        # >>> cutouts = cutouts_from_fits('h_udf_wfc_b_drz_img.fits', 'catalog.ecsv')
     """
     if report:
         report(initialize=3, message="Reading catalog")
