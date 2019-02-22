@@ -69,6 +69,8 @@ class MOSVizViewer(DataViewer):
         self.textChangedAt = None
         self.mask = None
         self.cutout_wcs = None
+        self.level2_data = None
+        self.spec2d_data = None
 
         self.catalog = None
         self.current_row = None
@@ -618,6 +620,15 @@ class MOSVizViewer(DataViewer):
         colname_spectrum2d = self.catalog.meta["special_columns"]["spectrum2d"]
         colname_cutout = self.catalog.meta["special_columns"]["cutout"]
 
+        level2_data = None
+        if "level2" in self.catalog.meta["loaders"]:
+            loader_level2 = LEVEL2_LOADERS[self.catalog.meta["loaders"]["level2"]]
+            colname_level2 = self.catalog.meta["special_columns"]["level2"]
+
+            level2_basename = os.path.basename(row[colname_level2])
+            if level2_basename != "None":
+                level2_data = loader_level2(row[colname_level2])
+
         spec1d_basename = os.path.basename(row[colname_spectrum1d])
         if spec1d_basename == "None":
             spec1d_data = None
@@ -640,7 +651,10 @@ class MOSVizViewer(DataViewer):
         self._update_data_components(spec2d_data, key='spectrum2d')
         self._update_data_components(image_data, key='cutout')
 
-        self.render_data(row, spec1d_data, spec2d_data, image_data)
+        self.level2_data = level2_data
+        self.spec2d_data = spec2d_data
+
+        self.render_data(row, spec1d_data, spec2d_data, image_data, level2_data)
 
     def load_exposure(self, index):
         '''
