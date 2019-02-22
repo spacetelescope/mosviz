@@ -68,8 +68,7 @@ def nirspec_level2_reader(file_name):
     Data Loader for level2 products.
     Uses extension information to index
     fits hdu list. The ext info is included
-    in the file_name as follows:
-        <file_path>[<ext>]
+    in the file_name as follows: <file_path>[<ext>]
     """
     file_name, ext = split_file_name(file_name)
 

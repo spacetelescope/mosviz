@@ -476,7 +476,7 @@ class MOSVizViewer(DataViewer):
 
                 if str(att) in ["comments", "flag"]:
                     self.comments = True
-                elif str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
+                elif str(att) in ['level2', 'spectrum1d', 'spectrum2d', 'cutout']:
                     self.filepath = component._load_log.path
                     p = Path(self.filepath)
                     path = os.path.sep.join(p.parts[:-1])
