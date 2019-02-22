@@ -3,7 +3,9 @@ from astropy.io import fits
 from astropy.wcs import WCS
 from astropy.table import Table
 from glue.core import Data
+from astropy import units as u
 from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
+from specviz.third_party.glue.utils import SpectralCoordinates
 
 from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_cutout_loader, mosviz_level2_loader
 
@@ -21,6 +23,10 @@ def nirspec_spectrum1d_reader(file_name):
 
     data = Data(label="1D Spectrum")
     data.header = header
+
+    # This assumes the wavelength is in microns
+    data.coords = SpectralCoordinates(tab['WAVELENGTH'] * u.micron)
+
     data.add_component(tab['WAVELENGTH'], "Wavelength")
     data.add_component(tab['FLUX'], "Flux")
     data.add_component(tab['ERROR'], "Uncertainty")
