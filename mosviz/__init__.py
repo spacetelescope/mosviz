@@ -10,15 +10,22 @@ This is an Astropy affiliated package.
 from ._astropy_init import *
 # ----------------------------------------------------------------------------
 
-# Enforce Python version check during package import.
-# This is the same check as the one at the top of setup.py
 import sys
+from pkg_resources import get_distribution, DistributionNotFound
+
+try:
+    __version__ = get_distribution(__name__).version
+except DistributionNotFound:
+    # package is not installed
+    __version__ = "unknown"
+
 
 __minimum_python_version__ = "3.6"
 
 class UnsupportedPythonError(Exception):
     pass
 
+# Enforce Python version check during package import.
 if sys.version_info < tuple((int(val) for val in __minimum_python_version__.split('.'))):
     raise UnsupportedPythonError("mosviz does not support Python < {}".format(__minimum_python_version__))
 
@@ -39,3 +46,4 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 UI_DIR = os.path.join(ROOT_DIR, "data", "ui")
 ICON_DIR = os.path.join(ROOT_DIR, "data", "ui", "icons")
+

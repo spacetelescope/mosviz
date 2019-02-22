@@ -1,18 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-__all__ = ['__version__', '__githash__']
-
-# this indicates whether or not we are in the package's setup.py
-try:
-    from .version import version as __version__
-except ImportError:
-    __version__ = ''
-try:
-    from .version import githash as __githash__
-except ImportError:
-    __githash__ = ''
-
-
 import os
 from warnings import warn
 from astropy.config.configuration import (
@@ -24,7 +11,7 @@ from astropy.config.configuration import (
 from astropy.tests.runner import TestRunner
 test = TestRunner.make_test_runner_in(os.path.dirname(__file__))
 test.__test__ = False
-__all__ += ['test']
+__all__ = ['test']
 
 # add these here so we only need to cleanup the namespace at the end
 config_dir = None
