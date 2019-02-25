@@ -203,11 +203,6 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 self.data._load_log.path.split(os.sep)[:-1])
 
             for filename in filenames:
-                if filename.count("[") > 1 or filename.count("]") > 1:
-                    self.validate(False, "File name '{0}' listed in column '{1}' "
-                                         "(currently selected for {2}) contains multiple "
-                                         "brackets.".format(filename, column_name, column))
-                    return
 
                 filename, ext = split_file_name(filename)
 

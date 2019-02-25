@@ -1,5 +1,6 @@
-from glue.config import data_factory
+import re
 
+from glue.config import data_factory
 
 __all__ = ['mosviz_cutout_loader', 'mosviz_spectrum2d_loader',
            'mosviz_spectrum1d_loader', 'mosviz_level2_loader',
@@ -9,6 +10,10 @@ SPECTRUM1D_LOADERS = {}
 SPECTRUM2D_LOADERS = {}
 CUTOUT_LOADERS = {}
 LEVEL2_LOADERS = {}
+
+
+class FileNameSplitting(Exception):
+    pass
 
 
 def split_file_name(file_name):
@@ -30,21 +35,19 @@ def split_file_name(file_name):
     path_and_ext : list
 
     """
-    path = file_name
-    ext = 0
 
-    has_ext = "[" in file_name and "]" in file_name
+    # Create a regular expression to match the expected pattern
+    # (this should be defined outside the function)
+    regex = re.compile(r'^(.+)\[(\d+)\]$')
+    match = regex.match(file_name)
 
-    if has_ext:
-        if file_name.count("[") > 1 or file_name.count("]") > 1:
-            raise Exception("File path contains multiple brackets")
+    if match is None:
+        return [file_name, 0]
 
-        path = file_name[:file_name.find("[")]
-        ext = file_name[file_name.find("[")+1:file_name.find("]")]
-        if ext.isnumeric():
-            ext = int(ext)
-
-    return [path, ext]
+    groups = list(match.groups())
+    if groups[1].isnumeric():
+        groups[1] = int(groups[1])
+    return groups
 
 
 def mosviz_spectrum1d_loader(label, *args, **kwargs):
