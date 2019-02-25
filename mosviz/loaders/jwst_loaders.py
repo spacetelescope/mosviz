@@ -78,6 +78,8 @@ def nirspec_level2_reader(file_name):
     data.header = hdulist[ext].header
     data.coords = coordinates_from_header(hdulist[ext].header)
     data.add_component(hdulist[ext].data, 'Flux')
+
+    # TODO: update uncertainty once data model becomes clear
     data.add_component(np.sqrt(hdulist[ext + 2].data), 'Uncertainty')
 
     hdulist.close()

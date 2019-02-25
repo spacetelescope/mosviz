@@ -11,6 +11,8 @@ SPECTRUM2D_LOADERS = {}
 CUTOUT_LOADERS = {}
 LEVEL2_LOADERS = {}
 
+FILENAME_REGEX = re.compile(r'^(.+)\[(\d+)\]$')
+
 
 def split_file_name(file_name):
     """
@@ -32,10 +34,7 @@ def split_file_name(file_name):
 
     """
 
-    # Create a regular expression to match the expected pattern
-    # (this should be defined outside the function)
-    regex = re.compile(r'^(.+)\[(\d+)\]$')
-    match = regex.match(file_name)
+    match = FILENAME_REGEX.match(file_name)
 
     if match is None:
         return [file_name, 0]
