@@ -7,11 +7,14 @@ from astropy import units as u
 from glue.core.coordinates import coordinates_from_header, coordinates_from_wcs
 from specviz.third_party.glue.utils import SpectralCoordinates
 
-from .utils import mosviz_spectrum1d_loader, mosviz_spectrum2d_loader, mosviz_cutout_loader, mosviz_level2_loader
+from .utils import (mosviz_spectrum1d_loader, mosviz_spectrum2d_loader,
+                    mosviz_cutout_loader, mosviz_level2_loader,
+                    split_file_name)
 
-
-__all__ = ['pre_nirspec_spectrum1d_reader', 'pre_nirspec_spectrum2d_reader',
-           'pre_nircam_image_reader', 'pre_nirspec_level2_reader']
+__all__ = ['nirspec_spectrum1d_reader', 'nirspec_spectrum2d_reader',
+           'nirspec_level2_reader', 'pre_nirspec_spectrum1d_reader',
+           'pre_nirspec_spectrum2d_reader', 'pre_nircam_image_reader',
+           'pre_nirspec_level2_reader']
 
 
 @mosviz_spectrum1d_loader("NIRSpec 1D Spectrum")
@@ -53,6 +56,31 @@ def nirspec_spectrum2d_reader(file_name):
     data.coords = coordinates_from_header(hdulist[1].header)
     data.add_component(hdulist['SCI'].data, 'Flux')
     data.add_component(np.sqrt(hdulist['CON'].data), 'Uncertainty')
+
+    hdulist.close()
+
+    return data
+
+
+@mosviz_level2_loader('NIRSpec 2D Level 2 Spectra')
+def nirspec_level2_reader(file_name):
+    """
+    Data Loader for level2 products.
+    Uses extension information to index
+    fits hdu list. The ext info is included
+    in the file_name as follows: <file_path>[<ext>]
+    """
+    file_name, ext = split_file_name(file_name)
+
+    hdulist = fits.open(file_name)
+
+    data = Data(label="2D Spectra")
+    data.header = hdulist[ext].header
+    data.coords = coordinates_from_header(hdulist[ext].header)
+    data.add_component(hdulist[ext].data, 'Flux')
+
+    # TODO: update uncertainty once data model becomes clear
+    data.add_component(np.sqrt(hdulist[ext + 2].data), 'Uncertainty')
 
     hdulist.close()
 
