@@ -12,10 +12,6 @@ CUTOUT_LOADERS = {}
 LEVEL2_LOADERS = {}
 
 
-class FileNameSplitting(Exception):
-    pass
-
-
 def split_file_name(file_name):
     """
     Used to split fits extension from file name.
