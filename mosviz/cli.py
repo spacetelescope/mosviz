@@ -9,6 +9,9 @@ from glue.main import get_splash, load_data_files, load_plugins
 from qtpy.QtCore import QTimer
 from qtpy import QtGui, QtWidgets
 
+from .plugins.cutout_tool import nIRSpec_cutout_tool
+from .plugins.cutout_tool import general_cutout_tool
+from .plugins.table_generator import nIRSpec_table_gen
 from mosviz import __version__
 
 try:
