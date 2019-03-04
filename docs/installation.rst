@@ -74,6 +74,10 @@ Or, have the `pip <http://pip.pypa.org>`_ package manager do everything for you:
 Either way, the MosView Viewer should show up in the list of available Glue
 viewers.
 
+Alternatively, you can use conda and install a nightly build using::
+
+    $ conda create -n mosviz-nightly -c glueviz/label/dev python=3.6 mosviz
+
 
 SpecViz functionality
 ---------------------

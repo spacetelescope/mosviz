@@ -8,7 +8,7 @@ from glue.utils.qt import load_ui
 from glue.core.data_combo_helper import ComponentIDComboHelper
 
 from ..loaders.utils import (SPECTRUM1D_LOADERS, SPECTRUM2D_LOADERS,
-                             CUTOUT_LOADERS, LEVEL2_LOADERS)
+                             CUTOUT_LOADERS, LEVEL2_LOADERS, split_file_name)
 from .. import UI_DIR
 
 
@@ -203,6 +203,9 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
                 self.data._load_log.path.split(os.sep)[:-1])
 
             for filename in filenames:
+
+                filename, ext = split_file_name(filename)
+
                 file_path = os.path.join(path, filename)
                 base = os.path.basename(file_path)
                 if base != "None":
