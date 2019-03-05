@@ -103,13 +103,11 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
 
     fits_cutouts = cutouts_from_fits(imagename, table, output_dir=path,
                                      overwrite=True, verbose=True)
-    if ispreview:
-        return None
-    else:
-        success_list = [True if type(e)==fits.hdu.image.PrimaryHDU else False
-                        for e in fits_cutouts]
-        success_counter = success_list.count(True)
-        return success_counter, success_list
+    success_list = [True if type(e)==fits.hdu.image.PrimaryHDU else False
+                    for e in fits_cutouts]
+    success_counter = success_list.count(True)
+
+    return fits_cutouts, success_counter, success_list
 
 
 def natural_sort(array):
@@ -665,7 +663,7 @@ class NIRSpecCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        success_counter, success_table = go_make_cutouts(
+        fits_cutouts, success_counter, success_table = go_make_cutouts(
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
@@ -762,11 +760,12 @@ class NIRSpecCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        hdu = go_make_cutouts(
+        fits_cutouts, success_counter, success_table  = go_make_cutouts(
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
             apply_rotation=True, ispreview=True, report=self.report)
+        hdu = fits_cutouts[0]
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
@@ -1064,7 +1063,7 @@ class GeneralCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        success_counter, success_table = go_make_cutouts(
+        fits_cutouts, success_counter, success_table = go_make_cutouts(
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
@@ -1154,11 +1153,12 @@ class GeneralCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        hdu = go_make_cutouts(
+        fits_cutouts, success_counter, success_table = go_make_cutouts(
             t, self.img_path, programName,
             output_file_format=self.output_file_format,
             output_dir_format=self.output_dir_format, clobber=True,
             apply_rotation=True, ispreview=True, report=self.report)
+        hdu = fits_cutouts[0]
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
