@@ -22,8 +22,7 @@ from astropy import log
 # imports from astropy.nddata.utils
 
 
-def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True,
-                 report=None):
+def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True):
     """Make cutouts of catalog targets from a 2D image array.
     Expects input image WCS to be in the TAN projection.
 
@@ -40,9 +39,6 @@ def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True,
         Whether SkyCoord.from_pixel should use 0 or 1-based pixel coordinates.
     verbose : bool
         Print extra info. Default is `True`.
-    report : function, optional
-        Call back that allows monitoring of the internal algorithm by the
-        caller. Set to None if no reporting is needed.
 
     Returns
     -------
@@ -82,9 +78,6 @@ def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True,
         * ``OBJ_ROT`` - Rotation of cutout object in degrees.
 
     """
-    if report:
-        report(initialize=len(catalog), message="Making cutouts")
-
     # Do not rotate if column is missing.
     if 'cutout_pa' in catalog.colnames:
         if catalog['cutout_pa'].unit is None:
@@ -164,12 +157,7 @@ def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True,
 
     cutcls = partial(Cutout2D, data.data, wcs=wcs, mode='partial')
     cutouts = []
-    counter = 0
     for position, x_pix, y_pix, row in zip(coords, width, height, catalog):
-
-        counter += 1
-        if report:
-            report(counter)
 
         if apply_rotation:
             pix_rot = row['cutout_pa'].to(u.degree).value
@@ -240,8 +228,7 @@ def make_cutouts(data, catalog, wcs=None, origin=0, verbose=True,
 
 
 def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
-                      output_dir=None, overwrite=False, verbose=True,
-                      report=None):
+                      output_dir=None, overwrite=False, verbose=True):
     """Wrapper for the make_cutouts function. This function will take in a single
     fits image and return an array containing a list of cutouts as fits hdus. It
     will also save the cutouts to file if requested.
@@ -268,9 +255,6 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
         Overwrite existing files. Default is `False`.
     verbose : bool, optional
         Print extra info. Default is `True`.
-    report : function, optional
-        Call back that allows monitoring of the internal algorithm by the
-        caller. Set to None if no reporting is needed.
 
     Returns
     -------
@@ -338,9 +322,6 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
         # >>> catalog.write('catalog.ecsv', format='ascii.ecsv')
         # >>> cutouts = cutouts_from_fits('h_udf_wfc_b_drz_img.fits', 'catalog.ecsv')
     """
-    if report:
-        report(initialize=3, message="Reading catalog")
-
     save_to_file = output_dir is not None
 
     # read in the catalog file:
@@ -349,9 +330,6 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
     elif not isinstance(catalog, Table):
         raise TypeError("Catalog should be an astropy.table.table.Table or"
                         " file name, got {0} instead".format(type(catalog)))
-
-    if report:
-        report(1, message="Reading input image")
 
     # Load data and wcs:
     if isinstance(image, str):
@@ -372,9 +350,6 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
         data = image_hdu.data
         wcs = WCS(image_hdu.header)
 
-    if report:
-        report(2, message="Creating output directory")
-
     # If image is empty, raise exception
     if np.array_equiv(data, 0):
         raise ValueError("No data in image.")
@@ -392,10 +367,7 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
 
     # Make the cutouts using the make_cutouts function:
     cutouts = make_cutouts(data=data, catalog=catalog, wcs=wcs,
-                           origin=origin, verbose=verbose, report=report)
-
-    if report:
-        report(initialize=len(cutouts), message="Writing files")
+                           origin=origin, verbose=verbose)
 
     # Convert cutouts to fits hdus.
     # Save the hdus to file if requested:
@@ -429,8 +401,5 @@ def cutouts_from_fits(image, catalog, image_ext=0, origin=0,
 
         # Add cutout to output list
         fits_cutouts.append(hdu)
-
-        if report:
-            report(idx)
 
     return fits_cutouts

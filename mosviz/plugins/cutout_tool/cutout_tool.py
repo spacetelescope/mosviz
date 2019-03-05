@@ -102,8 +102,7 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
     table.rename_column("cutout_y_size", "cutout_height")
 
     fits_cutouts = cutouts_from_fits(imagename, table, output_dir=path,
-                                     overwrite=True, verbose=True,
-                                     report=report)
+                                     overwrite=True, verbose=True)
     if ispreview:
         return None
     else:
