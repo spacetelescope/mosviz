@@ -618,6 +618,7 @@ class NIRSpecCutoutTool(CutoutTool):
         try:
             self.main()
             os.chdir(cwd)
+            self.start_button.setEnabled(True)
             self.start_button.setText("Start")
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self.call_main)
@@ -638,9 +639,13 @@ class NIRSpecCutoutTool(CutoutTool):
             self.statusBar().showMessage("Please fill in all fields")
             return
 
-        self.start_button.setText("Abort")
-        self.start_button.clicked.disconnect()
-        self.start_button.clicked.connect(self.abort)
+        # self.start_button.setText("Abort")
+        # self.start_button.clicked.disconnect()
+        # self.start_button.clicked.connect(self.abort)
+
+        # temporary fix for non-existing abort functionality.
+        self.start_button.setText("Working...")
+        self.start_button.setEnabled(False)
 
         self.statusBar().showMessage("Making a list of files")
         QApplication.processEvents()
@@ -1017,6 +1022,7 @@ class GeneralCutoutTool(CutoutTool):
         try:
             self.main()
             os.chdir(cwd)
+            self.start_button.setEnabled(True)
             self.start_button.setText("Start")
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self.call_main)
@@ -1036,9 +1042,14 @@ class GeneralCutoutTool(CutoutTool):
             self.statusBar().showMessage("Please fill in all fields")
             return
 
-        self.start_button.setText("Abort")
-        self.start_button.clicked.disconnect()
-        self.start_button.clicked.connect(self.abort)
+        # self.start_button.setText("Abort")
+        # self.start_button.clicked.disconnect()
+        # self.start_button.clicked.connect(self.abort)
+
+        # temporary fix for non-existing abort functionality.
+        self.start_button.setText("Working...")
+        self.start_button.setEnabled(False)
+
         self.statusBar().showMessage("Making a list of files")
         QApplication.processEvents()
 
