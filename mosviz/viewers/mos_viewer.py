@@ -81,6 +81,8 @@ class MOSVizViewer(DataViewer):
         self._layer_view.layer_combo.currentIndexChanged.connect(self._selection_changed)
         self.resize(800, 600)
 
+        self.image_viewer_hidden = False
+
     def load_ui(self):
         """
         Setup the MOSView viewer interface.
@@ -132,6 +134,7 @@ class MOSVizViewer(DataViewer):
         # Set the central widget
         self.setCentralWidget(self.central_widget)
 
+        self.central_widget.show()
         # Define the options widget
         self._options_widget = OptionsWidget()
 
@@ -140,8 +143,15 @@ class MOSVizViewer(DataViewer):
         # Trigger a sync between the splitters
         self._left_splitter_moved()
 
+        if self.image_viewer_hidden:
+            self.image_widget.hide()
+        else:
+            self.image_widget.show()
+
     @avoid_circular
     def _right_splitter_moved(self, *args, **kwargs):
+        if self.image_widget.isHidden():
+            return
         sizes = self.central_widget.right_vertical_splitter.sizes()
         if sizes == [0, 0]:
             sizes = [230, 230]
@@ -149,6 +159,8 @@ class MOSVizViewer(DataViewer):
 
     @avoid_circular
     def _left_splitter_moved(self, *args, **kwargs):
+        if self.image_widget.isHidden():
+            return
         sizes = self.central_widget.left_vertical_splitter.sizes()
         if sizes == [0, 0]:
             sizes = [230, 230]
@@ -729,6 +741,8 @@ class MOSVizViewer(DataViewer):
         """
         self._check_unsaved_comments()
 
+        self.image_viewer_hidden = image_data is None
+
         if spec1d_data is not None:
             # TODO: This should not be needed. Must explore why the core model
             # is out of sync with the proxy model.
@@ -754,7 +768,7 @@ class MOSVizViewer(DataViewer):
             # Explicitly let the plot widget know that data items have changed
             self.spectrum1d_widget.plot_widget.on_item_changed(data_item)
 
-        if image_data is not None:
+        if not self.image_viewer_hidden:
             if not self.image_widget.isVisible():
                 self.image_widget.setVisible(True)
             wcs = image_data.coords.wcs
@@ -782,7 +796,6 @@ class MOSVizViewer(DataViewer):
             self.image_widget._redraw()
         else:
             self.cutout_wcs = None
-            self.image_widget.setVisible(False)
 
         # Plot the 2D spectrum data last because by then we can make sure that
         # we set up the extent of the image appropriately if the cutout and the
@@ -791,17 +804,7 @@ class MOSVizViewer(DataViewer):
         # We are repurposing the spectrum 2d widget to handle the display of both
         # the level 3 and level 2 spectra.
         if spec2d_data is not None or level2_data is not None:
-
-            # These are probably retrievable from the slit controller.
-            scale = np.sqrt(proj_plane_pixel_area(wcs)) * 3600.
-            slit_length = row[self.catalog.meta["special_columns"]["slit_length"]]
-            dy = slit_length / scale
-            ra = row[self.catalog.meta["special_columns"]["slit_ra"]] * u.degree
-            dec = row[self.catalog.meta["special_columns"]["slit_dec"]] * u.degree
-            skycoord = SkyCoord(ra, dec, frame='fk5')
-            xp, yp = skycoord.to_pixel(wcs)
-
-            self._load_spectrum2d_widget(dy, yp, image_data, spec2d_data, level2_data)
+            self._load_spectrum2d_widget(spec2d_data, level2_data)
         else:
             self.spectrum2d_widget.no_data()
 
@@ -863,7 +866,10 @@ class MOSVizViewer(DataViewer):
 
             self.meta_form_layout.addRow(self.input_save, self.input_refresh)
 
-    def _load_spectrum2d_widget(self, dy, yp, image_data, spec2d_data, level2_data):
+        if not self.isHidden() and self.image_viewer_hidden:
+            self.image_widget.setVisible(False)
+
+    def _load_spectrum2d_widget(self, spec2d_data, level2_data):
 
         if not spec2d_data:
             return
