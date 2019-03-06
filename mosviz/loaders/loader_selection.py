@@ -75,6 +75,13 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
         # By defult, ui is built for level 2 data. Must be
         # re-configured for level 3-only data.
         if not self.is_level2:
+
+            # Since we are modifying self.columns below by popping one of the
+            # elements, we should make a copy of the columns attribute first
+            # to avoid modifying the class-level attribute for all future
+            # instances
+            self.columns = self.columns[:]
+
             self.columns.pop(3)
             self.ui.combosel_level2.hide()
             self.ui.combosel_loader_level2.hide()
