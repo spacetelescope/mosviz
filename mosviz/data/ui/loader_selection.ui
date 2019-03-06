@@ -200,6 +200,12 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>436</width>
+         <height>104</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <weight>50</weight>
@@ -296,4 +302,3 @@
  <resources/>
  <connections/>
 </ui>
-
