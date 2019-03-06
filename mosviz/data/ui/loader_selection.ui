@@ -134,7 +134,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Column</string>
+        <string>Table Column</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
