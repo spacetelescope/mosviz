@@ -22,7 +22,7 @@ def nirspec_spectrum1d_reader(file_name):
     with fits.open(file_name) as hdulist:
         header = hdulist['PRIMARY'].header
 
-    tab = Table.read(file_name)
+    tab = Table.read(file_name, hdu=1)
 
     data = Data(label="1D Spectrum")
     data.header = header
@@ -77,10 +77,10 @@ def nirspec_level2_reader(file_name):
     data = Data(label="2D Spectra")
     data.header = hdulist[ext].header
     data.coords = coordinates_from_header(hdulist[ext].header)
-    data.add_component(hdulist[ext].data, 'Flux')
+    data.add_component(hdulist[ext].data, 'Level2 Flux')
 
     # TODO: update uncertainty once data model becomes clear
-    data.add_component(np.sqrt(hdulist[ext + 2].data), 'Uncertainty')
+    data.add_component(np.sqrt(hdulist[ext + 2].data), 'Level2 Uncertainty')
 
     hdulist.close()
 
