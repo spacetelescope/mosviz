@@ -87,9 +87,6 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
         Class that allows monitoring of the internal algorithm by the
         caller. Set to None if no reporting is needed.
     """
-
-    print ('@@@@@@     line: 91  - ', len(table))
-
     if report:
         report.initialize(len(table))
 
@@ -205,24 +202,6 @@ class _Report():
         self.status_bar = status_bar
         self.kill = kill
 
-    def __call__(self, *args, **kwargs):
-        """
-        Callable form.
-
-        Parameters
-        ---------
-        args : tuple
-            One int value can be passed; it is interpreted as the current
-            value for the progress bar
-        kwargs : dict
-            'initialize' calls the initialize method
-            'message' is the message passed to the initialize method
-        """
-        if 'initialize' in kwargs:
-            self.initialize(kwargs['initialize'], message=kwargs['message'])
-        if len(args) == 1:
-            self.report(args[0])
-
     def initialize(self, maximum, message="Making cutouts"):
         """
         Initialize the report.
@@ -234,7 +213,6 @@ class _Report():
         message : str
             Text to display in status bar
         """
-        print ('@@@@@@     line: 237  -  maximum: ', maximum)
         self.maximum = maximum
         self.message = message
 
@@ -257,9 +235,6 @@ class _Report():
             Text to display in status bar. If None, the text defined
             at initialization time is used.
         """
-
-        print ('@@@@@@     line: 261  - value:  v', value)
-
         if self.status_bar is not None:
             msg = self.message
             if message != None:
