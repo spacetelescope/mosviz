@@ -83,10 +83,16 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
         Overwrite existing files. Default is `False`.
     verbose : bool, optional
         Print extra info. Default is `True`.
-    report : function, optional
-        Call back that allows monitoring of the internal algorithm by the
+    report : _Report, optional
+        Class that allows monitoring of the internal algorithm by the
         caller. Set to None if no reporting is needed.
     """
+
+    print ('@@@@@@     line: 91  - ', len(table))
+
+    if report:
+        report.initialize(len(table))
+
     # Define output names.
     if not output_file_format:
         output_file_format = '{0}.fits'
@@ -101,8 +107,16 @@ def go_make_cutouts(table, imagename, image_label, output_file_format=None,
     table.rename_column("cutout_x_size", "cutout_width")
     table.rename_column("cutout_y_size", "cutout_height")
 
-    fits_cutouts = cutouts_from_fits(imagename, table, output_dir=path,
+    fits_cutouts = []
+    counter = 0
+    for row in table:
+        t = QTable(row)
+        cutout = cutouts_from_fits(imagename, t, output_dir=path,
                                      overwrite=True, verbose=True)
+        fits_cutouts.append(cutout)
+        if report:
+            report.report(counter)
+
     success_list = [True if type(e)==fits.hdu.image.PrimaryHDU else False
                     for e in fits_cutouts]
     success_counter = success_list.count(True)
@@ -170,7 +184,7 @@ def unique_id(ID, IDList):
     return ID, IDList
 
 
-class Report():
+class _Report():
     """
     Class that enables the go_make_cutouts and related functions in
     nddata.utils to report their status and progress to the mosviz cutout
@@ -220,6 +234,7 @@ class Report():
         message : str
             Text to display in status bar
         """
+        print ('@@@@@@     line: 237  -  maximum: ', maximum)
         self.maximum = maximum
         self.message = message
 
@@ -242,6 +257,9 @@ class Report():
             Text to display in status bar. If None, the text defined
             at initialization time is used.
         """
+
+        print ('@@@@@@     line: 261  - value:  v', value)
+
         if self.status_bar is not None:
             msg = self.message
             if message != None:
@@ -332,7 +350,7 @@ class NIRSpecCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
-        self.report = Report(self.progress_bar, self.status_bar, self.kill)
+        self.report = _Report(self.progress_bar, self.status_bar, self.kill)
 
     def initUI(self):
 
@@ -807,7 +825,7 @@ class GeneralCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
-        self.report = Report(self.progress_bar, self.status_bar,
+        self.report = _Report(self.progress_bar, self.status_bar,
                                  self.kill)
 
     def initUI(self):
