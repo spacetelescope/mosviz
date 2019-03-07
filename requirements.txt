@@ -7,3 +7,4 @@ numpy
 glue-core
 pyqt5
 specviz
+reproject

@@ -1,8 +1,6 @@
 import sys
 import os
 from glob import glob
-import numpy as np
-from functools import partial
 import re
 
 from qtpy import compat
@@ -18,16 +16,98 @@ from glue.core.data_factories import load_data
 from astropy.table import QTable
 import astropy.units as u
 from astropy.io import fits
-from astropy.wcs import WCS, NoConvergence
-from astropy.coordinates import SkyCoord
-from astropy.nddata.utils import (Cutout2D, NoOverlapError)
-from astropy import log
+from astropy.wcs import WCS\
 
-from .. import UI_DIR
+# this will be eventually imported from astropy.nddata.utils
+from .cutout_lib import cutouts_from_fits
 
-__all__ = ["natural_sort", "unique_id", "CutoutTool",
+__all__ = ["go_make_cutouts", "natural_sort",
+           "unique_id", "CutoutTool",
            "NIRSpecCutoutTool", "nIRSpec_cutout_tool",
            "GeneralCutoutTool", "general_cutout_tool"]
+
+
+def go_make_cutouts(table, imagename, image_label, output_file_format=None,
+                 output_dir_format=None, apply_rotation=False,
+                 image_ext=0, clobber=False, verbose=True, ispreview=False,
+                 report=None):
+    """
+    This function is a modified copy of astroimtools.cutout_tools.make_cutouts.
+    Make cutouts from a 2D image and write them to FITS files.
+
+    Catalog must have the following columns with unit info, where applicable:
+        * ``'id'`` - ID string; no unit necessary.
+        * ``'ra'`` - RA (e.g., in degrees).
+        * ``'dec'`` - DEC (e.g., in degrees).
+        * ``'cutout_x_size'`` - Cutout width (e.g., in arcsec).
+        * ``'cutout_y_size'`` - Cutout height (e.g., in arcsec).
+        * ``'cutout_pa'`` - Cutout angle (e.g., in degrees). This is only
+          use if user chooses to rotate the cutouts. Positive value
+          will result in a clockwise rotation.
+        * ``'spatial_pixel_scale'`` - Pixel scale (e.g., in arcsec/pix).
+
+    The following are no longer used, so they are now optional:
+        * ``'slit_pa'`` - Slit angle (e.g., in degrees).
+        * ``'slit_width'`` - Slit width (e.g., in arcsec).
+        * ``'slit_length'`` - Slit length (e.g., in arcsec).
+
+    Cutouts are organized as follows::
+        working_dir/
+            &lt;image_label&gt;_cutouts/
+                &lt;id&gt;_&lt;image_label&gt;_cutout.fits
+
+    Each cutout image is a simple single-extension FITS with updated WCS.
+    Its header has the following special keywords:
+        * ``OBJ_RA`` - RA of the cutout object in degrees.
+        * ``OBJ_DEC`` - DEC of the cutout object in degrees.
+        * ``OBJ_ROT`` - Rotation of cutout object in degrees.
+    Can add Qt.WindowStaysOnTopHint to supper to keep window ontop.
+
+    Parameters
+    ----------
+    table : QTable
+        Catalog table defining the sources to cut out.
+    imagename : str
+        Image to cut.
+    image_label : str
+        Label to name the cutout sub-directory and filenames.
+    output_file_format : str, optional
+        Typically '{0}.fits'
+    output_dir_format : str, optional
+        Typically '{0}_cutouts'
+    apply_rotation : bool, optional
+        Cutout will be rotated to a given angle. Default is `False`.
+    image_ext : int, optional
+        Image extension to extract header and data. Default is 0.
+    clobber : bool, optional
+        Overwrite existing files. Default is `False`.
+    verbose : bool, optional
+        Print extra info. Default is `True`.
+    report : function, optional
+        Call back that allows monitoring of the internal algorithm by the
+        caller. Set to None if no reporting is needed.
+    """
+    # Define output names.
+    if not output_file_format:
+        output_file_format = '{0}.fits'
+    if not output_dir_format:
+        output_dir_format = '{0}_cutouts'
+
+    # Sub-directory, relative to working directory.
+    path = output_dir_format.format(image_label)
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    table.rename_column("cutout_x_size", "cutout_width")
+    table.rename_column("cutout_y_size", "cutout_height")
+
+    fits_cutouts = cutouts_from_fits(imagename, table, output_dir=path,
+                                     overwrite=True, verbose=True)
+    success_list = [True if type(e)==fits.hdu.image.PrimaryHDU else False
+                    for e in fits_cutouts]
+    success_counter = success_list.count(True)
+
+    return fits_cutouts, success_counter, success_list
 
 
 def natural_sort(array):
@@ -89,6 +169,92 @@ def unique_id(ID, IDList):
 
     return ID, IDList
 
+
+class Report():
+    """
+    Class that enables the go_make_cutouts and related functions in
+    nddata.utils to report their status and progress to the mosviz cutout
+    tools GUIs. These classes call function report(*args, **kwargs) which
+    acts as interface to this class.
+
+    Parameters
+    ---------
+    progress_bar : QProgressBar
+        a progress bar
+    status_bar : QStatusBar
+        a status bar
+    kill : bool, optional
+        a flag that allows the GUI to kill the cutout algorithm
+    """
+    def __init__(self, progress_bar, status_bar, kill=False):
+        self.progress_bar = progress_bar
+        self.status_bar = status_bar
+        self.kill = kill
+
+    def __call__(self, *args, **kwargs):
+        """
+        Callable form.
+
+        Parameters
+        ---------
+        args : tuple
+            One int value can be passed; it is interpreted as the current
+            value for the progress bar
+        kwargs : dict
+            'initialize' calls the initialize method
+            'message' is the message passed to the initialize method
+        """
+        if 'initialize' in kwargs:
+            self.initialize(kwargs['initialize'], message=kwargs['message'])
+        if len(args) == 1:
+            self.report(args[0])
+
+    def initialize(self, maximum, message="Making cutouts"):
+        """
+        Initialize the report.
+
+        Parameters
+        ---------
+        maximum : int
+            The maximum value to set in a progress bar
+        message : str
+            Text to display in status bar
+        """
+        self.maximum = maximum
+        self.message = message
+
+        if self.progress_bar is not None:
+            self.progress_bar.setMinimum(0)
+            self.progress_bar.setMaximum(self.maximum)
+            self.progress_bar.reset()
+
+        QApplication.processEvents()
+
+    def report(self, value, message=None):
+        """
+        Report in progress and status bars.
+
+        Parameters
+        ----------
+        value : int
+            Current value for progress bar
+        message : str
+            Text to display in status bar. If None, the text defined
+            at initialization time is used.
+        """
+        if self.status_bar is not None:
+            msg = self.message
+            if message != None:
+                msg = message
+            self.status_bar().showMessage(
+                msg + ("(%s/%s)"%(value, self.maximum)))
+
+        if self.progress_bar is not None:
+            self.progress_bar.setValue(value)
+
+        QApplication.processEvents()
+
+
 class CutoutTool(QMainWindow):
 
     def __init__ (self, session, parent=None):
@@ -103,183 +269,6 @@ class CutoutTool(QMainWindow):
         self.kill = False
         self.output_dir_format = '{0}_cutouts' #format(image_label)
         self.output_file_format = '{0}_{1}_cutout.fits' #format(ID, image_label)
-
-
-    def make_cutouts(self, table, imagename, image_label, apply_rotation=False,
-                     image_ext=0, clobber=False, verbose=True, ispreview=False):
-        """
-        This function is a modified copy of astroimtools.cutout_tools.make_cutouts.
-        Make cutouts from a 2D image and write them to FITS files.
-
-        Catalog must have the following columns with unit info, where applicable:
-            * ``'id'`` - ID string; no unit necessary.
-            * ``'ra'`` - RA (e.g., in degrees).
-            * ``'dec'`` - DEC (e.g., in degrees).
-            * ``'cutout_x_size'`` - Cutout width (e.g., in arcsec).
-            * ``'cutout_y_size'`` - Cutout height (e.g., in arcsec).
-            * ``'cutout_pa'`` - Cutout angle (e.g., in degrees). This is only
-              use if user chooses to rotate the cutouts. Positive value
-              will result in a clockwise rotation.
-            * ``'spatial_pixel_scale'`` - Pixel scale (e.g., in arcsec/pix).
-
-        The following are no longer used, so they are now optional:
-            * ``'slit_pa'`` - Slit angle (e.g., in degrees).
-            * ``'slit_width'`` - Slit width (e.g., in arcsec).
-            * ``'slit_length'`` - Slit length (e.g., in arcsec).
-
-        Cutouts are organized as follows::
-            working_dir/
-                &lt;image_label&gt;_cutouts/
-                    &lt;id&gt;_&lt;image_label&gt;_cutout.fits
-
-        Each cutout image is a simple single-extension FITS with updated WCS.
-        Its header has the following special keywords:
-            * ``OBJ_RA`` - RA of the cutout object in degrees.
-            * ``OBJ_DEC`` - DEC of the cutout object in degrees.
-            * ``OBJ_ROT`` - Rotation of cutout object in degrees.
-        Can add Qt.WindowStaysOnTopHint to supper to keep window ontop.
-
-        Parameters
-        ----------
-        table : QTable
-            Catalog table defining the sources to cut out.
-        imagename : str
-            Image to cut.
-        image_label : str
-            Label to name the cutout sub-directory and filenames.
-        apply_rotation : bool
-            Cutout will be rotated to a given angle. Default is `False`.
-        image_ext : int, optional
-            Image extension to extract header and data. Default is 0.
-        clobber : bool, optional
-            Overwrite existing files. Default is `False`.
-        verbose : bool, optional
-            Print extra info. Default is `True`.
-        """
-        """
-        Now libs:
-
-        """
-        # Optional dependencies...
-        from reproject import reproject_interp
-
-        with fits.open(imagename) as pf:
-            data = pf[image_ext].data
-            wcs = WCS(pf[image_ext].header)
-
-        # It is more efficient to operate on an entire column at once.
-        c = SkyCoord(table['ra'], table['dec'])
-        x = (table['cutout_x_size'] / table['spatial_pixel_scale']).value  # pix
-        y = (table['cutout_y_size'] / table['spatial_pixel_scale']).value  # pix
-        pscl = table['spatial_pixel_scale'].to(u.deg / u.pix)
-
-        # Do not rotate if column is missing.
-        if 'cutout_pa' not in table.colnames:
-            apply_rotation = False
-
-        # Sub-directory, relative to working directory.
-        path = self.output_dir_format.format(image_label)
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-        cutcls = partial(Cutout2D, data, wcs=wcs, mode='partial')
-
-        if self.progress_bar is not None:
-            self.progress_bar.setMinimum(0)
-            self.progress_bar.setMaximum(len(table)-1)
-            self.progress_bar.reset()
-        counter = 0
-        success_counter = 0
-        success_table = [False for x in range(len(table['id']))]
-
-        for position, x_pix, y_pix, pix_scl, row in zip(c, x, y, pscl, table):
-            if self.kill:
-                return None, None
-            counter += 1
-            if self.status_bar is not None:
-                self.status_bar().showMessage("Making cutouts (%s/%s)"
-                    %(counter, len(success_table)))
-            if self.progress_bar is not None:
-                self.progress_bar.setValue(counter)
-            QApplication.processEvents()
-
-            if apply_rotation:
-                pix_rot = row['cutout_pa'].to(u.degree).value
-
-                cutout_wcs = WCS(naxis=2)
-                cutout_wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
-                cutout_wcs.wcs.crval = [position.ra.deg, position.dec.deg]
-                cutout_wcs.wcs.crpix = [(x_pix - 1) * 0.5, (y_pix - 1) * 0.5]
-
-                try:
-                    cutout_wcs.wcs.cd = wcs.wcs.cd
-                    cutout_wcs.rotateCD(-pix_rot)
-                except AttributeError:
-                    cutout_wcs.wcs.cdelt = wcs.wcs.cdelt
-                    cutout_wcs.wcs.crota = [0, -pix_rot]
-
-                cutout_hdr = cutout_wcs.to_header()
-
-                try:
-                    cutout_arr = reproject_interp(
-                        (data, wcs), cutout_hdr, shape_out=(y_pix, x_pix), order=2)
-                except Exception:
-                    if verbose:
-                        log.info('reproject failed: '
-                                 'Skipping {0}'.format(row['id']))
-                    continue
-
-                cutout_arr = cutout_arr[0]  # Ignore footprint
-                cutout_hdr['OBJ_ROT'] = (pix_rot, 'Cutout rotation in degrees')
-
-            else:
-                try:
-                    cutout = cutcls(position, size=(y_pix, x_pix))
-                except NoConvergence:
-                    if verbose:
-                        log.info('WCS solution did not converge: '
-                                 'Skipping {0}'.format(row['id']))
-                    continue
-                except NoOverlapError:
-                    if verbose:
-                        log.info('Cutout is not on image: '
-                                 'Skipping {0}'.format(row['id']))
-                    continue
-                else:
-                    cutout_hdr = cutout.wcs.to_header()
-                    cutout_arr = cutout.data
-
-            if np.array_equiv(cutout_arr, 0):
-                if verbose:
-                    log.info('No data in cutout: Skipping {0}'.format(row['id']))
-                continue
-
-            fname = os.path.join(
-                path, self.output_file_format.format(row['id'], image_label))
-
-            # Construct FITS HDU.
-            hdu = fits.PrimaryHDU(cutout_arr)
-            hdu.header.update(cutout_hdr)
-            hdu.header['OBJ_RA'] = (position.ra.deg, 'Cutout object RA in deg')
-            hdu.header['OBJ_DEC'] = (position.dec.deg, 'Cutout object DEC in deg')
-
-            if ispreview:
-                return hdu
-            else:
-                hdu.writeto(fname, overwrite=clobber)
-
-            success_counter += 1
-            success_table[counter-1] = True
-            if verbose:
-                log.info('Wrote {0}'.format(fname))
-
-        self.progressBar.setValue(counter)
-        QApplication.processEvents()
-
-        if ispreview:
-            return None
-        else:
-            return success_counter, success_table
 
     def get_spatial_pixel_scale(self, imagename):
         """
@@ -308,8 +297,6 @@ class CutoutTool(QMainWindow):
             parent is not self.session.application):
             parent.raise_()
         super(CutoutTool, self).closeEvent(event)
-
-
 
 
 class NIRSpecCutoutTool(CutoutTool):
@@ -345,9 +332,14 @@ class NIRSpecCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
+        self.report = Report(self.progress_bar, self.status_bar, self.kill)
+
     def initUI(self):
-        path = os.path.join(UI_DIR, 'cutout_tool.ui')
-        loadUi(path, self)
+
+        plugin_path = os.path.dirname(os.path.abspath(__file__))
+        ui_dir = os.path.join(plugin_path, "ui")
+        ui_path = os.path.join(ui_dir, 'cutout_tool.ui')
+        loadUi(ui_path, self)
         self.statusBar().showMessage("Waiting for user input")
 
         self.progress_bar = self.progressBar
@@ -537,9 +529,16 @@ class NIRSpecCutoutTool(CutoutTool):
 
         spatial_pixel_scale = self.get_spatial_pixel_scale(self.img_path)
 
+        counter = 0
+        self.report.initialize(len(fb))
+
         #Extract info from spectra files and save to catalog.
         for idx, fn in enumerate(fb): #For file name in file base:
             QApplication.processEvents()
+
+            counter += 1
+            self.report.report(counter, message="Making catalog")
+
             row = []
             #Catch file error or load WCS:
             filex1d = fn
@@ -599,13 +598,14 @@ class NIRSpecCutoutTool(CutoutTool):
         return t, skipped
 
     def write_skipped(self, table, success_table, skipped):
-        with open("skipped_cutout_files.txt", "w") as f:
-            for i, x in enumerate(skipped):
-                f.write(x+"\n")
-            for i, x in enumerate(table['id']):
-                status = success_table[i]
-                if status == False:
-                    f.write(table["spectrum2d"][i]+"\n")
+        pass
+        # with open("skipped_cutout_files.txt", "w") as f:
+        #     for i, x in enumerate(skipped):
+        #         f.write(x+"\n")
+        #     for i, x in enumerate(table['id']):
+        #         status = success_table[i]
+        #         if status == False:
+        #             f.write(table["spectrum2d"][i]+"\n")
 
     def call_main(self):
         """
@@ -615,6 +615,7 @@ class NIRSpecCutoutTool(CutoutTool):
         try:
             self.main()
             os.chdir(cwd)
+            self.start_button.setEnabled(True)
             self.start_button.setText("Start")
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self.call_main)
@@ -630,16 +631,18 @@ class NIRSpecCutoutTool(CutoutTool):
         by the user and in the headers of spectra files
         to construct a catalog and make cutouts.
         """
-
         success = self.verify_input()
         if not success:
             self.statusBar().showMessage("Please fill in all fields")
             return
 
+        # self.start_button.setText("Abort")
+        # self.start_button.clicked.disconnect()
+        # self.start_button.clicked.connect(self.abort)
 
-        self.start_button.setText("Abort")
-        self.start_button.clicked.disconnect()
-        self.start_button.clicked.connect(self.abort)
+        # temporary fix for non-existing abort functionality.
+        self.start_button.setText("Working...")
+        self.start_button.setEnabled(False)
 
         self.statusBar().showMessage("Making a list of files")
         QApplication.processEvents()
@@ -660,9 +663,11 @@ class NIRSpecCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        success_counter, success_table = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
-            apply_rotation=True)
+        fits_cutouts, success_counter, success_table = go_make_cutouts(
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, report=self.report)
 
         if self.kill:
             self.kill = False
@@ -755,9 +760,12 @@ class NIRSpecCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        hdu = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
-            apply_rotation=True, ispreview=True)
+        fits_cutouts, success_counter, success_table  = go_make_cutouts(
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, ispreview=True, report=self.report)
+        hdu = fits_cutouts[0]
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
@@ -776,7 +784,6 @@ class NIRSpecCutoutTool(CutoutTool):
             import matplotlib.pyplot as plt
             plt.imshow(hdu.data)
             plt.show()
-
 
 
 class GeneralCutoutTool(CutoutTool):
@@ -800,9 +807,15 @@ class GeneralCutoutTool(CutoutTool):
          '*.FITZ', '*.ftz', '*.FTZ', '*.fz', '*.FZ']
         self.initUI()
 
+        self.report = Report(self.progress_bar, self.status_bar,
+                                 self.kill)
+
     def initUI(self):
-        path = os.path.join(UI_DIR, 'general_cutout_tool.ui')
-        loadUi(path, self)
+
+        plugin_path = os.path.dirname(os.path.abspath(__file__))
+        ui_dir = os.path.join(plugin_path, "ui")
+        ui_path = os.path.join(ui_dir, 'general_cutout_tool.ui')
+        loadUi(ui_path, self)
         self.statusBar().showMessage("Waiting for user input")
 
         self.progress_bar = self.progressBar
@@ -992,11 +1005,12 @@ class GeneralCutoutTool(CutoutTool):
         return t
 
     def write_skipped(self, table, success_table):
-        with open("skipped_cutout_files.txt", "w") as f:
-            for i, x in enumerate(table['id']):
-                status = success_table[i]
-                if status == False:
-                    f.write(table["spectrum2d"][i]+"\n")
+        pass
+        # with open("skipped_cutout_files.txt", "w") as f:
+        #     for i, x in enumerate(table['id']):
+        #         status = success_table[i]
+        #         if status == False:
+        #             f.write(table["spectrum2d"][i]+"\n")
 
     def call_main(self):
         """
@@ -1006,6 +1020,7 @@ class GeneralCutoutTool(CutoutTool):
         try:
             self.main()
             os.chdir(cwd)
+            self.start_button.setEnabled(True)
             self.start_button.setText("Start")
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self.call_main)
@@ -1025,9 +1040,14 @@ class GeneralCutoutTool(CutoutTool):
             self.statusBar().showMessage("Please fill in all fields")
             return
 
-        self.start_button.setText("Abort")
-        self.start_button.clicked.disconnect()
-        self.start_button.clicked.connect(self.abort)
+        # self.start_button.setText("Abort")
+        # self.start_button.clicked.disconnect()
+        # self.start_button.clicked.connect(self.abort)
+
+        # temporary fix for non-existing abort functionality.
+        self.start_button.setText("Working...")
+        self.start_button.setEnabled(False)
+
         self.statusBar().showMessage("Making a list of files")
         QApplication.processEvents()
 
@@ -1043,9 +1063,11 @@ class GeneralCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        success_counter, success_table = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
-            apply_rotation=True)
+        fits_cutouts, success_counter, success_table = go_make_cutouts(
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, report=self.report)
 
         if self.kill:
             self.kill = False
@@ -1131,9 +1153,12 @@ class GeneralCutoutTool(CutoutTool):
 
         #Make cutouts using info in catalog.
         self.statusBar().showMessage("Making cutouts")
-        hdu = self.make_cutouts(
-            t, self.img_path, programName, clobber=True,
-            apply_rotation=True, ispreview=True)
+        fits_cutouts, success_counter, success_table = go_make_cutouts(
+            t, self.img_path, programName,
+            output_file_format=self.output_file_format,
+            output_dir_format=self.output_dir_format, clobber=True,
+            apply_rotation=True, ispreview=True, report=self.report)
+        hdu = fits_cutouts[0]
 
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
