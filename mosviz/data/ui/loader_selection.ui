@@ -134,7 +134,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Column</string>
+        <string>Table Column</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -199,6 +199,12 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>436</width>
+         <height>104</height>
+        </size>
        </property>
        <property name="font">
         <font>
@@ -296,4 +302,3 @@
  <resources/>
  <connections/>
 </ui>
-

@@ -72,6 +72,8 @@ class LoaderSelectionDialog(QtWidgets.QDialog, HasCallbackProperties):
 
         self.ui = load_ui('loader_selection.ui', self, directory=UI_DIR)
 
+        self.setWindowTitle("Loader Selection")
+
         # By defult, ui is built for level 2 data. Must be
         # re-configured for level 3-only data.
         if not self.is_level2:
