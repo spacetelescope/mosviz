@@ -8,13 +8,16 @@ from qtpy.QtWidgets import QMainWindow, QApplication, QMessageBox
 from qtpy.QtCore import Qt
 
 from glue.config import menubar_plugin
+from glue.core.data_factories import load_data
 
 from astropy.table import QTable
 import astropy.units as u
 from astropy.io import fits
 from astropy.wcs import WCS
 
-from mosviz.plugins.cutout_tool import natural_sort, unique_id, NIRSpecCutoutTool
+from ..cutout_tool import NIRSpecCutoutTool
+from .nirspec_table import nirspec_table_generator
+from ...viewers.mos_viewer import MOSVizViewer
 
 __all__ = ["NIRSpecTableGen", "nIRSpec_table_gen"]
 
@@ -25,6 +28,9 @@ class NIRSpecTableGen(QMainWindow):
         super(NIRSpecTableGen, self).__init__(parent)
         self.setWindowFlags(self.windowFlags() | Qt.Tool)
         self.parent = parent
+        self.session = None
+        if parent is not None and hasattr(parent, "session"):
+            self.session = parent.session
 
         self.title = "MOSViz Table Generator for NIRSpec"
         self.spec_path = ""
@@ -93,7 +99,7 @@ class NIRSpecTableGen(QMainWindow):
             "background-color: rgba(255, 255, 255, 0);")
 
     def default_filename(self):
-        self.save_file_name = "MOSViz_Table.txt"
+        self.save_file_name = "mosviz_table.ecsv"
         self.filename_user_input.setText(self.save_file_name)
         self.filename_user_input.setStyleSheet("")
 
@@ -304,7 +310,7 @@ class NIRSpecTableGen(QMainWindow):
         try:
             self.CutoutTool = NIRSpecCutoutTool(self.parent.session,
                 parent=self, spec_path=self.spec_path, TableGen=self)
-        except:
+        except Exception as e:
             info = QMessageBox.critical(self, "Error", "Cutout tool failed: "+str(e))
 
     def cutout_response(self, cutout_path, abs_path):
@@ -352,156 +358,38 @@ class NIRSpecTableGen(QMainWindow):
             return
 
         self.generate_table_button.setDisabled(True)
-        self.statusBar().showMessage("Making a list of files")
-
-        target_names = []
-        fb = [] # File Base
-        skipped = [] #List of files skipped.
-        searchPath = os.path.join(self.spec_path, "*s2d.fits")
-        for fn in glob(searchPath):
-            name = os.path.basename(fn)
-            name = name.split("_") #Split up file name
-            if len(name) != 5:
-                skipped.append([fn, "File name format not compliant."])
-                continue
-            name = name[-4] # Get the target name from file
-            target_names.append(name)
-            fb.append(fn)
-
-        #If no files are found, return
-        if len(fb) == 0:
-            self.statusBar().showMessage("NIRSpec files not found")
-            self.generate_table_button.setDisabled(False)
-            info = QMessageBox.information(self, "Status", "No NIRSpec files found in this directory\n"
-                "File Name Format:\n\n"
-                "<programName>_<objectName>_<instrument_filter>_ <grating>_<s2d|x1d>.fits")
-            return
-
-        fb = natural_sort(fb)
-
-        #Change working path to save path
-        cwd = os.getcwd()
-        os.chdir(self.save_file_dir)
-        self.statusBar().showMessage("Making catalog")
+        self.statusBar().showMessage("Making Table")
         QApplication.processEvents()
 
-        #Setup local catalog.
-        catalog = []
-        IDList = {} #Counter for objects with the same ID
+        output_path = os.path.join(self.save_file_dir, self.save_file_name)
+        source_catalog = nirspec_table_generator(self.spec_path,
+                                                 cutout_path=self.cutout_path,
+                                                 output_path=output_path)
 
-
-        #Extract info from spectra files and save to catalog.
-        projectName = os.path.basename(fb[0]).split("_")[0]
-        for idx, fn in enumerate(fb): #For file name in file base:
-            row = []
-
-            #Catch file error or load WCS:
-            filex1d = fn.replace("s2d.fits", "x1d.fits")
-            if os.path.isfile(filex1d):
-                try:
-                    headx1d = fits.open(filex1d)['extract1d'].header
-                    wcs = WCS(headx1d)
-                    w1, w2 = wcs.wcs_pix2world(0., 0., 1)
-                    w1 = w1.tolist()
-                    w2 = w2.tolist()
-                except Exception as e:
-                    print("WCS Read Failed:", e, ":", filex1d)
-                    skipped.append([filex1d, str(e)])
-                    continue
-            else:
-                skipped.append([fn, "x1d counterpart not found."])
-                continue
-
-            try:
-                head = fits.getheader(fn)
-            except Exception as e:
-                print("Header Read Failed:", e, ":", fn)
-                skipped.append([fn, str(e)])
-                continue
-
-            #Make row for catalog:
-            ID = target_names[idx]
-            ID, IDList = unique_id(ID, IDList)
-
-            if self.add_cutout_radio.isChecked():
-                cutout = self.get_cutout(fn, ID)
-            else:
-                cutout = "None"
-
-            if self.abs_path or self.custom_save_path:
-                spectrum1d = os.path.abspath(fn.replace("s2d.fits", "x1d.fits"))
-                spectrum2d = os.path.abspath(fn)
-            else:
-                spectrum1d = os.path.join(".", os.path.basename(fn).replace("s2d.fits", "x1d.fits"))
-                spectrum2d = os.path.join(".", os.path.basename(fn))
-
-            row.append(ID) #id
-            row.append(w1) #ra
-            row.append(w2) #dec
-            row.append(spectrum1d) #spectrum1d
-            row.append(spectrum2d) #spectrum2d
-            row.append(cutout) #cutout
-            row.append(0.2) #slit_width
-            row.append(3.3) #slit_length
-            row.append(head["CDELT2"]) #pix_scale (spatial_pixel_scale)
-            row.append(head["PA_APER"]) #slit_pa
-
-            catalog.append(row) #Add row to catalog
-
-        #Write Skipped Files
-        searchPath = os.path.join(self.spec_path, "*x1d.fits")
-        for fn in glob(searchPath):
-            name = os.path.basename(fn)
-            name = name.split("_") #Split up file name
-            if len(name) != 5:
-                skipped.append([fn, "File name format not compliant."])
-                continue
-            files2d = fn.replace("x1d.fits", "s2d.fits")
-            if not os.path.isfile(files2d):
-                skipped.append([fn, "s2d counterpart not found"])
-
-        if len(skipped) > 0:
-            self._write_skipped(skipped)
-
-        #if all spectra files were skipped
-        if len(catalog) == 0:
-            info = QMessageBox.critical(self, "Error", "MOSViz Table not generated: "
-                                        "All spectra files were skipped.")
-            os.chdir(cwd)
-            self.close()
-            return
-
-        #Make and write MOSViz table
-        self.statusBar().showMessage("Making MOSViz catalog")
-
-        colNames = ["id", "ra", "dec", "spectrum1d", "spectrum2d", "cutout",
-                    "slit_width", "slit_length", "spatial_pixel_scale", "slit_pa"]
-        t = QTable(rows=catalog, names=colNames)
-        t["ra"].unit = u.deg
-        t["dec"].unit = u.deg
-        t["slit_width"].unit = u.arcsec
-        t["slit_length"].unit = u.arcsec
-        t["spatial_pixel_scale"].unit = (u.arcsec/u.pix)
-        t["slit_pa"].unit = u.deg
-
-        self.statusBar().showMessage("Saving MOSViz catalog")
-        #Write MOSViz Table to file.
-        t.write(self.save_file_name, format="ascii.ecsv", overwrite=True)
-
-        #Change back dir.
         self.statusBar().showMessage("DONE!")
-        os.chdir(cwd)
 
-        moscatalogname = os.path.abspath(os.path.join(self.save_file_dir, self.save_file_name))
-        info = QMessageBox.information(self, "Status", "Catalog saved at:\n"+moscatalogname)
+        info = QMessageBox.information(self, "Status", "Catalog saved at:\n"+output_path)
+
+        if self.session is not None:
+            usr_ans = QMessageBox.question(self, '',
+                                           "Would you like to open {}?".format(self.save_file_name),
+                                           QMessageBox.Yes | QMessageBox.No)
+
+            if usr_ans == QMessageBox.Yes:
+                self.hide()
+                data = load_data(output_path)
+                self.session.data_collection.append(data)
+                self.session.application.new_data_viewer(MOSVizViewer, data=self.session.data_collection[-1])
 
         self.close()
         return
+
 
 @menubar_plugin("MOSViz Table Generator (JWST/NIRSpec MSA)")
 def nIRSpec_table_gen(session, data_collection):
     ex = NIRSpecTableGen(session.application)
     return
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
