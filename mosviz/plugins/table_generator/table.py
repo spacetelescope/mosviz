@@ -3,19 +3,46 @@ from collections import defaultdict
 from astropy.table import Table
 from astropy import units as u
 
-__all__ = ['Source', 'SourceCatalog',
-           'SPEC_1D_KEY', 'SPEC_2D_KEY',
-           'LEVEL2_KEY', 'CUTOUT_KEY',
-           ]
-
-
-SPEC_1D_KEY = 'spec_1d'
-SPEC_2D_KEY = 'spec_2d'
-LEVEL2_KEY = 'level2'
-CUTOUT_KEY = 'cutouts'
+__all__ = ['Source', 'SourceCatalog',]
 
 
 class Source:
+    """
+    An information container for a single source.
+    Contributes a row in a mosviz table via the
+    to_row method.
+
+    Attributes
+    ----------
+    source_id : str
+        ID of the source. Must be unique.
+
+    spec1d : str
+        1D spectrum file. "None" if n/a.
+
+    spec2d : str
+        2D spectrum file. "None" if n/a.
+
+    cutout : str
+        cutout image file. "None" if n/a.
+
+    ra, dec : float
+        Coordinates of source in degrees
+
+    slit_width, slit_length : float
+        Size of slit in arcsec
+
+    spatial_pixel_scale : float
+        Pixel scale in 2D spectrum in pixel/arcsec
+
+    slit_pa : float
+        Position angle of slit
+
+    level2 : list
+        A list of level 2 data files, added through
+        the add_level2 function.
+    """
+
     def __init__(self):
         self.source_id = None
 
@@ -50,12 +77,24 @@ class Source:
             return "None"
         else:
             # Can only support 1 level2 in v0.3
+            # TODO: Multiple level2 data
             return self._level2[0]
 
     def add_level2(self, file_name):
+        """Append a level2 data product to list"""
         self._level2.append(file_name)
 
     def to_row(self, include_level2=False):
+        """
+        Return a list of attributes to be
+        add to the astropy.table.Table.
+
+        Returns
+        -------
+        row : list
+            List of row data.
+        """
+
         row = [
             self.source_id,
             self.ra,
@@ -76,6 +115,12 @@ class Source:
 
 
 class SourceCatalog(defaultdict):
+    """
+    A catalog (defaultdict) of Source objects.
+    Generates a MOSViz from the Sources.
+    Returns a `astropy.table.Table` via the to_table function.
+    Writes table to an ecsv file via the to_file function.
+    """
     def __init__(self):
         super(SourceCatalog, self).__init__(Source)
 
@@ -92,6 +137,9 @@ class SourceCatalog(defaultdict):
         return False
 
     def to_table(self):
+        """
+        Convert catalog to `astropy.table.table`.
+        """
         if len(self.keys()) == 0:
             return
 
@@ -121,6 +169,14 @@ class SourceCatalog(defaultdict):
         return t
 
     def to_file(self, save_file_name):
+        """
+        Write catalog to ecsv file.
+
+        Returns
+        -------
+        row : list
+            List of row data.
+        """
         t = self.to_table()
         if t is None:
             raise Exception("SourceCatalog is empty")
