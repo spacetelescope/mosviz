@@ -379,6 +379,7 @@ class MOSVizViewer(DataViewer):
         self._unpack_selection(data)
         return True
 
+
     def add_subset(self, subset):
         """
         Processes subset messages from the central communication hub.
