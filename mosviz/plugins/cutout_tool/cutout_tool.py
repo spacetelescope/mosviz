@@ -597,9 +597,9 @@ class NIRSpecCutoutTool(CutoutTool):
         # save a list of failed cutouts
         if success_counter != len(t):
             self.write_skipped(t, success_table)
-            string += "\n\nA list of spectra files"
-            string += "without cutouts is saved in"
-            string += "'skipped_cutout_files.txt'"
+            string += "\n\nA list of spectra files "
+            string += "without cutouts is saved in "
+            string += "'skipped_cutout_files.txt' "
             string += "\n\nSaved at: %s" %os.path.join(
                 self.save_path,
                 "skipped_cutout_files.txt")
