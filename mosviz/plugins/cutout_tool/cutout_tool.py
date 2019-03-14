@@ -594,8 +594,6 @@ class NIRSpecCutoutTool(CutoutTool):
         string = "Cutouts were made for %s out of %s files\n\nSaved at: %s" %(
             success_counter, len(t), output_path)
 
-        info = QMessageBox.information(self, "Status:", string)
-
         # save a list of failed cutouts
         if success_counter != len(t):
             self.write_skipped(t, success_table)
@@ -605,6 +603,8 @@ class NIRSpecCutoutTool(CutoutTool):
             string += "\n\nSaved at: %s" %os.path.join(
                 self.save_path,
                 "skipped_cutout_files.txt")
+
+        info = QMessageBox.information(self, "Status:", string)
 
         usr_ans = QMessageBox.question(self, '',
                                        "Would you like to load all generated cutouts into glue?",
