@@ -1,16 +1,16 @@
 [run]
 source = {packagename}
 omit =
-   {packagename}/_astropy_init*
-   {packagename}/conftest*
-   {packagename}/cython_version*
-   {packagename}/setup_package*
-   {packagename}/*/setup_package*
-   {packagename}/*/*/setup_package*
-   {packagename}/tests/*
-   {packagename}/*/tests/*
-   {packagename}/*/*/tests/*
-   {packagename}/version*
+   mosviz/_astropy_init*
+   mosviz/conftest*
+   mosviz/cython_version*
+   mosviz/setup_package*
+   mosviz/*/setup_package*
+   mosviz/*/*/setup_package*
+   mosviz/tests/*
+   mosviz/*/tests/*
+   mosviz/*/*/tests/*
+   mosviz/version*
 
 [report]
 exclude_lines =
