@@ -73,7 +73,6 @@ class NIRSpecTableGen(QMainWindow):
         self.default_filename_button.clicked.connect(self.default_filename)
         self.generate_table_button.clicked.connect(self.call_main)
         self.change_save_path_button.clicked.connect(self.change_save_path)
-        self.remove_cutout_button.clicked.connect(self.remove_cutout)
 
         #Set up defaults
         self.default_filename()
@@ -177,47 +176,6 @@ class NIRSpecTableGen(QMainWindow):
                                        " A list of the these files and the reason they were skipped has been saved to\n\n "
                                        " %s. " %file_name)
 
-    def get_cutout(self, fn, ID):
-        """
-        Searches and attempts to match cutout with target names.
-        It will check for images with the names containing the unique ID provided.
-        If none are found it will search for images with original IDs in their names.
-        If no images are found 'None' is returned as a place holder.
-
-        Parameters
-        ----------
-        fn : String
-            Spectra file name. (Used to get original ID)
-        ID : String
-            Unique ID.
-
-        returns
-        -------
-        String
-            A file name of cutout if image is found. "None" else.
-        """
-        img_fn = ID+".fits"
-        img_fn = os.path.join(self.cutout_path, img_fn)
-
-        if os.path.isfile(img_fn):
-            if self.abs_path or self.custom_save_path:
-                return os.path.abspath(img_fn)
-            else:
-                return os.path.relpath(img_fn, self.spec_path)
-
-        name = os.path.basename(fn)
-        name = name.split("_")
-
-        img_fn = name[1]+".fits"
-        img_fn = os.path.join(self.cutout_path, img_fn)
-
-        if os.path.isfile(img_fn):
-            if self.abs_path or self.custom_save_path:
-                return os.path.abspath(img_fn)
-            else:
-                return os.path.relpath(img_fn, self.spec_path)
-        else:
-            return "None"
 
     def verify_input(self):
         """
@@ -362,6 +320,7 @@ class NIRSpecTableGen(QMainWindow):
         QApplication.processEvents()
 
         output_path = os.path.join(self.save_file_dir, self.save_file_name)
+
         source_catalog = nirspec_table_generator(self.spec_path,
                                                  cutout_path=self.cutout_path,
                                                  output_path=output_path)
