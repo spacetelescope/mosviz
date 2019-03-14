@@ -606,20 +606,21 @@ class NIRSpecCutoutTool(CutoutTool):
 
         info = QMessageBox.information(self, "Status:", string)
 
-        usr_ans = QMessageBox.question(self, '',
-                                       "Would you like to load all generated cutouts into glue?",
-                                       QMessageBox.Yes | QMessageBox.No)
+        if success_counter == 0:
+            usr_ans = QMessageBox.question(self, '',
+                                           "Would you like to load all generated cutouts into glue?",
+                                           QMessageBox.Yes | QMessageBox.No)
 
-        if usr_ans == QMessageBox.Yes:
-            data = []
-            for i, flag in enumerate(success_table):
-                if flag:
-                    path = output_path
-                    this_id = t["id"][i]
-                    fname = os.path.join(
-                        path, self.output_file_format.format(this_id))
-                    data.append(load_data(fname))
-            self.session.data_collection.merge(*data, label=self.output_dir_format)
+            if usr_ans == QMessageBox.Yes:
+                data = []
+                for i, flag in enumerate(success_table):
+                    if flag:
+                        path = output_path
+                        this_id = t["id"][i]
+                        fname = os.path.join(
+                            path, self.output_file_format.format(this_id))
+                        data.append(load_data(fname))
+                self.session.data_collection.merge(*data, label=self.output_dir_format)
 
         if self.tableGen and self.TableGen is not None:
             self.TableGen.cutout_response(output_path, self.custom_save_path)
