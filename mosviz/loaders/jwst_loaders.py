@@ -19,16 +19,18 @@ __all__ = ['nirspec_spectrum1d_reader', 'nirspec_spectrum2d_reader',
 
 @mosviz_spectrum1d_loader("NIRSpec 1D Spectrum")
 def nirspec_spectrum1d_reader(file_name):
+    file_name, ext = split_file_name(file_name, default_ext=1)
+
     with fits.open(file_name) as hdulist:
         header = hdulist['PRIMARY'].header
 
-    tab = Table.read(file_name, hdu=1)
+    tab = Table.read(file_name, hdu=ext)
 
     data = Data(label="1D Spectrum")
     data.header = header
 
     # This assumes the wavelength is in microns
-    data.coords = SpectralCoordinates(tab['WAVELENGTH'] * u.micron)
+    data.coords = SpectralCoordinates(np.array(tab['WAVELENGTH']) * u.micron)
 
     data.add_component(tab['WAVELENGTH'], "Wavelength")
     data.add_component(tab['FLUX'], "Flux")
@@ -49,13 +51,15 @@ def nirspec_spectrum2d_reader(file_name):
     to detemine the wavelengths.
     """
 
+    file_name, ext = split_file_name(file_name, default_ext=1)
+
     hdulist = fits.open(file_name)
 
     data = Data(label="2D Spectrum")
     data.header = hdulist['PRIMARY'].header
-    data.coords = coordinates_from_header(hdulist[1].header)
-    data.add_component(hdulist['SCI'].data, 'Flux')
-    data.add_component(np.sqrt(hdulist['CON'].data), 'Uncertainty')
+    data.coords = coordinates_from_header(hdulist[ext].header)
+    data.add_component(hdulist[ext].data, 'Flux')
+    data.add_component(np.sqrt(hdulist[ext + 2].data), 'Uncertainty')
 
     hdulist.close()
 
@@ -70,7 +74,7 @@ def nirspec_level2_reader(file_name):
     fits hdu list. The ext info is included
     in the file_name as follows: <file_path>[<ext>]
     """
-    file_name, ext = split_file_name(file_name)
+    file_name, ext = split_file_name(file_name, default_ext=1)
 
     hdulist = fits.open(file_name)
 

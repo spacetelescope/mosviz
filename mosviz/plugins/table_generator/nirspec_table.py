@@ -8,6 +8,11 @@ from astropy import units as u
 
 from .table import *
 
+SPEC_1D_KEY = 'spec_1d'
+SPEC_2D_KEY = 'spec_2d'
+LEVEL2_KEY = 'level2'
+CUTOUT_KEY = 'cutouts'
+
 
 def nirspec_table_generator(path, cutout_path=None, output_path="./mosviz_table.ecsv"):
 
@@ -32,22 +37,28 @@ def nirspec_table_generator(path, cutout_path=None, output_path="./mosviz_table.
     catalog = SourceCatalog()
 
     for x1d in file_list[SPEC_1D_KEY]:
-        header = fits.getheader(x1d, ext=1)
+        with fits.open(x1d) as hdul:
+            for ext, h in enumerate(hdul):
+                if h.name.upper() == 'EXTRACT1D':
+                    header = h.header
 
-        source = catalog[str(header['SOURCEID'])]
-        source.spec1d = x1d
-        source.ra = header['SLIT_RA']
-        source.dec = header['SLIT_DEC']
-        source.slit_width = 0.2
-        source.slit_length = 3.3
+                    source = catalog[str(header['SOURCEID'])]
+                    source.spec1d = "{}[{}]".format(x1d, ext)
+                    source.ra = header['SLIT_RA']
+                    source.dec = header['SLIT_DEC']
+                    source.slit_width = 0.2
+                    source.slit_length = 3.3
 
     for s2d in file_list[SPEC_2D_KEY]:
-        header = fits.getheader(s2d, ext=1)
+        with fits.open(s2d) as hdul:
+            for ext, h in enumerate(hdul):
+                if h.name.upper() == 'SCI':
+                    header = h.header
 
-        source = catalog[str(header['SOURCEID'])]
-        source.spec2d = s2d
-        source.spatial_pixel_scale = header['CDELT2']
-        source.slit_pa = header['PA_APER']
+                    source = catalog[str(header['SOURCEID'])]
+                    source.spec2d = "{}[{}]".format(s2d, ext)
+                    source.spatial_pixel_scale = header['CDELT2']
+                    source.slit_pa = header['PA_APER']
 
     if file_list[LEVEL2_KEY]:
         for lv2 in file_list[LEVEL2_KEY]:

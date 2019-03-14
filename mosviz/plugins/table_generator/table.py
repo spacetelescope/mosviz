@@ -116,8 +116,11 @@ class Source:
 
 class SourceCatalog(defaultdict):
     """
-    A catalog (defaultdict) of Source objects.
-    Generates a MOSViz from the Sources.
+    A catalog (defaultdict) of Source objects that
+    generates a MOSViz from the Sources. When a new
+    source is added, the key of the source will become
+    the Source's ID.
+
     Returns a `astropy.table.Table` via the to_table function.
     Writes table to an ecsv file via the to_file function.
     """
