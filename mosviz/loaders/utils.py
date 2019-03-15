@@ -14,7 +14,7 @@ LEVEL2_LOADERS = {}
 FILENAME_REGEX = re.compile(r'^(.+)\[(\d+)\]$')
 
 
-def split_file_name(file_name):
+def split_file_name(file_name, default_ext=0):
     """
     Used to split fits extension from file name.
     Extensions are appended to the file path in
@@ -27,6 +27,9 @@ def split_file_name(file_name):
     ----------
     file_name : str
         File name to parse
+    default_ext : int
+        Default extension number if file name
+        doesnt have extension number.
 
     Returns
     -------
@@ -37,7 +40,7 @@ def split_file_name(file_name):
     match = FILENAME_REGEX.match(file_name)
 
     if match is None:
-        return [file_name, 0]
+        return [file_name, default_ext]
 
     groups = list(match.groups())
     if groups[1].isnumeric():
