@@ -14,7 +14,7 @@ LEVEL2_KEY = 'level2'
 CUTOUT_KEY = 'cutouts'
 
 
-def nirspec_table_generator(path, cutout_path=None, output_path="./mosviz_table.ecsv"):
+def nirspec_table_generator(path, cutout_path=None, output_path=None):
 
     file_list = {
         SPEC_1D_KEY: [],
