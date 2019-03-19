@@ -9,7 +9,6 @@ MOSViz is built using the PyQt programming language that allows for flexible and
 
 
 .. image:: images/mosviz_screenshot.png
-  :scale: 50%
   :alt: Screenshot of mosviz running
   :align: center
 
