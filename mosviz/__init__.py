@@ -13,6 +13,12 @@ from ._astropy_init import *
 import sys
 from pkg_resources import get_distribution, DistributionNotFound
 
+# This *must* occur before any imports from glue. It prevents the "python must
+# be installed as a framework" error that occurs on OSX. Since we now
+# explicitly depend on PyQt5, we use it as the mpl backend.
+import matplotlib as mpl
+mpl.use('Qt5Agg')
+
 from .mosviz_data_factory import *
 
 try:
