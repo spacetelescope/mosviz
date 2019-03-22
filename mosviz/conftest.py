@@ -63,32 +63,34 @@ from .viewers.mos_viewer import MOSVizViewer
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'tests', 'data')
 DEIMOSTABLE = os.path.join(TEST_DATA_DIR, 'deimos_mosviz.tbl')
 
-@pytest.fixture(scope='session')
-def glue_gui():
 
-    d = data_factories.load_data(DEIMOSTABLE)
-    dc = DataCollection([])
-    dc.append(d)
+if not os.environ.get('JWST_DATA_TEST', False):
+    @pytest.fixture(scope='session')
+    def glue_gui():
 
-    # Creates glue instance
-    app = GlueApplication(dc)
-    app.setVisible(True)
+        d = data_factories.load_data(DEIMOSTABLE)
+        dc = DataCollection([])
+        dc.append(d)
 
-    # Adds data to the MosVizViewer
-    app.new_data_viewer(MOSVizViewer)
-    app.viewers[0][0].add_data_for_testing(app.data_collection[0])
+        # Creates glue instance
+        app = GlueApplication(dc)
+        app.setVisible(True)
 
-    return app
+        # Adds data to the MosVizViewer
+        app.new_data_viewer(MOSVizViewer)
+        app.viewers[0][0].add_data_for_testing(app.data_collection[0])
+
+        return app
 
 
-@pytest.fixture(autouse=True)
-def reset_state(glue_gui):
-    # This yields the test itself
-    yield
+    @pytest.fixture(autouse=True)
+    def reset_state(glue_gui):
+        # This yields the test itself
+        yield
 
-    # Returns the applications to this state between tests
-    # Currently, this only changes the index of the comboboxes back to 0.
-    # TODO: In the future, this may need to be more robust
-    reset_mosviz = glue_gui.viewers[0][0]
-    reset_mosviz.toolbar.source_select.setCurrentIndex(0)
-    reset_mosviz.toolbar.exposure_select.setCurrentIndex(0)
+        # Returns the applications to this state between tests
+        # Currently, this only changes the index of the comboboxes back to 0.
+        # TODO: In the future, this may need to be more robust
+        reset_mosviz = glue_gui.viewers[0][0]
+        reset_mosviz.toolbar.source_select.setCurrentIndex(0)
+        reset_mosviz.toolbar.exposure_select.setCurrentIndex(0)
