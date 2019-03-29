@@ -4,10 +4,19 @@
 New Features
 ------------
 
-- Added in CHANGES.rst file
+- Integrated latest version of ``specviz``
+
+- Updated loaders for JWST data products
+
+- Added cutout tool functionality
+
+- UI improvements
 
 Bug Fixes
 ---------
+
+- Minor bug fixes
+
 
 0.2.1 (2019-12-15)
 ==================
