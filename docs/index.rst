@@ -3,8 +3,8 @@ MOSViz: Visualization Tool for Multi-object Spectroscopy
 
 .. DANGER:: 
 
-      Please note that this version of Specviz is **no longer being actively supported
-      or maintained**. The functionality of Specviz is now available and being actively
+      Please note that this version of MOSViz is **no longer being actively supported
+      or maintained**. The functionality of MOSViz is now available and being actively
       developed as part of `Jdaviz <https://github.com/spacetelescope/jdaviz>`_.
 
 MOSViz is a quick-look analysis and visualization tool for multi-object spectroscopy (MOS).  It is designed to work with pipeline output: spectra and associated images, or just with spectra.  MOSViz is created to work with data from any telescope/instrument, but is built with the micro-shutter array (MSA) on the JWST/NIRSpec spectrograph and the JWST/NIRCam imager in mind.  As such, MOSViz has some features specific to NIRSpec and NIRCam data.
