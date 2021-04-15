@@ -9,10 +9,12 @@ os:
 # Setting sudo to false opts in to Travis-CI container-based builds.
 sudo: false
 
-# The apt packages below are needed for sphinx builds. A full list of packages
-# that can be included can be found here:
-#
-# https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
+# The apt packages below are needed for sphinx builds, which can no longer
+# be installed with sudo apt-get.
+addons:
+    apt:
+        packages:
+            - graphviz
 
 env:
     global:
@@ -35,8 +37,8 @@ env:
         # Make sure README will display properly on pypi
         - TOXENV='checkdocs'
         # Run a test with stable dependencies
-        - TOXENV='py36'
-        - TOXENV='py37'
+        - TOXENV='py36-test'
+        - TOXENV='py37-test'
 
 matrix:
 
@@ -59,31 +61,31 @@ matrix:
 
         # Try MacOS X and Windows
         - os: osx
-          env: TOXENV='py36'
+          env: TOXENV='py36-test'
 
         - os: windows
-          env: TOXENV='py36'
+          env: TOXENV='py36-test'
 
         # Try building against Astropy dev
-        - env: TOXENV='py37-astrodev'
+        - env: TOXENV='py37-astrodev-test'
 
         # Test against numpy dev
-        - env: TOXENV='py37-numpydev'
+        - env: TOXENV='py37-numpydev-test'
 
         # Test against oldest supported version of Glue
-        - env: TOXENV='py36-glueold'
+        - env: TOXENV='py36-glueold-test'
 
         # Test against latest development version of Glue
-        - env: TOXENV='py37-gluedev'
+        - env: TOXENV='py37-gluedev-test'
 
     allow_failures:
         - env: TOXENV='style' TOX_ARGS=''
-        - env: TOXENV='py37-astrodev'
-        - env: TOXENV='py37-numpydev'
-        - env: TOXENV='py37-gluedev'
+        - env: TOXENV='py37-astrodev-test'
+        - env: TOXENV='py37-numpydev-test'
+        - env: TOXENV='py37-gluedev-test'
 
         - os: windows
-          env: TOXENV='py36'
+          env: TOXENV='py36-test'
 
 install:
     - git clone git://github.com/astropy/ci-helpers.git
@@ -93,5 +95,8 @@ install:
 script:
    - conda info
    - $TOX_CMD $TOX_ARGS
+   - if [[ $TRAVIS_OS_NAME != windows && $TOXENV == *-test ]]; then
+        JWST_DATA_TEST=1 $TOX_CMD mosviz/loaders/tests/test_load_NIRSpec_data.py $TOX_ARGS;
+     fi
    - find mosviz -name "*.ui" -exec grep "pointsize" {} \; >& font.log
    - test ! -s font.log

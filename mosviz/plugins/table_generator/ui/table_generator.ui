@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>823</width>
-    <height>810</height>
+    <width>820</width>
+    <height>795</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -21,6 +21,26 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,1,0">
+    <item row="17" column="4">
+     <widget class="QPushButton" name="add_cutout_button">
+      <property name="font">
+       <font>
+        <weight>50</weight>
+        <bold>false</bold>
+        <strikeout>false</strikeout>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Browse file system to add cutout directory. The cutout files should follow the naming scheme:&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600; font-style:italic;&quot;&gt;&amp;lt;objectName&amp;gt;.fits&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string>Browse</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="0" colspan="5">
      <widget class="QTextBrowser" name="InfoBox">
       <property name="styleSheet">
@@ -42,11 +62,10 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;MOSViz is a quick-look analysis and visualization tool for multi-object spectroscopy (MOS). It is designed to work with JWST and non-JWST data: spectra and optional &amp;quot;cutout&amp;quot; images. MOSViz uses a &amp;quot;MOSViz Table&amp;quot; catalog file to organize file paths and information (see the list of information contained below). For JWST data, the MOSViz Table Generator extracts information from the headers of NIRSpec spectra files.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Inputs&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;NIRSpec Spectra Directory: &lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;This is the path to the NIRSpec MSA post-pipeline spectra. These files are saved in the &amp;quot;level3&amp;quot; subdirectory of the pipeline output. The files should follow the naming scheme:&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-style:italic;&quot;&gt;&amp;lt;programName&amp;gt;_&amp;lt;objectName&amp;gt;_&amp;lt;instrument_filter&amp;gt;_ &amp;lt;grating&amp;gt;_&amp;lt;s2d|x1d&amp;gt;.fits&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;NIRSpec Spectra Directory: &lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;This is the path to the NIRSpec MSA post-pipeline spectra. These files are saved in the &amp;quot;level2&amp;quot; and  &amp;quot;level3&amp;quot; subdirectories of the pipeline output.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Cutout Images: &lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;MOSViz can display a “cutout” image of the spectral target along with its spectrum. You can add cutouts by selecting “Specify a Directory Containing Cutouts” and providing a path to a directory containing them. If the you would like to generate cutouts from an image, please use the MOSViz Cutout Tool by selecting the &amp;quot;Generate Cutouts from Image&amp;quot; option. The cutouts fits files should follow the naming scheme:&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-style:italic;&quot;&gt;&amp;lt;objectName&amp;gt;.fits&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-style:italic;&quot;&gt;&amp;lt;SourceID&amp;gt;.fits&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Outputs&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;MOSViz Table: &lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;A table containing paths to MSA spectra and postage stamp images will be saved in the same directory as the spectra. You can import this file into glue and visualize your data using MOSViz. &lt;/span&gt;&lt;/p&gt;
@@ -63,151 +82,7 @@ p, li { white-space: pre-wrap; }
       </property>
      </widget>
     </item>
-    <item row="12" column="4">
-     <widget class="QPushButton" name="remove_cutout_button">
-      <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove cutout directory.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="text">
-       <string>Remove</string>
-      </property>
-     </widget>
-    </item>
-    <item row="23" column="0" colspan="5">
-     <widget class="Line" name="line">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="17" column="0">
-     <widget class="QLabel" name="output_title">
-      <property name="font">
-       <font>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string> MOSViz Table</string>
-      </property>
-     </widget>
-    </item>
-    <item row="11" column="0">
-     <widget class="QLabel" name="include_cutout_label">
-      <property name="text">
-       <string> Include Cutouts?</string>
-      </property>
-     </widget>
-    </item>
-    <item row="10" column="0">
-     <widget class="QLabel" name="cutout_title">
-      <property name="font">
-       <font>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Cutout Images</string>
-      </property>
-     </widget>
-    </item>
-    <item row="18" column="4">
-     <widget class="QPushButton" name="default_filename_button">
-      <property name="text">
-       <string>Default</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="4">
-     <widget class="QPushButton" name="spectra_browse_button">
-      <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Browse to add the directory containing the NIRSpec MSA post-pipeline spectra.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="text">
-       <string>Browse</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="0" colspan="5">
-     <widget class="Line" name="line_4">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="19" column="4">
-     <widget class="QPushButton" name="change_save_path_button">
-      <property name="text">
-       <string>Change</string>
-      </property>
-     </widget>
-    </item>
-    <item row="19" column="1" colspan="3">
-     <widget class="QLineEdit" name="save_path_display">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255,0);</string>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="19" column="0">
-     <widget class="QLabel" name="save_path_label">
-      <property name="text">
-       <string> Output Directory:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="18" column="0">
-     <widget class="QLabel" name="filename_label">
-      <property name="text">
-       <string> Output File Name:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0" rowspan="2" colspan="5">
-     <widget class="Line" name="line_2">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="14" column="0" colspan="3">
-     <widget class="QPushButton" name="make_cutouts_button">
-      <property name="minimumSize">
-       <size>
-        <width>400</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>400</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Launches Cutout Tool. Generate cutouts from an image. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="text">
-       <string>Generate Cutouts from Image</string>
-      </property>
-     </widget>
-    </item>
-    <item row="18" column="1" colspan="3">
-     <widget class="QLineEdit" name="filename_user_input"/>
-    </item>
-    <item row="15" column="0" rowspan="2" colspan="5">
-     <widget class="Line" name="line_3">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="20" column="0" colspan="5" alignment="Qt::AlignHCenter">
+    <item row="25" column="0" colspan="5" alignment="Qt::AlignHCenter">
      <widget class="QPushButton" name="generate_table_button">
       <property name="minimumSize">
        <size>
@@ -235,63 +110,44 @@ p, li { white-space: pre-wrap; }
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="label">
-      <property name="font">
-       <font>
-        <weight>75</weight>
-        <italic>false</italic>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string> NIRSpec Spectra</string>
+    <item row="20" column="0" rowspan="2" colspan="5">
+     <widget class="Line" name="line_3">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="14" column="3" colspan="2">
-     <widget class="QPushButton" name="add_cutout_button">
-      <property name="minimumSize">
-       <size>
-        <width>400</width>
-        <height>0</height>
-       </size>
+    <item row="23" column="1" colspan="3">
+     <widget class="QLineEdit" name="filename_user_input"/>
+    </item>
+    <item row="23" column="4">
+     <widget class="QPushButton" name="default_filename_button">
+      <property name="text">
+       <string>Default</string>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>400</width>
-        <height>16777215</height>
-       </size>
+     </widget>
+    </item>
+    <item row="23" column="0">
+     <widget class="QLabel" name="filename_label">
+      <property name="text">
+       <string> Output File Name:</string>
       </property>
-      <property name="font">
-       <font>
-        <weight>50</weight>
-        <bold>false</bold>
-        <strikeout>false</strikeout>
-       </font>
+     </widget>
+    </item>
+    <item row="11" column="0">
+     <widget class="QLabel" name="include_cutout_label">
+      <property name="text">
+       <string> Include Cutouts?</string>
       </property>
+     </widget>
+    </item>
+    <item row="4" column="4">
+     <widget class="QPushButton" name="spectra_browse_button">
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Browse file system to add cutout directory. The cutout files should follow the naming scheme:&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600; font-style:italic;&quot;&gt;&amp;lt;objectName&amp;gt;.fits&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-      <property name="layoutDirection">
-       <enum>Qt::LeftToRight</enum>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Browse to add the directory containing the NIRSpec MSA post-pipeline spectra.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
-       <string>Specify a Directory Containing Cutouts</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0">
-     <widget class="QLabel" name="spectra_label">
-      <property name="text">
-       <string> Directory Containing Specta:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="12" column="0">
-     <widget class="QLabel" name="cutout_dir_label">
-      <property name="text">
-       <string> Directory Containing Cutouts:</string>
+       <string>Browse</string>
       </property>
      </widget>
     </item>
@@ -302,7 +158,7 @@ p, li { white-space: pre-wrap; }
       </property>
      </widget>
     </item>
-    <item row="12" column="1" colspan="3">
+    <item row="17" column="1" colspan="3">
      <widget class="QLineEdit" name="cutout_path_display">
       <property name="toolTip">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Path to directory containing cutout images.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -331,7 +187,122 @@ p, li { white-space: pre-wrap; }
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;MOSViz can display a cutout image of the spectral target along with its spectrum.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
-       <string>Add Cutouts</string>
+       <string>Use Cutouts</string>
+      </property>
+     </widget>
+    </item>
+    <item row="17" column="0">
+     <widget class="QLabel" name="cutout_dir_label">
+      <property name="text">
+       <string> Directory Containing Cutouts:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="24" column="4">
+     <widget class="QPushButton" name="change_save_path_button">
+      <property name="text">
+       <string>Change</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0" colspan="5">
+     <widget class="Line" name="line_4">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="24" column="1" colspan="3">
+     <widget class="QLineEdit" name="save_path_display">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(255, 255, 255,0);</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="22" column="0">
+     <widget class="QLabel" name="output_title">
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string> MOSViz Table</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="0">
+     <widget class="QLabel" name="cutout_title">
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Cutout Images</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label">
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <italic>false</italic>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string> NIRSpec Spectra</string>
+      </property>
+     </widget>
+    </item>
+    <item row="24" column="0">
+     <widget class="QLabel" name="save_path_label">
+      <property name="text">
+       <string> Output Directory:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="28" column="0" colspan="5">
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="spectra_label">
+      <property name="text">
+       <string> Directory Containing Specta:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" rowspan="2" colspan="5">
+     <widget class="Line" name="line_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="1" colspan="3">
+     <widget class="QPushButton" name="make_cutouts_button">
+      <property name="maximumSize">
+       <size>
+        <width>530</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Launches Cutout Tool. Generate cutouts from an image. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Generate Cutouts from Image Using the Cutout Tool</string>
       </property>
      </widget>
     </item>
@@ -342,7 +313,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>823</width>
+     <width>820</width>
      <height>22</height>
     </rect>
    </property>
