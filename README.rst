@@ -1,7 +1,7 @@
 MOSViz: MOS Visualization Tool
 ==============================
 
-MOSViz is a quick-look analysis and visualization tool for multi-object
+MOSViz was a quick-look analysis and visualization tool for multi-object
 spectroscopy (MOS).
 
 For documentation see https://mosviz.readthedocs.io/en/latest/
