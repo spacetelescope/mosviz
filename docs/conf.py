@@ -36,10 +36,7 @@ except ImportError:
     sys.exit(1)
 
 # Get configuration information from setup.cfg
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+from configparser import ConfigParser
 conf = ConfigParser()
 
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
@@ -144,8 +141,6 @@ latex_documents = [('index', project + '.tex', project + u' Documentation',
 # (source start file, name, description, authors, manual section).
 man_pages = [('index', project.lower(), project + u' Documentation',
               [author], 1)]
-
-intersphinx_mapping['glue'] = ('https://glueviz.readthedocs.org/en/stable', None)
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.

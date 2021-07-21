@@ -1,5 +1,11 @@
+0.4.0
+=====
+
+mosviz is no longer supported, please use jdaviz. If you must use legacy
+mosviz, please try v0.3.1 in Python 3.6.
+
 0.3.0
-================
+=====
 
 New Features
 ------------
