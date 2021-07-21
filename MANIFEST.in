@@ -1,16 +1,11 @@
 include README.rst
 include CHANGES.rst
+include LICENSE.rst
 
-include ez_setup.py
+include pyproject.toml
 include setup.cfg
-include mosviz/tests/coveragerc
 
-recursive-include mosviz *.pyx *.c *.pxd
 recursive-include docs *
-recursive-include licenses *
-recursive-include cextern *
-recursive-include scripts *
-recursive-include mosviz/data *
 
 prune build
 prune docs/_build
