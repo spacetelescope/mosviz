@@ -35,12 +35,6 @@ except ImportError:
     print('ERROR: the documentation requires the sphinx-astropy package to be installed')
     sys.exit(1)
 
-try:
-    import matplotlib
-    matplotlib.use('Agg')
-except ImportError:
-    pass
-
 # Get configuration information from setup.cfg
 try:
     from ConfigParser import ConfigParser
